@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HAMID AFANDI | Modern Egyptian Heritage Coffee</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#765400",
+                        "secondary": "#7b5800",
+                        "sand-muted": "#D9C1AA",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#271900",
+                        "secondary-fixed": "#ffdea6",
+                        "outline-variant": "#d2c3be",
+                        "primary": "#000000",
+                        "on-tertiary-fixed-variant": "#544431",
+                        "primary-container": "#261813",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#f8dec5",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#3e2d1a",
+                        "surface-container": "#ffead8",
+                        "on-surface": "#271908",
+                        "secondary-container": "#fdca68",
+                        "surface-container-low": "#fff1e6",
+                        "on-background": "#271908",
+                        "surface-dim": "#f2d5ba",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#5d4200",
+                        "inverse-primary": "#dac1b8",
+                        "surface": "#fff8f4",
+                        "on-primary-fixed-variant": "#54433c",
+                        "surface-container-high": "#ffe4c9",
+                        "on-primary-container": "#947f78",
+                        "surface-tint": "#6d5a53",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#000000",
+                        "on-primary-fixed": "#261813",
+                        "on-surface-variant": "#4f4541",
+                        "on-tertiary-container": "#95806b",
+                        "roast-black": "#0D0705",
+                        "paper-white": "#FFFFFF",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#dbc2aa",
+                        "tertiary-container": "#261909",
+                        "surface-variant": "#fadec2",
+                        "outline": "#817570",
+                        "background": "#fff8f4",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#fff8f4",
+                        "on-tertiary-fixed": "#261909",
+                        "primary-fixed-dim": "#dac1b8",
+                        "inverse-on-surface": "#ffeedf",
+                        "surface-container-highest": "#fadec2",
+                        "primary-fixed": "#f7ddd4",
+                        "secondary-fixed-dim": "#f1bf5e",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem",
+                        "3xl": "1.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "stack-sm": "24px",
+                        "stack-md": "48px",
+                        "margin-desktop": "64px",
+                        "stack-lg": "80px",
+                        "container-max": "1280px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-sm": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-md": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #fff8f4;
+            color: #271908;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pattern-overlay {
+            background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
+            opacity: 0.03;
+        }
+        .luxury-shadow {
+            box-shadow: 0px 4px 20px rgba(26, 14, 9, 0.05);
+        }
+        .high-elevation {
+            box-shadow: 0px 12px 40px rgba(26, 14, 9, 0.12);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="font-body-md selection:bg-secondary/30">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface-container-highest/80 backdrop-blur-xl">
+<div class="flex justify-between items-center px-margin-desktop py-4 max-w-container-max mx-auto">
+<div class="flex items-center gap-12">
+<a class="font-display-lg text-headline-md text-primary dark:text-primary-fixed tracking-tighter" href="#">HAMID AFANDI</a>
+<div class="hidden md:flex gap-8">
+<a class="font-label-md text-label-md uppercase tracking-widest text-secondary border-b-2 border-secondary pb-1 transition-colors duration-300" href="#">Home</a>
+<a class="font-label-md text-label-md uppercase tracking-widest text-on-surface dark:text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Store</a>
+<a class="font-label-md text-label-md uppercase tracking-widest text-on-surface dark:text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Coffee</a>
+<a class="font-label-md text-label-md uppercase tracking-widest text-on-surface dark:text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">About</a>
+<a class="font-label-md text-label-md uppercase tracking-widest text-on-surface dark:text-on-surface-variant hover:text-secondary transition-colors duration-300" href="#">Branch</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-on-surface hover:text-secondary transition-colors">search</button>
+<button class="material-symbols-outlined text-on-surface hover:text-secondary transition-colors">shopping_bag</button>
+<button class="hidden md:block bg-secondary text-paper-white px-8 py-3 rounded-full font-label-md text-label-md uppercase tracking-wider scale-95 active:scale-90 transition-transform">Order Now</button>
+</div>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative h-[921px] min-h-[700px] flex items-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center" data-alt="A cinematic, high-resolution close-up of dark, glistening roasted coffee beans being poured into a traditional Egyptian brass dallah. Warm, golden hour light catches the steam and the intricate engravings on the metal. The scene is set against a moody, deep-toned background, evoking a sense of affluent nostalgia and premium craftsmanship in the heart of Cairo." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDpHYKaDbPH4GDNtKVPFXtZA_RQayLx4Q7gQKg0H16FobXpLQeOsPLnO_u-vIfevbrfB9xCRnrTZFV7qiE0DvxCvIT0Q5UnEcAFzGwlrrLx1o0INue903Sge4CRIO9Y14O4Dq1pWkVdFiy-96OgrmCI0NhfTNLSYZzpJEAm3VroFQszH7TgqQdh8gRKH0-iTxNNydoDmu9H7rvCQ5GH68F3kuErH43q_tLimva8ReDWnUnrtboLxylOnXzvpoG0OAXJK7FcM3qK1RCi')"></div>
+<div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent"></div>
+</div>
+<div class="relative z-10 px-margin-desktop max-w-container-max mx-auto w-full">
+<div class="max-w-2xl text-paper-white space-y-8">
+<h1 class="font-display-lg text-display-lg tracking-tight">A Taste of Egyptian Heritage in Every Cup</h1>
+<p class="font-body-lg text-body-lg text-sand-muted max-w-lg">Premium coffee, deeply rooted in tradition, crafted for modern coffee lovers. Experience the rich soul of Cairo's coffee culture delivered to your door.</p>
+<div class="flex gap-4">
+<button class="bg-secondary text-paper-white px-10 py-4 rounded-full font-label-md text-label-md uppercase tracking-widest hover:bg-on-secondary-container transition-colors shadow-lg">Shop Coffee</button>
+<button class="border border-paper-white text-paper-white px-10 py-4 rounded-full font-label-md text-label-md uppercase tracking-widest hover:bg-paper-white hover:text-primary transition-all">Our Story</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Pattern Divider -->
+<div class="h-12 w-full bg-surface-container flex items-center justify-center overflow-hidden">
+<div class="pattern-overlay w-full h-full"></div>
+</div>
+<!-- Featured Products -->
+<section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto">
+<div class="flex justify-between items-end mb-12">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Featured Coffee</h2>
+<p class="text-on-surface-variant font-body-md mt-2">Handpicked blends, roasted to perfection.</p>
+</div>
+<a class="text-secondary font-label-md hover:underline" href="#">View All</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<!-- Product Card 1 -->
+<div class="group luxury-shadow bg-surface-container-low rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-80 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A premium bag of Hamid Afandi coffee beans, matte dark brown with gold foil detailing, standing on a rustic wooden table with scattered beans and a soft-focus background of an elegant coffee shop. Soft ambient lighting highlights the rich texture of the packaging." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAO3qDKQXh0zthabZhGghK70edShq3haEB1h7sRkctfUAUvCktpsQhD3od5976WV88c4RPNCIDUVXOiNGXtpupKNllLKdSxlA8U9NOZFVfGgfmrAubD3XVJx_WSeVw0oYszK-zZf8iJchMGQbziszcEzDxqeQ_hZKNQHlKu47tQPUFCAtCW0LkteupjF2PbRAvQSZPaP-4GP9ycLWUchY0LnUTMvXfNBq2s9LydUn-dzpdGPRA3yhlkMsZqL5rVMHl8aGGfdsUrcS22"/>
+<span class="absolute top-4 left-4 bg-secondary text-paper-white px-3 py-1 rounded-full text-label-sm uppercase tracking-tighter">Bestseller</span>
+</div>
+<div class="p-6 space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-secondary flex items-center gap-1 font-label-sm">4.9 <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span></span>
+<span class="text-on-surface-variant text-label-sm">Medium Roast</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Afandi Signature Blend</h3>
+<p class="text-secondary font-display-lg text-headline-sm">EGP 245</p>
+<button class="w-full bg-primary text-paper-white py-4 rounded-2xl font-label-md uppercase tracking-widest flex items-center justify-center gap-2 group-hover:bg-secondary transition-colors">
+                            Add to Cart <span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+</button>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="group luxury-shadow bg-surface-container-low rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-80 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="An elegant black tin of Hamid Afandi Turkish coffee, positioned next to a small traditional cup with a gold rim. The lighting is focused and dramatic, emphasizing the metallic sheen and the sophisticated brand typography. Roasted coffee beans are scattered in the foreground." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEcBBEWYoqKB1g9SMRo-PBOPa4ygrijePGjVQHlqBLsct3adHO8IXO36ofvFEDaYptN7N_nUVhsv9dIOJZkUagHWR4OR3zJLKQBJE-tZfVIkVAHo3W6c3ufPAdFDUDOTiErcfancpKo0w_oQ_JaY_RZ7LuItoW1_l8uF2j4U6p5BO1Nl1GEPHhoRpLr0eUY-w_vBt5gVlLzFmeUixkO0jQh8-url9VXwC2ivbJxKe-oeCPcnfgvTAph2dfF3TEUloq7XEpwtU33MXX"/>
+</div>
+<div class="p-6 space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-secondary flex items-center gap-1 font-label-sm">4.8 <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span></span>
+<span class="text-on-surface-variant text-label-sm">Fine Grind</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Classic Espresso</h3>
+<p class="text-secondary font-display-lg text-headline-sm">EGP 220</p>
+<button class="w-full bg-primary text-paper-white py-4 rounded-2xl font-label-md uppercase tracking-widest flex items-center justify-center gap-2 group-hover:bg-secondary transition-colors">
+                            Add to Cart <span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+</button>
+</div>
+</div>
+<!-- Repeat for layout balance -->
+<div class="group luxury-shadow bg-surface-container-low rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-80 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A bag of Hamid Afandi single-origin Ethiopian coffee beans, featuring botanical illustrations on the label. The setting is bright and editorial, with soft shadows and a neutral color palette that highlights the premium nature of the product." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCualFC7dUe4fOId29Fhv_WOObJt0A0oK4dwRpn-miWXPj9eq2pN5xoRpA3_l8SvX2KiLC2oSLHa9mLVO8JFPnrNfLqpoyKXKwPlY3kzuo1pW_LU_MtKNqaMDaqv4jQIuMCVBXgJzOthU0iAZqaYd29ZX1T2AbI0R1MFtRDBDtjn9K9P1soMoM4lYjmzBWUIJgd7vg6f6AVYSTbNlJNQPKBR2qMIx_OukUTSAbFAvIobhWHeAMXTrwaRCMz33szsIvdFsR1-7qmOzMN"/>
+</div>
+<div class="p-6 space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-secondary flex items-center gap-1 font-label-sm">5.0 <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span></span>
+<span class="text-on-surface-variant text-label-sm">Light Roast</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Ethiopian Yirgacheffe</h3>
+<p class="text-secondary font-display-lg text-headline-sm">EGP 310</p>
+<button class="w-full bg-primary text-paper-white py-4 rounded-2xl font-label-md uppercase tracking-widest flex items-center justify-center gap-2 group-hover:bg-secondary transition-colors">
+                            Add to Cart <span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+</button>
+</div>
+</div>
+<div class="group luxury-shadow bg-surface-container-low rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-80 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A specialized copper coffee grinder for Turkish coffee, showing detailed craftsmanship and a warm metallic glow. The background is a blurred artisan workshop with tools and coffee artifacts, suggesting authenticity and heritage." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6dc5BR6VAl7cRiDRIVM4pSIIHTpg7b8RYXS20ztWO_P3OtC7qUGMd2V44NTMx0-P_m5nwIlykrzwYWJIXFu-4CrDblVg_UNuj1scSDJJwyOVnzCvlUUgLX8Ad01aQ9K6_ZWoj1jCsFNAjCc4XOyrsmkGQtlpJsGG4y4IzUMVGtUokfkDCfejKTmHyZ9dxKFbAdA-Qr4PtqIJCv6c3AmvKjwQY22Nsv4AoFIaZdUNcqp04Qk8NgzYUEoaSguRaOgDTp9Zi2FL2wLYY"/>
+</div>
+<div class="p-6 space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-secondary flex items-center gap-1 font-label-sm">4.7 <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span></span>
+<span class="text-on-surface-variant text-label-sm">Limited Edition</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary">Heritage Grinder</h3>
+<p class="text-secondary font-display-lg text-headline-sm">EGP 850</p>
+<button class="w-full bg-primary text-paper-white py-4 rounded-2xl font-label-md uppercase tracking-widest flex items-center justify-center gap-2 group-hover:bg-secondary transition-colors">
+                            Add to Cart <span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Categories Section (Bento Grid) -->
+<section class="py-stack-lg bg-surface-container">
+<div class="px-margin-desktop max-w-container-max mx-auto">
+<h2 class="font-headline-md text-headline-md text-primary mb-12 text-center">Shop by Category</h2>
+<div class="grid grid-cols-1 md:grid-cols-6 grid-rows-2 gap-gutter h-[600px]">
+<div class="md:col-span-3 md:row-span-2 group relative overflow-hidden rounded-3xl luxury-shadow bg-roast-black">
+<div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" data-alt="Close-up of premium coffee beans in various roasts, ranging from light cinnamon to oily dark roast, arranged artistically. The lighting is dramatic and directional, creating high contrast and highlighting the unique textures of each bean. Modern luxury editorial style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCnLyE0AV2PpaHpAIsGnofk40-Valox_QyotcE-o57h6ajtSIqenIHsx0B9mLuf5h8GSKz0DoP_1Cb8NHBGPZGoedrVnqSrEGgVC9aonl9OK5ZyHsTEo22s1bdOoDoa8KPurZHAGWzfojggBSSYP7kB6WYZyZ6vbMs8xZ--X6z8yBATLGnBbW_2iK2haSA9K_sCVuh2eNYXEwe6PRomI0XG1Ezt_nzKujIr-RSQlY2QbCbSutEejj1KLrjcAp_q0fSfty_mfqO8Exm-')"></div>
+<div class="absolute inset-0 flex flex-col justify-end p-10 text-paper-white">
+<h3 class="font-display-lg text-headline-md mb-2">Coffee Beans</h3>
+<p class="font-body-md opacity-80 mb-6">Explore our world-class origins and signature house blends.</p>
+<a class="inline-flex items-center gap-2 font-label-md uppercase tracking-widest text-secondary-fixed" href="#">Explore Collection <span class="material-symbols-outlined">arrow_forward</span></a>
+</div>
+</div>
+<div class="md:col-span-3 md:row-span-1 group relative overflow-hidden rounded-3xl luxury-shadow bg-primary">
+<div class="absolute inset-0 bg-cover bg-center opacity-60 transition-transform duration-700 group-hover:scale-105" data-alt="An authentic Egyptian Turkish coffee set with a brass pot, intricate cups, and a plate of traditional sweets on a patterned stone surface. The steam rising from the cup adds a sense of life and warmth. High-end lifestyle photography." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAtHJO0P8lnQRgLkZnHiguKhs_L21LPF-xDZvzmr2trJ7KmpFR_hwwIf1zcxrNys4ORwC0tdjlJR4T7U_7d6Appl-R2awVjPZxpR81qcuTx8HhgMdz7tio5QUxPSMycuQ6HxZkVwBiu5jp8H9sTR6edkTYOTlujLoop-J4WUshVgHSjETPfi9TB8ffq3_VG-JCyYcR2SvJB1KSlIvqRar7kagI0IWN1-oruYe-iwd7kdM4LKVEdcKa4QfLCasHCj_IYgYoaATeIJtxq')"></div>
+<div class="absolute inset-0 flex flex-col justify-end p-8 text-paper-white">
+<h3 class="font-display-lg text-headline-sm mb-1">Turkish Coffee</h3>
+<a class="inline-flex items-center gap-2 font-label-md uppercase tracking-widest text-secondary-fixed" href="#">View More <span class="material-symbols-outlined">arrow_forward</span></a>
+</div>
+</div>
+<div class="md:col-span-1.5 md:row-span-1 group relative overflow-hidden rounded-3xl luxury-shadow bg-secondary">
+<div class="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-700 group-hover:scale-105" data-alt="Macro shot of a perfect espresso shot with a rich, golden crema layer. The lighting is soft and warm, capturing the silky texture of the coffee. Minimalist and focused aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCEsHAR7ODVNAYkY6yPqfb-mAh84mmOmZpi4nwE7VIK-bpflOMRsneh4VbqJo-ZkzeDu-s74yuFnTw0lYtePbpgOSNkjXMlQtEL473pdpfPoeXwyzv9g38iHy1Dyab5GYzbQCFKbT205kDWQNi6JSc44tMEcTN25nPQAfNeFUW_zNcIa2NKlwW8OCJiLEQeZCYnmEK3qk_jg83FJKQz2-8eEhNKF-grCgxpz5TSZjrU6uVvw0Cv3qnls-IKZNK5Wn-1cz5cmU_8JVkg')"></div>
+<div class="absolute inset-0 flex flex-col justify-end p-6 text-paper-white">
+<h3 class="font-headline-sm text-headline-sm mb-1">Espresso</h3>
+</div>
+</div>
+<div class="md:col-span-1.5 md:row-span-1 group relative overflow-hidden rounded-3xl luxury-shadow bg-on-primary-container">
+<div class="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-700 group-hover:scale-105" data-alt="A beautifully packaged coffee gift box, open to reveal a bag of coffee, a handmade ceramic mug, and a small copper scoop. The presentation is elegant and minimalist, emphasizing the premium quality of the gift." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAF9HdGf4lYv8_zBJZKzbhxpPUV0YBd70W58_EibIEpwk3sYrCRBzozxm7MfosZ0Yev8sGKGQLlhgXWIknIGxT0apovhaNOtq7anPTQLFUEflkq66eGZmaTP6SsGZ42HoKjV0v21I3J0hFprI9q5b_0ztBh8gZ4izpoB-8w2gI-LZgftADYSJe2Cpw7zkX2V9EE8TnyRjU2TVifTKX_8OlPHT4s1jyKnP9X5hSH6m2ONB3hsMuR234QhhVacvTjzKz1elp0ceyxAOKQ')"></div>
+<div class="absolute inset-0 flex flex-col justify-end p-6 text-paper-white">
+<h3 class="font-headline-sm text-headline-sm mb-1">Gift Boxes</h3>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- About Section (Heritage) -->
+<section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto overflow-hidden">
+<div class="flex flex-col md:flex-row gap-20 items-center">
+<div class="w-full md:w-1/2 relative">
+<div class="absolute -top-10 -left-10 w-40 h-40 border-t-2 border-l-2 border-secondary/30"></div>
+<img class="rounded-3xl luxury-shadow relative z-10 w-full grayscale hover:grayscale-0 transition-all duration-1000" data-alt="A black and white vintage-style photograph of a bustling, historic Cairo street scene near a traditional coffee house. The architecture is grand and ornate, with people gathered in conversation. The image has a subtle sepia tint, creating a sense of heritage and timelessness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkH61wZIeWDQVG7XwTYY-UgMR2izAozhpZN5O6mWPcOyaus5yRNk_4n4oibOL05Z6PrWnyq76Jyy5DN9vmYgILrOgkzm4Oy6FC5dw0xb0xW4srS8s4ZEY0_T6tGzyD5JRX6LfFNSUN3PK8-cDZEYEsfbXz3eK4r7CtXVCbbkzsTPCN-Wfxd-atfgg_0HdgsC5ePQxQ_jLN7ql_uko3b4gM2z1UkjdrnsC4QwCnNZVmQGX_y9Xy9DUhIB9X7Mkg6Tz7G9v1tSlk37s6"/>
+<div class="absolute -bottom-10 -right-10 w-40 h-40 border-b-2 border-r-2 border-secondary/30"></div>
+</div>
+<div class="w-full md:w-1/2 space-y-8">
+<div class="space-y-4">
+<span class="font-label-md text-label-md uppercase tracking-[0.2em] text-secondary">Our Legacy</span>
+<h2 class="font-display-lg text-display-lg text-primary leading-tight">Heritage in Every Single Detail</h2>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">From the vibrant heart of Cairo, Hamid Afandi brings the timeless coffee tradition to life with passion, craftsmanship, and authenticity. Our story began with a simple vision: to honor the complex rituals of Egyptian brewing while embracing the refinements of modern roasting.</p>
+<p class="font-body-md text-body-md text-on-surface-variant">We source only the finest beans from ethical farmers across the coffee belt, ensuring every bag tells a story of origin, resilience, and unparalleled flavor.</p>
+<button class="group flex items-center gap-4 text-primary font-label-md uppercase tracking-widest border-b-2 border-primary pb-2 hover:text-secondary hover:border-secondary transition-all">
+                        Discover Our Story <span class="material-symbols-outlined transition-transform group-hover:translate-x-2">arrow_right_alt</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Immersive Coffee Experience -->
+<section class="relative h-[819px] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0">
+<img class="w-full h-full object-cover" data-alt="A dramatic wide-angle shot of a master roaster at work in a modern yet rustic roasting facility. The lighting is industrial and moody, with dust motes dancing in sunbeams. Large burlap sacks of green coffee beans line the walls, and the massive roasting machine glows with internal heat. A professional, high-end editorial look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQwUW2-Nl99Fd61IHy372RbhsPzdro6dQMmnL8hfvAx3NN86mzWCtw9WNxR_o8IHRBJzTeFboF-QdCcaIDrE-e2UM-lSzKq8ohYF6NaTS72PeZX2mU4d5zt0bsmkwW00cV31Y_A06xscg83zg9MNZnHp7pTUvthrI0qiQXqATOXeIUHzjPL3qMrCFzqejlmZ1qjFUoPlZGIgHSu05uIeKZg1wO17r6s3eVRn7QwgVa8dRyE_CFHaggMcLredAc_hms4P6b2rxUB9h1"/>
+<div class="absolute inset-0 bg-roast-black/50"></div>
+</div>
+<div class="relative z-10 text-center max-w-4xl px-margin-mobile">
+<h2 class="font-display-lg text-display-lg text-paper-white mb-8">The Coffee Experience</h2>
+<p class="font-body-lg text-body-lg text-sand-muted mb-10 leading-relaxed">More than just a drink, it's a sensory journey. We source the finest beans, roast with care, and craft each cup to deliver a rich and unforgettable experience. Witness the transformation from green bean to liquid gold.</p>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-paper-white">
+<div class="space-y-2">
+<span class="font-display-lg text-headline-md text-secondary">Ethically Sourced</span>
+<p class="text-label-sm opacity-70">Directly from the farm to our roastery.</p>
+</div>
+<div class="space-y-2">
+<span class="font-display-lg text-headline-md text-secondary">Artisan Roasted</span>
+<p class="text-label-sm opacity-70">Small batches for maximum flavor profile.</p>
+</div>
+<div class="space-y-2">
+<span class="font-display-lg text-headline-md text-secondary">Heritage Brewed</span>
+<p class="text-label-sm opacity-70">Combining old-world techniques with new technology.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Best Sellers (Horizontal Scroll) -->
+<section class="py-stack-lg bg-surface">
+<div class="px-margin-desktop max-w-container-max mx-auto">
+<div class="flex justify-between items-center mb-12">
+<h2 class="font-headline-md text-headline-md text-primary">Best Sellers</h2>
+<div class="flex gap-4">
+<button class="w-12 h-12 rounded-full border border-outline flex items-center justify-center hover:bg-primary hover:text-paper-white transition-all"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="w-12 h-12 rounded-full border border-outline flex items-center justify-center hover:bg-primary hover:text-paper-white transition-all"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<div class="flex gap-gutter overflow-x-auto no-scrollbar pb-10 -mx-4 px-4">
+<!-- Cards are identical structure to featured products -->
+<div class="min-w-[300px] flex-shrink-0 group luxury-shadow bg-paper-white rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-64 overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A beautifully staged top-down view of a Hamid Afandi coffee cup with latte art, a bag of signature beans, and a small ceramic bowl of raw sugar. The lighting is soft and ethereal, with a clean white and warm wood background. A high-end lifestyle composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzN0zQkS5k6B5_NdqcqnANAwA8Y4RujmzrSXJU2qOs0xAtV3EDM2Tf9LP8I7Jp0wV7ctqaTj5CB-dde9VsbPwyL-G9rrPab0Qi77-GVHdHSBrna-hUWNBuPucsdsFNJ_DlrDpEgx7F6xuOrFVN32rregDfUJgArLth4wZTH_GpF21o-5Ia3moH7M0pMGa0nkbSAphkneHNL_7TaiEMJdlJ6nczuibk6tjTg_gwwSYa2_gl3kz2EkMlaD6QmL7tARExqV9FhHuI2thQ"/>
+</div>
+<div class="p-6 space-y-2">
+<h3 class="font-headline-sm text-headline-sm text-primary">Egyptian Gold</h3>
+<p class="text-on-surface-variant font-label-sm">Medium-Dark Roast</p>
+<p class="text-secondary font-bold">EGP 280</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="min-w-[300px] flex-shrink-0 group luxury-shadow bg-paper-white rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-64 overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A close-up of a glass of cold brew coffee from Hamid Afandi, with ice cubes and condensation on the glass. A splash of cream is being poured in, creating a beautiful swirl. The background is a minimalist, modern cafe setting with soft golden lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBS_ICspq4E8s6psEzyun_WxdifdjFBoli9O5c9s65tenx-EJePiAHZ8apiZJNvUde2VHV7fWdc_ZiOqgesJjTGkF-VZ5fHhP3w5DcL_6hg2EdM4vb6opWU1nX5MuQY4QPhEpMP2t5cJwJFf2SPmjT8tVuTH285hiKDebeWo6gHn0o_n2QsAjnOAmKKpnI9CEC4PrlRPKhlfd4kjlF4uhvvXYcedrIkfnDKScVGCqfnqR0TNlLarQ_IgwPXD_AOJ2vEMbElf0Nd6DUY"/>
+</div>
+<div class="p-6 space-y-2">
+<h3 class="font-headline-sm text-headline-sm text-primary">Cold Brew Blend</h3>
+<p class="text-on-surface-variant font-label-sm">Coarse Grind</p>
+<p class="text-secondary font-bold">EGP 195</p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="min-w-[300px] flex-shrink-0 group luxury-shadow bg-paper-white rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-64 overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A set of two elegant, double-walled glass espresso cups on a minimalist brass tray. The cups are half-filled with dark espresso, showing a thick crema. The scene is shot in a bright, modern studio with clean lines and soft shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiUxYdYPBdh0V9WNd34EKGHQKGAdMdwOK0b1nO8dC7w0xfwmwoHOnWnMl2D-0OZoPzUPVLSCIWOqLibvlcA2hDq3ApPszTDhICfJqwJAsU2M-CRsxlpltdXp4XDu1huzt55NEQH_wEtLSXoIrqUhuoKvdKG9gK9mJcs-g5wSMrNPAoVrI7sJSV7588q8jxmX42Tf3SWjxGdWWYEQABrPN0OxUDNxR5I754ANF9AMHcYVZbbFZKk9huvsEQnpVAUxYeZJL66mgF2mVu"/>
+</div>
+<div class="p-6 space-y-2">
+<h3 class="font-headline-sm text-headline-sm text-primary">Modern Glass Set</h3>
+<p class="text-on-surface-variant font-label-sm">Accessories</p>
+<p class="text-secondary font-bold">EGP 450</p>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="min-w-[300px] flex-shrink-0 group luxury-shadow bg-paper-white rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2">
+<div class="h-64 overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A dark, intense espresso shot being pulled from a high-end machine into a small, artisan-crafted ceramic cup. The steam and the rich color of the coffee are highlighted by a dramatic spotlight against a dark, textured background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ44YoDFCzS8xWko-C-YzrXd-o0wxnIxuPz-P_hqSda3BGfGGtL-6xry2vdVNByVllb2nsrww4TzcTmCHsNoiLxMi7o9Y8uB6184XU6TeOVaqOvMQYopWohq7zVA8n135XHAEfBTBjVYKndkSNl8xji6rALRinv0QNV7-VugHHsbqs-Ik_TqNrmLIOQFZwLSMeyRgUz6KggSbPexlP3Mcg1P9jNTdLC3EZqjssrYbdL34TFQA39EPUUrVgQH1u-seU444WJ5wvXjNP"/>
+</div>
+<div class="p-6 space-y-2">
+<h3 class="font-headline-sm text-headline-sm text-primary">Cairo Roast</h3>
+<p class="text-on-surface-variant font-label-sm">Dark Roast</p>
+<p class="text-secondary font-bold">EGP 260</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-stack-lg bg-surface-container-low">
+<div class="px-margin-desktop max-w-container-max mx-auto text-center">
+<h2 class="font-headline-md text-headline-md text-primary mb-12">What Our Guests Say</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-paper-white p-10 rounded-3xl luxury-shadow flex flex-col items-center space-y-6">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-secondary">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a sophisticated man in his 30s, wearing a tailored navy suit and smiling warmly. The background is a soft-focus office or library, conveying a sense of intelligence and discernment. Clean, corporate-modern lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4ZwdGmO_DCQ_aCgiwaPolMXaHgusfYkpwIs7fHmlbBxDfA6uuhnwAMYvMubrVmYYXtY0gXBmKNtiriXbDLwAFGweLRTltgsgUQ_W4UHNYn9_UjkKloMXnaDEUEk5aHm45KZ25PZ0jGkBnfJ9oM4eHULDOG4t1GGs0cCy1fQvE3IthcWYIUCvYtVosgW38GkHhLWE_T2pwYSB94qI5qcwlSihBA1L485ERxJlFeZlQ5DwFB30bWFM5EPJpwaBJ93xT1czcPstot8Uq"/>
+</div>
+<div class="flex gap-1 text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-on-surface-variant italic leading-relaxed">"The best coffee experience I've had in a long time. Rich flavor, beautiful atmosphere, and unmatched quality that truly honors our heritage."</p>
+<h4 class="font-label-md uppercase tracking-widest text-primary">Omar Y.</h4>
+</div>
+<div class="bg-paper-white p-10 rounded-3xl luxury-shadow flex flex-col items-center space-y-6">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-secondary">
+<img class="w-full h-full object-cover" data-alt="A stylish portrait of an elegant woman in her late 20s with artistic flair. She is wearing modern accessories and has a confident, serene expression. The lighting is soft and artistic, with a neutral, textured background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEkkUYsBilZcRFKb99oIS5EiJRGznTw3K4rgIlYROhOvnlPUq4t12Ig32XJ3eXuk-vyQtZtz_NOTSVw-B7_OSNI5AqHs8kYVB98Ab0GYBm6PB18hN61mLajZ4k5rD7c_vwLUHp2_h07oSAlFG72QitHhHvVNBQ8Lx8cJNTrdfNXvsya2decTr31B_vtA8KSgLdJsnK1fdno3J86SKmzXAfEl9nENMcN-voi1OkLV5EPRwZDArMMaBOaqa8zai3fdcgl_cIKLTq8AVn"/>
+</div>
+<div class="flex gap-1 text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-on-surface-variant italic leading-relaxed">"Every sip feels like a trip back to the historic cafes of Cairo. The branding and packaging are just as exquisite as the coffee itself."</p>
+<h4 class="font-label-md uppercase tracking-widest text-primary">Dina M.</h4>
+</div>
+<div class="bg-paper-white p-10 rounded-3xl luxury-shadow flex flex-col items-center space-y-6">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-secondary">
+<img class="w-full h-full object-cover" data-alt="A friendly, professional man in his 40s with a warm smile, wearing a casual but high-end linen shirt. The background is a bright, airy coffee shop with plants and wood textures, suggesting a love for premium lifestyle experiences." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrEVFYM1L6FTqLYhtPRdwvLDFbDlk2ogIvmI8qFS5Au0K9deWoqdWQx0sQ54mAr3ovbV4L5RPWuTU6EnqStwp22LQVePhkSAeID5IZ3VKNjUIF76FCtlKGvuGNsy5Hm5tYtUOgAwriUbwm_6YgL4a70yyHow2kYqLXlaHNjrZJV6y4tH-l3W1mRiRYeczRwrmBCi8xnP8omOTmyaJGY14344_N7my9EOMQmjEodC4vRqNk-Y176LOOb_yaHfuo6d33HW5ajO6Iw9Uu"/>
+</div>
+<div class="flex gap-1 text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-on-surface-variant italic leading-relaxed">"The gift boxes are my go-to for special occasions. They are impeccably presented and always leave a lasting impression of luxury."</p>
+<h4 class="font-label-md uppercase tracking-widest text-primary">Karim A.</h4>
+</div>
+</div>
+</div>
+</section>
+<!-- Instagram Gallery -->
+<section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto">
+<div class="text-center mb-12 space-y-2">
+<h2 class="font-headline-md text-headline-md text-primary">From Our Instagram</h2>
+<p class="text-secondary font-label-md">Follow Us @hamidafandi.coffee</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="aspect-square overflow-hidden rounded-2xl group relative cursor-pointer">
+<img class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110" data-alt="A moody, high-contrast shot of a hand pouring steamed milk into a dark coffee, creating an intricate rosette. The focus is sharp on the milk stream, with a blurred background of a modern espresso machine." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-mC26bB2x66nsnPViuVeNaB6IzJi0vUPNLCZhx6E1W8WrRky2jm8WW_CLp9MfJE5VXnq8pZna0plcHgeQRGQx1OZRqLliJmkEJMFuZbYT8_48gS87ZXDqUNjInaZ5muf5veLkac3Q78uafAD9yAYLIte1T3Pk8a08kuDChkMvuW6nh7FMObHznsnRUSkPCgKBdZWQ8X1PPEzvjEDLLe04w6j4k0aCDUA9VqolFvfg5nfzM_liwhnhBeZ-rB3xMCj_AAri5Xh-Mfca"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-paper-white text-4xl">favorite</span>
+</div>
+</div>
+<div class="aspect-square overflow-hidden rounded-2xl group relative cursor-pointer">
+<img class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110" data-alt="A flat lay of an Egyptian breakfast spread including feteer, honey, and a steaming cup of Hamid Afandi coffee. The setting is bright and morning-focused, with sunlight streaming across the table." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGDm2Espjkau2eZBUoPSyhwhnu5PClVqC6GcTsZz--ZpkWD7AaDOrfMzradikpV6CS7IhOIRnrFll_0NWnJLxwiTeZaNPZ3akrjbKMvz7Yvw0wadaya3HWemdtfZh_uJong7cx85qh6Xzjt5EvLx-Ef1o6OD6R42W4zOqL8oburJD-WiNYxpRysHSec392zNgnO0bMh9D58IcDD8NwHcUX7_4Pk0emwv1LWGi5M3qgzmGlYi7OZ8oV-fsf3YAePOV9_kZh49xezhOj"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-paper-white text-4xl">favorite</span>
+</div>
+</div>
+<div class="aspect-square overflow-hidden rounded-2xl group relative cursor-pointer">
+<img class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110" data-alt="Close-up of a coffee roasting logbook and a pile of green coffee beans. The scene is shot in a warm, low-lit environment, emphasizing the studious and artisanal nature of the process." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjH39DFRbhHp5O_oXN8twAV6J2Etj923ufUIyyAWvU6VzhsTgVZh8R01mu8BP2QXHtABshvLF9eAr5YSKHK829voUsbeTpiIWxDOC-JEvyoE5FbAnGNZYP3xuLNveiE9fiXCb3in0JtjxFtBRyZbdvLMooXj-8raCyHsDYoBe-ZADDgyXVjHCmCfqjXH7E9rGHxRGTEZ3alId1XeB1flfG-qeBWU7Uqi7fBS2niO8YtzJs_Tb1wYKfUYmRklA2apGsnk2TgreRvxfC"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-paper-white text-4xl">favorite</span>
+</div>
+</div>
+<div class="aspect-square overflow-hidden rounded-2xl group relative cursor-pointer">
+<img class="w-full h-full object-cover transition-all duration-500 group-hover:scale-110" data-alt="A lifestyle shot of a group of friends laughing and sharing coffee in a sun-drenched, high-ceilinged cafe with modern architectural elements and traditional accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg-8QEfNfLQXHok6C-2tosGWXorttjKPcNSsUkF-sq231VQHkX1mWNHVEawhKGnqSguepMcfxOsc5XtY1cwamwk2e4Qnyl0zkGBojYc57st6CkBiwValZqvP6vh_C-XfrsBKeT1xPZ9d9Vhy5ppcKMBB51WZw1-StGh-FnKW35HN6gXtMNlHInXhvX95lUaS_RBj8AFX5jVepaBy3JW6m1UmB00fk1eTgb1aQ5Vvk7mhc63Tvt5Ug0xNFE48j2JnnvC9deDYQKC0jO"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-paper-white text-4xl">favorite</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Locations Section -->
+<section class="py-stack-lg bg-surface-container-high overflow-hidden">
+<div class="px-margin-desktop max-w-container-max mx-auto">
+<div class="flex flex-col md:flex-row gap-gutter items-center">
+<div class="w-full md:w-1/3 space-y-10">
+<div class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-primary">Our Location</h2>
+<p class="font-body-md text-on-surface-variant">Experience the heritage in person. Visit one of our thoughtfully designed branches across Cairo.</p>
+</div>
+<div class="space-y-6">
+<div class="p-6 bg-paper-white rounded-2xl luxury-shadow flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+<div>
+<h4 class="font-bold text-primary">Zamalek</h4>
+<p class="text-sm text-on-surface-variant">23 Sharia 26 July St., Zamalek</p>
+</div>
+</div>
+<div class="p-6 bg-paper-white/50 rounded-2xl border border-outline/10 flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+<div>
+<h4 class="font-bold text-primary">Maadi</h4>
+<p class="text-sm text-on-surface-variant">9 Road 233, Maadi</p>
+</div>
+</div>
+<div class="p-6 bg-paper-white/50 rounded-2xl border border-outline/10 flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary">location_on</span>
+<div>
+<h4 class="font-bold text-primary">New Cairo</h4>
+<p class="text-sm text-on-surface-variant">The Waterway, 5th Settlement</p>
+</div>
+</div>
+</div>
+<button class="w-full border-2 border-secondary text-secondary py-4 rounded-full font-label-md uppercase tracking-widest hover:bg-secondary hover:text-paper-white transition-all">View All Branches</button>
+</div>
+<div class="w-full md:w-2/3 h-[500px] rounded-3xl overflow-hidden luxury-shadow">
+<div class="w-full h-full" data-alt="A minimalist, stylized map of Cairo showing key districts like Zamalek and New Cairo. The map is designed with a premium color palette of creams, golds, and deep browns, featuring elegant icons for the Hamid Afandi coffee locations." data-location="Cairo" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD_Ki8fEXHLMzEoRtk5goIjM_EVOkVtEP0qBbxKbSTsgMapp-SXp2jIsZ2-TOJb0kCXVhb2sjKl1OSz5eqJ9bkC5mB0GshPuGOhSc4ddSK-weJEbjEicmY5gGfI8RwWorDG5jP68GctDQWWC-irILJPQqZBqFyS2pt6kwCcbKJ-oSbO-LR7NICpjoXUZmVdmxBbBFQm_psK5swjehJriSQHqHE2XOAsehHEegHlQ52AIw0YVcZilmCS6Mnaz1Wd0J7b3XgJNihHJ0_i')"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter -->
+<section class="py-stack-lg px-margin-desktop max-w-container-max mx-auto text-center">
+<div class="bg-roast-black rounded-3xl p-16 space-y-8 relative overflow-hidden">
+<div class="pattern-overlay absolute inset-0 opacity-10"></div>
+<div class="relative z-10 max-w-2xl mx-auto space-y-6">
+<h2 class="font-display-lg text-display-lg text-secondary-fixed">Join Our Coffee Circle</h2>
+<p class="text-sand-muted font-body-lg">Be the first to know about new blends, exclusive offers, and stories from the heart of Cairo's coffee culture.</p>
+<form class="flex flex-col md:flex-row gap-4 max-w-lg mx-auto">
+<input class="flex-grow bg-paper-white/10 border-none rounded-full px-8 py-4 text-paper-white placeholder:text-sand-muted focus:ring-2 focus:ring-secondary outline-none transition-all" placeholder="Your email address" type="email"/>
+<button class="bg-secondary text-paper-white px-10 py-4 rounded-full font-label-md uppercase tracking-widest hover:bg-on-secondary-container transition-colors" type="submit">Subscribe</button>
+</form>
+<p class="text-sand-muted/50 text-xs uppercase tracking-widest">Join 50,000+ coffee lovers.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-roast-black dark:bg-roast-black border-t border-paper-white/5">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop py-stack-lg max-w-container-max mx-auto text-paper-white">
+<div class="space-y-6">
+<a class="font-display-lg text-headline-md text-secondary" href="#">HAMID AFANDI</a>
+<p class="text-sand-muted font-body-md opacity-80">Bringing people together through the rich tradition of Egyptian coffee. From our roastery in Cairo to your cup.</p>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full border border-paper-white/20 flex items-center justify-center hover:border-secondary hover:text-secondary transition-all opacity-80 hover:opacity-100" href="#">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path></svg>
+</a>
+<a class="w-10 h-10 rounded-full border border-paper-white/20 flex items-center justify-center hover:border-secondary hover:text-secondary transition-all opacity-80 hover:opacity-100" href="#">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+</a>
+</div>
+</div>
+<div>
+<h4 class="font-label-md text-label-md uppercase tracking-widest text-secondary mb-6">Experience</h4>
+<ul class="space-y-4">
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">Sourcing</a></li>
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">Brewing Guides</a></li>
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">Wholesale</a></li>
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">Careers</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-label-md uppercase tracking-widest text-secondary mb-6">Customer Care</h4>
+<ul class="space-y-4">
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">Contact Us</a></li>
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">Shipping &amp; Returns</a></li>
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">Store Locator</a></li>
+<li><a class="text-sand-muted hover:text-secondary transition-all font-body-md" href="#">FAQ</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-label-md uppercase tracking-widest text-secondary mb-6">Our Roastery</h4>
+<p class="text-sand-muted font-body-md opacity-80 mb-4">Visit our main roastery and tasting room in the 5th Settlement for a private cupping session.</p>
+<p class="text-paper-white font-bold">Mon - Sun: 8:00 AM - 11:00 PM</p>
+</div>
+</div>
+<div class="border-t border-paper-white/5 py-8 text-center">
+<p class="text-sand-muted text-label-sm opacity-60">© 2024 Hamid Afandi Coffee. All Rights Reserved. <span class="mx-2">|</span> <a class="hover:text-secondary" href="#">Privacy Policy</a></p>
+</div>
+</footer>
+<script>
+        // Subtle scroll reveal interaction
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-1000', 'opacity-0', 'translate-y-10');
+            observer.observe(section);
+        });
+
+        // Initialize first section immediately
+        document.querySelector('section').classList.remove('opacity-0', 'translate-y-10');
+        document.querySelector('section').classList.add('opacity-100', 'translate-y-0');
+    </script>
+</body></html>

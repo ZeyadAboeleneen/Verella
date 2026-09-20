@@ -1,0 +1,60 @@
+name: verella
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-verella}
+      MYSQL_USER: ${MYSQL_USER:-verella}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306" # bind to localhost only; POS/ERP on the same host or VPN can still reach it
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    ports:
+      - "127.0.0.1:3000:3000" # only nginx talks to this directly
+
+  migrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: migrator
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    profiles: ["tools"] # run on demand: docker compose run --rm migrator
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+      # - "443:443" # add once TLS certs are provisioned — see docs/SETUP.md
+
+volumes:
+  mysql-data:

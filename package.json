@@ -1,0 +1,34 @@
+{
+  "name": "verella-web",
+  "version": "0.1.0",
+  "private": true,
+  "author": {
+    "name": "Digitiva",
+    "url": "https://www.digitivaa.com/"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @verella/web dev",
+    "build": "pnpm --filter @verella/web build",
+    "start": "pnpm --filter @verella/web start",
+    "lint": "pnpm --filter @verella/web lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:generate": "pnpm --filter @verella/db generate",
+    "db:migrate": "pnpm --filter @verella/db migrate",
+    "db:seed": "pnpm --filter @verella/db seed",
+    "db:studio": "pnpm --filter @verella/db studio",
+    "db:dump": "pnpm --filter @verella/db dump"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}
