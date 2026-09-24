@@ -1,8 +1,8 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import NextImage from "next/image";
-import { desc, eq, count } from "drizzle-orm";
+import { desc, eq, count, inArray } from "drizzle-orm";
 import { db, payments, orders, paymentMethods, media } from "@verella/db";
-import { formatMoney, toCents } from "@verella/core";
+import { formatMoney, toCents, WALLET_PAYMENT_METHODS } from "@verella/core";
 import { authenticatedDeliveryUrl } from "@/lib/media/cloudinary";
 import { Table, Thead, Th, Tr, Td, EmptyRow } from "@/components/admin/table";
 import { PaymentReviewActions } from "@/components/admin/payments/review-actions";
@@ -16,9 +16,9 @@ export default async function AdminPaymentsPage({
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const offset = (page - 1) * PAGE_SIZE;
-  // This page exists to review InstaPay screenshot proofs — Cash on
-  // Delivery doesn't have a proof to approve/reject, so it doesn't belong here.
-  const whereClause = eq(paymentMethods.code, "instapay");
+  // This page reviews wallet-transfer screenshots (InstaPay / Vodafone Cash) —
+  // cash on delivery has no proof to approve, so it doesn't belong here.
+  const whereClause = inArray(paymentMethods.code, [...WALLET_PAYMENT_METHODS]);
 
   const [rows, [{ total }]] = await Promise.all([
     db

@@ -1,6 +1,6 @@
 import "server-only";
 import { eq } from "drizzle-orm";
-import { db, orders, orderItems, payments, paymentMethods, customers } from "@verella/db";
+import { db, orders, orderItems, payments, paymentMethods, customers, addresses } from "@verella/db";
 import { auth } from "@/auth";
 
 /**
@@ -32,7 +32,7 @@ export async function getOrderDetail(orderNumber: string) {
   const order = await getOwnedOrder(orderNumber);
   if (!order) return null;
 
-  const [items, [payment]] = await Promise.all([
+  const [items, [payment], [address]] = await Promise.all([
     db.select().from(orderItems).where(eq(orderItems.orderId, order.id)),
     db
       .select({ status: payments.status, methodCode: paymentMethods.code, methodName: paymentMethods.name })
@@ -40,7 +40,16 @@ export async function getOrderDetail(orderNumber: string) {
       .innerJoin(paymentMethods, eq(paymentMethods.id, payments.methodId))
       .where(eq(payments.orderId, order.id))
       .limit(1),
+    // Governorate + area only: this page is reachable by order number alone
+    // (guest tracking), so it deliberately shows no street-level address.
+    order.addressId
+      ? db
+          .select({ governorate: addresses.governorate, area: addresses.area })
+          .from(addresses)
+          .where(eq(addresses.id, order.addressId))
+          .limit(1)
+      : Promise.resolve([]),
   ]);
 
-  return { order, items, payment };
+  return { order, items, payment, address: address ?? null };
 }

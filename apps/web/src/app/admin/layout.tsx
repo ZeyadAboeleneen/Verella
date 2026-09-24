@@ -15,14 +15,23 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <AdminShell
-      permissions={user.permissions}
-      name={user.name ?? user.email ?? "Admin"}
-      email={user.email ?? ""}
-      locale={locale}
-      dict={dict.admin}
-    >
-      {children}
-    </AdminShell>
+    <>
+      {/* Icon font used by the dashboard only — kept off the storefront's critical path. */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font -- deliberately scoped to /admin */}
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+        precedence="default"
+      />
+      <AdminShell
+        permissions={user.permissions}
+        name={user.name ?? user.email ?? "Admin"}
+        email={user.email ?? ""}
+        locale={locale}
+        dict={dict.admin}
+      >
+        {children}
+      </AdminShell>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { desc, eq, count } from "drizzle-orm";
 import { db, orders, type OrderStatus } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";

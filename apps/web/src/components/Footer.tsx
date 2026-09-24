@@ -1,158 +1,160 @@
 "use client";
-import Link from "next/link";
-import Image from "next/image";
+import Link from "@/components/LocaleLink";
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
-import type { LocalizedBranch } from "@/lib/branches/queries";
+import type { StoreCategoryView } from "@/lib/store/queries";
+import { BRAND_CONTACT } from "@/lib/brand";
 import { SocialIconLinks } from "@/components/social-links";
+import { Lockup, VMark } from "@/components/brand/Logo";
+import { reopenConsent } from "@/lib/consent";
 
-const EXPERIENCE_HREFS = ["/sourcing", "/brewing-guides", "/wholesale", "/careers"];
-const CARE_HREFS = ["/contact", "/shipping-returns", "/branches", "/faq"];
+type FooterLink = { label: string; href: string; external?: boolean };
 
-function AccordionSection({ title, links }: { title: string; links: { label: string; href: string }[] }) {
-  const [open, setOpen] = useState(false);
+function LinkList({ links, className = "" }: { links: FooterLink[]; className?: string }) {
   return (
-    <div className="border-b border-white/10 md:border-none">
-      <button
-        className="w-full flex justify-between items-center py-4 md:py-0 md:cursor-default"
-        onClick={() => setOpen(!open)}
-      >
-        <h4 className="text-xs font-semibold uppercase tracking-widest text-[#57392D]">{title}</h4>
-        <span className="material-symbols-outlined text-[#57392D] text-lg md:hidden" aria-hidden="true">
-          {open ? "expand_less" : "expand_more"}
-        </span>
-      </button>
-      <ul className={`space-y-3 overflow-hidden transition-all duration-300 ${open ? "max-h-60 pb-4" : "max-h-0 md:max-h-none"} md:max-h-none md:pb-0 md:mt-6`}>
-        {links.map(({ label, href }) => (
-          <li key={label}>
-            <Link href={href} className="text-[#FEE5C9] hover:text-[#57392D] transition-all text-sm md:text-base block py-0.5">
+    <ul className={`space-y-3 ${className}`}>
+      {links.map(({ label, href, external }) => (
+        <li key={href}>
+          {external ? (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-ivory/70 transition-colors duration-300 hover:text-champagne"
+            >
+              {label}
+            </a>
+          ) : (
+            <Link href={href} className="text-sm text-ivory/70 transition-colors duration-300 hover:text-champagne">
               {label}
             </Link>
-          </li>
-        ))}
-      </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ColumnTitle({ children }: { children: React.ReactNode }) {
+  return <h4 className="text-[11px] font-medium uppercase tracking-[0.25em] text-champagne">{children}</h4>;
+}
+
+function MobileSection({ title, links }: { title: string; links: FooterLink[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-ivory/10">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between py-4"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <ColumnTitle>{title}</ColumnTitle>
+        <ChevronDown
+          className={`h-4 w-4 text-champagne transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <div className="overflow-hidden">
+          <LinkList links={links} className="pb-5" />
+        </div>
+      </div>
     </div>
   );
 }
 
-export default function Footer({ dict, branches = [] }: { dict: Dictionary; branches?: LocalizedBranch[] }) {
-  const sections = [
-    { title: dict.footer.experienceTitle, links: dict.footer.experienceLinks.map((label, i) => ({ label, href: EXPERIENCE_HREFS[i] })) },
-    { title: dict.footer.careTitle, links: dict.footer.careLinks.map((label, i) => ({ label, href: CARE_HREFS[i] })) },
+export default function Footer({ dict, categories = [] }: { dict: Dictionary; categories?: StoreCategoryView[] }) {
+  const f = dict.footer;
+
+  const shop: FooterLink[] = [
+    { label: f.shopAll, href: "/store" },
+    ...categories.map((c) => ({ label: c.name, href: `/store?category=${c.slug}` })),
+  ];
+  const help: FooterLink[] = [
+    { label: f.help.contact, href: "/contact" },
+    { label: f.help.shipping, href: "/shipping-returns" },
+    { label: f.help.faq, href: "/faq" },
+  ];
+  const company: FooterLink[] = [
+    { label: f.company.about, href: "/about" },
+    { label: f.company.privacy, href: "/privacy" },
+    { label: f.company.terms, href: "/terms" },
+  ];
+  const contact: FooterLink[] = [
+    { label: `${f.contact.whatsapp} · ${BRAND_CONTACT.whatsapp.display}`, href: BRAND_CONTACT.whatsapp.href, external: true },
+    { label: BRAND_CONTACT.email.address, href: BRAND_CONTACT.email.href, external: true },
+    { label: BRAND_CONTACT.instagram.handle, href: BRAND_CONTACT.instagram.href, external: true },
   ];
 
   return (
-    <footer className="bg-[#000000] border-t border-white/5">
-      <div className="px-5 md:px-16 py-12 md:py-20 max-w-[1280px] mx-auto text-white">
-        {/* Logo + tagline + socials */}
-        <div className="mb-8 md:mb-0 md:contents">
-          <div className="flex flex-col gap-5 md:contents">
-            <div className="md:hidden space-y-4">
-              <Link href="/">
-                <Image
-                  src="/verella-logo.png"
-                  alt="Verella"
-                  width={64}
-                  height={64}
-                  className="h-16 w-16 object-contain brightness-[0.85] sepia saturate-[3] hue-rotate-[5deg]"
-                />
-              </Link>
-              <p className="text-[#FEE5C9] text-sm opacity-80 max-w-xs">{dict.footer.tagline}</p>
-              <SocialIconLinks className="flex gap-3" />
-            </div>
-          </div>
-        </div>
+    <footer className="relative overflow-hidden bg-charcoal text-ivory">
+      {/* A single cropped mark at the edge — the guidelines prefer this over a full repeat. */}
+      <VMark
+        size={520}
+        className="pointer-events-none absolute -bottom-40 -end-24 text-champagne opacity-[0.05]"
+      />
 
-        {/* Desktop grid — dir="ltr" keeps the column order (logo, experience,
-            care, branches) fixed between languages; only each column's own
-            text content follows the page's natural reading direction. */}
-        <div className="hidden md:grid grid-cols-4 gap-6" dir="ltr">
-          <div className="space-y-6">
-            <Link href="/">
-              <Image src="/verella-logo.png" alt="Verella" width={72} height={72} className="h-18 w-18 object-contain brightness-[0.85] sepia saturate-[3] hue-rotate-[5deg]" />
+      <div className="relative mx-auto max-w-[1280px] px-5 pb-10 pt-14 md:px-16 md:pt-20">
+        <div className="grid gap-10 md:grid-cols-12 md:gap-8">
+          <div className="space-y-6 md:col-span-4">
+            <Link href="/" aria-label="Verella — home" className="inline-block">
+              <Lockup variant="primary" height={48} className="text-champagne" />
             </Link>
-            <p className="text-[#FEE5C9] text-base opacity-80">{dict.footer.tagline}</p>
-            <SocialIconLinks className="flex gap-4" iconClassName="w-5 h-5" />
+            <p className="max-w-xs text-sm leading-relaxed text-ivory/70">{f.tagline}</p>
+            <SocialIconLinks className="flex gap-3" iconClassName="h-4 w-4" />
           </div>
-          {sections.map(({ title, links }) => (
-            <div key={title}>
-              <h4 className="text-xs font-semibold uppercase tracking-widest text-[#57392D] mb-6">{title}</h4>
-              <ul className="space-y-4">
-                {links.map(({ label, href }) => (
-                  <li key={label}><Link href={href} className="text-[#FEE5C9] hover:text-[#57392D] transition-all text-base">{label}</Link></li>
-                ))}
-              </ul>
-            </div>
-          ))}
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#57392D] mb-6">
-              {branches.length > 1 ? dict.footer.ourBranches : dict.footer.ourBranch}
-            </h4>
-            {branches.length > 0 ? (
-              <ul className="space-y-4">
-                {branches.slice(0, 3).map((b) => (
-                  <li key={b.id}>
-                    <p className="text-white font-bold">{b.name}</p>
-                    {b.address && <p className="text-[#FEE5C9] text-sm opacity-80">{b.address}</p>}
-                    {b.hours && <p className="text-[#FEE5C9] text-sm opacity-80">{b.hours}</p>}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <>
-                <p className="text-[#FEE5C9] text-base opacity-80 mb-4">{dict.footer.branchHint}</p>
-                <p className="text-white font-bold">{dict.footer.openDaily}</p>
-              </>
-            )}
-            {branches.length > 1 && (
-              <Link href="/branches" className="mt-4 inline-block text-sm font-semibold text-[#57392D] hover:underline">
-                {dict.footer.viewAllBranches}
-              </Link>
-            )}
+
+          <div className="hidden space-y-5 md:col-span-2 md:block">
+            <ColumnTitle>{f.shopTitle}</ColumnTitle>
+            <LinkList links={shop} />
+          </div>
+          <div className="hidden space-y-5 md:col-span-2 md:block">
+            <ColumnTitle>{f.helpTitle}</ColumnTitle>
+            <LinkList links={help} />
+          </div>
+          <div className="hidden space-y-5 md:col-span-2 md:block">
+            <ColumnTitle>{f.companyTitle}</ColumnTitle>
+            <LinkList links={company} />
+          </div>
+          <div className="space-y-5 md:col-span-2">
+            <ColumnTitle>{f.contactTitle}</ColumnTitle>
+            <LinkList links={contact} />
+          </div>
+
+          <div className="border-t border-ivory/10 md:hidden">
+            <MobileSection title={f.shopTitle} links={shop} />
+            <MobileSection title={f.helpTitle} links={help} />
+            <MobileSection title={f.companyTitle} links={company} />
           </div>
         </div>
 
-        {/* Mobile accordion */}
-        <div className="md:hidden border-t border-white/10 mt-2">
-          {sections.map(({ title, links }) => (
-            <AccordionSection key={title} title={title} links={links} />
-          ))}
-          <div className="border-b border-white/10 py-4">
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-[#57392D] mb-2">
-              {branches.length > 1 ? dict.footer.ourBranches : dict.footer.ourBranch}
-            </h4>
-            {branches.length > 0 ? (
-              <ul className="space-y-2">
-                {branches.slice(0, 3).map((b) => (
-                  <li key={b.id} className="text-[#FEE5C9] text-sm opacity-80">
-                    <span className="font-semibold text-white">{b.name}</span>
-                    {b.address && ` — ${b.address}`}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[#FEE5C9] text-sm opacity-80">{dict.footer.branchHint}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t border-white/5 py-6 text-center px-5">
-        <p className="text-[#FEE5C9] text-xs opacity-80">
-          © {new Date().getFullYear()} Verella Coffee. {dict.footer.rights}
-          <span className="mx-2">|</span>
-          <Link href="/privacy" className="hover:text-[#57392D] transition-colors">{dict.footer.privacyPolicy}</Link>
-          <span className="mx-2">|</span>
-          <span>Made by </span>
-          <a
-            href="https://www.digitivaa.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-white hover:text-[#57392D] transition-colors underline underline-offset-2"
+        <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-ivory/10 pt-6 text-xs text-ivory/50 md:flex-row">
+          <p>
+            © {new Date().getFullYear()} Verella. {f.rights}
+          </p>
+          <button
+            type="button"
+            onClick={reopenConsent}
+            className="underline-offset-4 transition-colors hover:text-champagne hover:underline"
           >
-            Digitiva
-          </a>
-        </p>
+            {dict.cookies.settings}
+          </button>
+          <p>
+            Made by{" "}
+            <a
+              href="https://www.digitivaa.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ivory/80 underline-offset-4 transition-colors hover:text-champagne hover:underline"
+            >
+              Digitiva
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

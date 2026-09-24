@@ -1,4 +1,5 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
+import { WifiOff } from "lucide-react";
 
 /**
  * Friendly inline fallback for a page section whose data failed to load —
@@ -8,11 +9,11 @@ import Link from "next/link";
 export function LoadErrorBand({ message, retryLabel, href }: { message: string; retryLabel: string; href: string }) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-5 py-20 text-center">
-      <span aria-hidden="true" className="material-symbols-outlined text-4xl text-[#FFE2C6]">wifi_off</span>
-      <p className="text-sm leading-relaxed text-[#4A3026]">{message}</p>
+      <WifiOff aria-hidden="true" size={36} strokeWidth={1.5} className="text-beige" />
+      <p className="text-sm leading-relaxed text-charcoal/80">{message}</p>
       <Link
         href={href}
-        className="rounded-full bg-[#000000] px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-white transition-colors hover:bg-[#57392D]"
+        className="rounded-full bg-charcoal px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-white transition-colors hover:bg-black"
       >
         {retryLabel}
       </Link>

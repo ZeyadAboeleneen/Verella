@@ -2,13 +2,15 @@ import { relations } from "drizzle-orm";
 import { users, roles, permissions, rolePermissions, userRoles } from "./auth";
 import { customers, addresses } from "./customers";
 import { media } from "./media";
-import { menuCategories, menuCategoryTranslations, menuItems, menuItemTranslations, menuItemSizes } from "./menu";
 import {
   storeCategories,
   storeCategoryTranslations,
   storeProducts,
   storeProductTranslations,
   storeProductMedia,
+  storeProductCategories,
+  storeProductVariants,
+  storeProductVariantTranslations,
 } from "./store";
 import { discounts, discountProducts, discountCategories } from "./promotions";
 import { carts, cartItems } from "./cart";
@@ -49,30 +51,6 @@ export const addressesRelations = relations(addresses, ({ one }) => ({
   customer: one(customers, { fields: [addresses.customerId], references: [customers.id] }),
 }));
 
-export const menuCategoriesRelations = relations(menuCategories, ({ many }) => ({
-  translations: many(menuCategoryTranslations),
-  items: many(menuItems),
-}));
-
-export const menuCategoryTranslationsRelations = relations(menuCategoryTranslations, ({ one }) => ({
-  category: one(menuCategories, { fields: [menuCategoryTranslations.categoryId], references: [menuCategories.id] }),
-}));
-
-export const menuItemsRelations = relations(menuItems, ({ one, many }) => ({
-  category: one(menuCategories, { fields: [menuItems.categoryId], references: [menuCategories.id] }),
-  image: one(media, { fields: [menuItems.imageMediaId], references: [media.id] }),
-  translations: many(menuItemTranslations),
-  sizes: many(menuItemSizes),
-}));
-
-export const menuItemTranslationsRelations = relations(menuItemTranslations, ({ one }) => ({
-  item: one(menuItems, { fields: [menuItemTranslations.itemId], references: [menuItems.id] }),
-}));
-
-export const menuItemSizesRelations = relations(menuItemSizes, ({ one }) => ({
-  item: one(menuItems, { fields: [menuItemSizes.itemId], references: [menuItems.id] }),
-}));
-
 export const storeCategoriesRelations = relations(storeCategories, ({ many }) => ({
   translations: many(storeCategoryTranslations),
   products: many(storeProducts),
@@ -89,8 +67,25 @@ export const storeProductsRelations = relations(storeProducts, ({ one, many }) =
   category: one(storeCategories, { fields: [storeProducts.categoryId], references: [storeCategories.id] }),
   translations: many(storeProductTranslations),
   media: many(storeProductMedia),
+  variants: many(storeProductVariants),
+  extraCategories: many(storeProductCategories),
   discountProducts: many(discountProducts),
 }));
+
+export const storeProductVariantsRelations = relations(storeProductVariants, ({ one, many }) => ({
+  product: one(storeProducts, { fields: [storeProductVariants.productId], references: [storeProducts.id] }),
+  translations: many(storeProductVariantTranslations),
+}));
+
+export const storeProductVariantTranslationsRelations = relations(
+  storeProductVariantTranslations,
+  ({ one }) => ({
+    variant: one(storeProductVariants, {
+      fields: [storeProductVariantTranslations.variantId],
+      references: [storeProductVariants.id],
+    }),
+  }),
+);
 
 export const storeProductTranslationsRelations = relations(storeProductTranslations, ({ one }) => ({
   product: one(storeProducts, { fields: [storeProductTranslations.productId], references: [storeProducts.id] }),
@@ -123,6 +118,10 @@ export const cartsRelations = relations(carts, ({ many }) => ({
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   cart: one(carts, { fields: [cartItems.cartId], references: [carts.id] }),
   product: one(storeProducts, { fields: [cartItems.storeProductId], references: [storeProducts.id] }),
+  variant: one(storeProductVariants, {
+    fields: [cartItems.variantId],
+    references: [storeProductVariants.id],
+  }),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
@@ -137,6 +136,10 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
   product: one(storeProducts, { fields: [orderItems.storeProductId], references: [storeProducts.id] }),
+  variant: one(storeProductVariants, {
+    fields: [orderItems.variantId],
+    references: [storeProductVariants.id],
+  }),
 }));
 
 export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one }) => ({
@@ -151,4 +154,9 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 
 export const paymentMethodsRelations = relations(paymentMethods, ({ many }) => ({
   payments: many(payments),
+}));
+
+export const storeProductCategoriesRelations = relations(storeProductCategories, ({ one }) => ({
+  product: one(storeProducts, { fields: [storeProductCategories.productId], references: [storeProducts.id] }),
+  category: one(storeCategories, { fields: [storeProductCategories.categoryId], references: [storeCategories.id] }),
 }));

@@ -1,11 +1,13 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { privateMetadata } from "@/lib/seo";
+import Link from "@/components/LocaleLink";
 import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { formatMoney, toCents } from "@verella/core";
 import type { OrderStatus } from "@verella/db";
 import { getSessionUser } from "@/lib/auth/rbac";
 import { getOrCreateCustomer, getCustomerOrders } from "@/lib/account/queries";
-import { getLocale } from "@/lib/i18n";
+import { getDict, getLocale } from "@/lib/i18n";
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "Pending",
@@ -16,6 +18,11 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   completed: "Completed",
   cancelled: "Cancelled",
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDict();
+  return privateMetadata(dict.meta.pages.account.title);
+}
 
 export default async function AccountOrdersPage() {
   const user = await getSessionUser();

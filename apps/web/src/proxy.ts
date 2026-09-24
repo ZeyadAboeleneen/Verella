@@ -11,9 +11,8 @@ function detectLocaleFromRequest(request: NextRequest): Locale {
   const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
   if (SUPPORTED_LOCALES.includes(cookieLocale as Locale)) return cookieLocale as Locale;
 
-  const acceptLanguage = request.headers.get("accept-language") ?? "";
-  if (/\bar\b/i.test(acceptLanguage.split(",")[0] ?? "")) return "ar";
-
+  // English unless the visitor picked Arabic themselves — the browser's
+  // language is deliberately not used to guess.
   return DEFAULT_LOCALE;
 }
 

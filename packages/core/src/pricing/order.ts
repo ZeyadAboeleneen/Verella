@@ -34,7 +34,7 @@ export function computeOrderTotals(input: OrderTotalsInput): OrderTotals {
 }
 
 /**
- * Human-readable, sortable order number: HA-YYMMDD-XXXXXXXX. The suffix is
+ * Human-readable, sortable order number: VR-YYMMDD-XXXXXXXX. The suffix is
  * 8 random hex chars (~4.3 billion combinations/day) rather than 4 decimal
  * digits (10,000/day) — guest order lookup is unauthenticated, so a short
  * suffix would let someone enumerate real orders by brute force.
@@ -44,5 +44,5 @@ export function generateOrderNumber(date = new Date()): string {
   const m = String(date.getUTCMonth() + 1).padStart(2, "0");
   const d = String(date.getUTCDate()).padStart(2, "0");
   const suffix = randomBytes(4).toString("hex").toUpperCase();
-  return `HA-${y}${m}${d}-${suffix}`;
+  return `VR-${y}${m}${d}-${suffix}`;
 }

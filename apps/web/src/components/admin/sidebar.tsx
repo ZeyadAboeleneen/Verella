@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
+import { VMark } from "@/components/brand/Logo";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { ADMIN_NAV, UNRESTRICTED_ADMIN_PATHS } from "@/lib/admin/nav";
@@ -27,7 +27,7 @@ export function AdminSidebar({
     <>
       <div className="flex h-16 items-center justify-between gap-2 border-b border-outline-variant/60 px-6">
         <Link href="/admin" className="flex items-center gap-2.5">
-          <Image src="/brand/logo-icon-crisp.png" alt="Verella" width={30} height={28} className="h-7 w-auto object-contain" priority />
+          <VMark size={26} className="text-gold" />
           <span className="font-display text-lg font-bold text-on-surface">{dict.brandName}</span>
         </Link>
         {onClose && (

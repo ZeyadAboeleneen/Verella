@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import {
@@ -75,7 +75,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-on-surface">
                   <span>
-                    {item.nameSnapshot} × {item.quantity}
+                    {item.nameSnapshot}
+                    {item.variantLabelSnapshot && (
+                      <span className="ms-2 rounded-full bg-surface-container px-2 py-0.5 text-xs text-on-surface-variant">
+                        {item.variantLabelSnapshot}
+                      </span>
+                    )}{" "}
+                    × {item.quantity}
+                    {item.skuSnapshot && <span className="ms-2 text-xs text-on-surface-variant">SKU {item.skuSnapshot}</span>}
                   </span>
                   <span>{formatMoney(toCents(item.lineTotal))}</span>
                 </div>

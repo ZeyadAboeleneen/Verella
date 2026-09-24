@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { desc } from "drizzle-orm";
 import { Plus, Pencil } from "lucide-react";
 import { db, discounts } from "@verella/db";

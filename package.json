@@ -19,7 +19,7 @@
     "db:migrate": "pnpm --filter @verella/db migrate",
     "db:seed": "pnpm --filter @verella/db seed",
     "db:studio": "pnpm --filter @verella/db studio",
-    "db:dump": "pnpm --filter @verella/db dump"
+    "test": "pnpm -r --if-present test"
   },
   "devDependencies": {
     "typescript": "^5"

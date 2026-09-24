@@ -9,6 +9,7 @@ import { loginSchema, registerSchema } from "@verella/core";
 import { auth, signIn, signOut } from "@/auth";
 import { getGuestCartToken, clearGuestCartCookie } from "@/lib/cart/guest-token";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { isHoneypotFilled } from "@/lib/spam";
 import { sendVerificationEmail } from "./email-verification";
 import type { ActionResult } from "./rbac";
 
@@ -41,6 +42,7 @@ export async function loginAction(_prev: ActionResult | null, formData: FormData
 }
 
 export async function registerAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  if (isHoneypotFilled(formData)) return { error: "We couldn't create your account. Please try again." };
   const raw = Object.fromEntries(formData);
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };

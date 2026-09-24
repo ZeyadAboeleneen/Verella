@@ -24,15 +24,15 @@ export function RevenueBarChart({ data }: { data: RevenueDataPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0e8de" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#EDE5D9" />
         <XAxis
           dataKey="day"
-          tick={{ fontSize: 11, fill: "#8E7B6A" }}
+          tick={{ fontSize: 11, fill: "#5A5348" }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "#8E7B6A" }}
+          tick={{ fontSize: 11, fill: "#5A5348" }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => `${(v / 100).toFixed(0)}`}
@@ -44,11 +44,11 @@ export function RevenueBarChart({ data }: { data: RevenueDataPoint[] }) {
           }}
           contentStyle={{
             borderRadius: "10px",
-            border: "1px solid #e8d5bc",
+            border: "1px solid #DFD3C0",
             fontSize: 12,
           }}
         />
-        <Bar dataKey="revenue" fill="#57392D" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="revenue" fill="#141414" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -66,7 +66,7 @@ const STATUS_COLORS: Record<string, string> = {
   preparing:         "#8b5cf6",
   out_for_delivery:  "#06b6d4",
   ready_for_pickup:  "#10b981",
-  completed:         "#57392D",
+  completed:         "#A8813E",
   cancelled:         "#ef4444",
 };
 
@@ -83,7 +83,7 @@ const STATUS_LABEL: Record<string, string> = {
 export function OrderStatusDonut({ data }: { data: StatusDataPoint[] }) {
   if (data.every((d) => d.value === 0)) {
     return (
-      <div className="flex h-[220px] items-center justify-center text-sm text-[#8E7B6A]">
+      <div className="flex h-[220px] items-center justify-center text-sm text-on-surface-variant">
         No orders yet
       </div>
     );
@@ -104,7 +104,7 @@ export function OrderStatusDonut({ data }: { data: StatusDataPoint[] }) {
           {data.map((entry) => (
             <Cell
               key={entry.name}
-              fill={STATUS_COLORS[entry.name] ?? "#8E7B6A"}
+              fill={STATUS_COLORS[entry.name] ?? "#5A5348"}
             />
           ))}
         </Pie>
@@ -115,7 +115,7 @@ export function OrderStatusDonut({ data }: { data: StatusDataPoint[] }) {
           ]}
           contentStyle={{
             borderRadius: "10px",
-            border: "1px solid #e8d5bc",
+            border: "1px solid #DFD3C0",
             fontSize: 12,
           }}
         />

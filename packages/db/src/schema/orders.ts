@@ -3,7 +3,7 @@ import { fk, id, softDelete, timestamps, uuid } from "./_helpers";
 import { branches } from "./branches";
 import { users } from "./auth";
 import { customers, addresses } from "./customers";
-import { storeProducts } from "./store";
+import { storeProducts, storeProductVariants } from "./store";
 import { discounts } from "./promotions";
 
 export type OrderStatus =
@@ -57,7 +57,10 @@ export const orderItems = mysqlTable(
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
     storeProductId: fk("store_product_id").references(() => storeProducts.id, { onDelete: "set null" }),
+    variantId: fk("variant_id").references(() => storeProductVariants.id, { onDelete: "set null" }),
     nameSnapshot: varchar("name_snapshot", { length: 191 }).notNull(),
+    /** Which variant was bought, frozen at order time — survives the variant being renamed or deleted. */
+    variantLabelSnapshot: varchar("variant_label_snapshot", { length: 64 }),
     skuSnapshot: varchar("sku_snapshot", { length: 64 }),
     unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull(),
     quantity: int("quantity").notNull(),

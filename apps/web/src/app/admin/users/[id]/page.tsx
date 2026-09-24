@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, users, userRoles, roles, rolePermissions, permissions, userPermissions } from "@verella/db";

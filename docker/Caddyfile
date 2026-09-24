@@ -1,0 +1,32 @@
+# Verella reverse proxy — Caddy obtains and renews the Let's Encrypt
+# certificate for $DOMAIN on its own and redirects every http:// request to
+# https:// (checklist item 4, "Force HTTPS"). DNS for $DOMAIN (and www.) must
+# point at this server before the first `docker compose up`.
+{
+	email {$ACME_EMAIL}
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Payment screenshots and product photos upload straight to Cloudinary,
+	# so request bodies here stay small.
+	request_body {
+		max_size 10MB
+	}
+
+	reverse_proxy web:3000 {
+		# Overwrite (never pass through) the client IP headers — the app's
+		# rate limiter keys on X-Real-IP (apps/web/src/lib/rate-limit.ts).
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+	}
+
+	# Next's hashed build assets never change — let browsers keep them.
+	@static path /_next/static/*
+	header @static Cache-Control "public, max-age=31536000, immutable"
+}

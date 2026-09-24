@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { registerAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { PasswordStrength } from "@/components/ui/password-strength";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, FormError } from "@/components/ui/card";
 import type { Dictionary } from "@/lib/i18n";
+import { Honeypot } from "@/components/Honeypot";
 
 export function RegisterForm({ dict }: { dict: Dictionary }) {
   const [state, formAction, pending] = useActionState(registerAction, null);
@@ -22,7 +23,8 @@ export function RegisterForm({ dict }: { dict: Dictionary }) {
         <p className="mt-1 text-sm text-on-surface-variant">{dict.auth.registerSubtitle}</p>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="relative space-y-4">
+          <Honeypot />
           {state && "error" in state && <FormError>{state.error}</FormError>}
           <div>
             <Label htmlFor="fullName">{dict.auth.fullName}</Label>

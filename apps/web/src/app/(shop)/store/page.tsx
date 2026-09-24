@@ -1,106 +1,69 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import ProductCard from "@/components/ProductCard";
-import { StoreSearchInput } from "@/components/store/search-input";
+import { pageMetadata } from "@/lib/seo";
+import { Suspense } from "react";
 import { LoadErrorBand } from "@/components/LoadErrorBand";
 import { withDbTimeout } from "@/lib/db-timeout";
-import { getStoreCategories, getStoreProducts, getStoreHeroImages } from "@/lib/store/queries";
+import { getStoreCategories, getStoreProducts } from "@/lib/store/queries";
 import { getLocale, getDict } from "@/lib/i18n";
-import { StoreHeroBackground } from "@/components/store/hero-background";
+import { StoreBrowser } from "@/components/store/StoreBrowser";
+import { CategoryStrip } from "@/components/home/CategoryStrip";
+import { VMarquee } from "@/components/home/VMarquee";
+import { Reveal, RevealText } from "@/components/motion/Reveal";
 
-// Note: this route reads the locale cookie (via getLocale) and searchParams,
-// which force dynamic (per-request) rendering — an ISR `revalidate` export
-// here would be a no-op, so it's intentionally omitted.
+export async function generateMetadata(): Promise<Metadata> {
+  const [locale, dict] = await Promise.all([getLocale(), getDict()]);
+  return pageMetadata({ locale, path: "/store", ...dict.meta.pages.store });
+}
 
-export const metadata: Metadata = {
-  title: "Our Store | Verella",
-  description: "Shop coffee beans, Turkish coffee, espresso, and accessories from Verella Coffee.",
-};
-
-export default async function StorePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; q?: string }>;
-}) {
+export default async function StorePage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const [locale, dict, params] = await Promise.all([getLocale(), getDict(), searchParams]);
-  const activeCategory = params.category;
-  const search = params.q;
-
-  const [categories, products, heroImages] = await Promise.all([
+  const [categories, products] = await Promise.all([
     withDbTimeout(getStoreCategories(locale)).catch(() => null),
-    withDbTimeout(getStoreProducts(locale, { categorySlug: activeCategory, search })).catch(() => null),
-    withDbTimeout(getStoreHeroImages()).catch(() => []),
+    withDbTimeout(getStoreProducts(locale)).catch(() => null),
   ]);
 
+  if (categories === null || products === null) {
+    return <LoadErrorBand message={dict.common.loadError} retryLabel={dict.common.retry} href="/store" />;
+  }
+
+  const active = categories.find((c) => c.slug === params.category);
+  const s = dict.store;
+
   return (
-    <div className="min-h-screen">
-      <div className="relative overflow-hidden bg-[#000000] py-14 md:py-24 px-5 md:px-16 text-center">
-        <StoreHeroBackground images={heroImages} />
-        <div className="relative z-10">
-          <p className="text-[#FFE2C6] text-xs font-semibold uppercase tracking-widest mb-3">Verella</p>
-          <h1 className="font-[family-name:var(--font-plus-jakarta)] text-3xl md:text-5xl font-bold text-white mb-4">
-            {dict.store.title}
-          </h1>
-          <p className="text-white/80 text-sm md:text-lg max-w-xl mx-auto">{dict.store.subtitle}</p>
+    <div>
+      <section className="mx-auto grid max-w-[1400px] gap-10 px-5 pb-16 pt-10 md:grid-cols-12 md:gap-12 md:px-16 md:pb-20 md:pt-16">
+        <div className="flex flex-col justify-end md:col-span-4">
+          <Reveal>
+            <p className="mb-5 text-[11px] font-medium uppercase tracking-[0.35em] text-gold-ink">Verella — {s.all}</p>
+          </Reveal>
+          <RevealText
+            key={active?.slug ?? "all"}
+            text={active?.name ?? s.title}
+            as="h1"
+            className="font-[family-name:var(--font-display)] text-6xl font-medium uppercase leading-[0.9] tracking-tight text-charcoal md:text-8xl"
+          />
+          <Reveal delay={0.2}>
+            <p className="mt-6 max-w-sm text-base leading-relaxed text-charcoal/70">{active?.description ?? s.subtitle}</p>
+          </Reveal>
         </div>
+        <Reveal className="md:col-span-8" y={40} delay={0.1}>
+          <CategoryStrip
+            categories={categories.map((c) => ({ ...c, count: products.filter((p) => p.categorySlug === c.slug).length }))}
+            labels={{ explore: dict.home.worlds.explore, items: dict.home.worlds.items }}
+            height="h-[62vh] min-h-[440px] md:h-[520px]"
+          />
+        </Reveal>
+      </section>
+
+      <div className="px-5 md:px-16">
+        <Suspense>
+          <StoreBrowser products={products} categories={categories} labels={s} productLabels={dict.product} />
+        </Suspense>
       </div>
 
-      {categories === null || products === null ? (
-        <LoadErrorBand message={dict.common.loadError} retryLabel={dict.common.retry} href="/store" />
-      ) : (
-      <div className="py-10 md:py-16 px-5 md:px-16 max-w-[1280px] mx-auto">
-        <StoreSearchInput placeholder={dict.store.searchPlaceholder} />
-
-        {/* dir="ltr": consistent horizontal-scroll direction regardless of page language */}
-        <div className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-2 mb-8 md:mb-12 md:flex-wrap md:justify-center" dir="ltr">
-          <Link
-            href="/store"
-            className={`flex-shrink-0 px-5 py-2 rounded-full border text-xs font-semibold uppercase tracking-widest transition-all whitespace-nowrap ${
-              !activeCategory ? "bg-black text-white border-black" : "border-[#8E7B6A] hover:bg-black hover:text-white hover:border-black"
-            }`}
-          >
-            {dict.store.all}
-          </Link>
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/store?category=${cat.slug}`}
-              className={`flex-shrink-0 px-5 py-2 rounded-full border text-xs font-semibold uppercase tracking-widest transition-all whitespace-nowrap ${
-                activeCategory === cat.slug
-                  ? "bg-black text-white border-black"
-                  : "border-[#8E7B6A] hover:bg-black hover:text-white hover:border-black"
-              }`}
-            >
-              {cat.name}
-            </Link>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {products.map((p) => (
-            <ProductCard
-              key={p.id}
-              productId={p.id}
-              slug={p.slug}
-              name={p.name}
-              price={p.price}
-              compareAtPrice={p.compareAtPrice}
-              rating={p.rating}
-              tag={p.tag}
-              badge={p.badge}
-              image={p.image}
-              alt={p.alt}
-              addToCartLabel={dict.product.addToCart}
-              addedLabel={dict.product.added}
-            />
-          ))}
-        </div>
-
-        {products.length === 0 && (
-          <p className="text-center text-[#4A3026] py-16">{search ? dict.store.searchEmpty : dict.store.empty}</p>
-        )}
+      <div className="mt-24">
+        <VMarquee items={dict.home.marquee} tone="light" />
       </div>
-      )}
     </div>
   );
 }

@@ -8,8 +8,10 @@ import {
   storeProducts,
   storeProductTranslations,
   storeProductMedia,
-  storeHeroImages,
+  storeProductVariants,
+  storeProductVariantTranslations,
   media,
+  type VariantAxis,
 } from "@verella/db";
 import { formatMoney, toCents, computeDiscountAmountCents, isDiscountWindowOpen, type Locale, type DiscountLike } from "@verella/core";
 import { getAutoDiscounts } from "@/lib/discounts/resolve";
@@ -31,12 +33,31 @@ const CATALOG_REVALIDATE_SECONDS = 60;
 export interface StoreCategoryView {
   slug: string;
   name: string;
+  description: string | null;
+  image: string | null;
+}
+
+export interface StoreVariantView {
+  id: number;
+  label: string;
+  price: string;
+  compareAtPrice: string | null;
+  stockQty: number;
 }
 
 export interface StoreProductView {
   id: number;
   slug: string;
   name: string;
+  brand: string | null;
+  /** Sells in variants (sizes/volumes); the shopper must pick one before adding to cart. */
+  hasVariants: boolean;
+  /** Variants differ in price, so `price` is the lowest — render it as "from …". */
+  priceFrom: boolean;
+  /** Headline price in cents, for sorting. */
+  priceValue: number;
+  /** Active variants in display order; empty for simple products. */
+  variants: StoreVariantView[];
   price: string;
   compareAtPrice: string | null;
   /** null = product has no reviews yet — render an unrated state, don't fabricate a score. */
@@ -44,6 +65,8 @@ export interface StoreProductView {
   tag: string;
   badge?: string;
   image: string;
+  /** Second photo, revealed on hover in listings; null when there's only one. */
+  hoverImage: string | null;
   alt: string;
   categorySlug: string;
   stockQty: number;
@@ -77,6 +100,120 @@ function applyAutoDiscount(priceCents: number, categoryId: number, productId: nu
   return Math.max(0, priceCents - bestDiscountCents);
 }
 
+interface VariantRow {
+  id: number;
+  productId: number;
+  axis: VariantAxis;
+  label: string;
+  priceCents: number;
+  compareAtCents: number | null;
+  stockQty: number;
+}
+
+async function loadVariants(productIds: number[], locale: Locale): Promise<Map<number, VariantRow[]>> {
+  const byProduct = new Map<number, VariantRow[]>();
+  if (productIds.length === 0) return byProduct;
+
+  const rows = await db
+    .select()
+    .from(storeProductVariants)
+    .where(and(inArray(storeProductVariants.productId, productIds), eq(storeProductVariants.isActive, true)))
+    .orderBy(asc(storeProductVariants.sortOrder));
+  if (rows.length === 0) return byProduct;
+
+  const translations = await db
+    .select()
+    .from(storeProductVariantTranslations)
+    .where(inArray(storeProductVariantTranslations.variantId, rows.map((r) => r.id)));
+
+  for (const v of rows) {
+    const t = pickTranslation(translations.filter((x) => x.variantId === v.id), locale);
+    const list = byProduct.get(v.productId) ?? [];
+    list.push({
+      id: v.id,
+      productId: v.productId,
+      axis: v.axis,
+      label: t?.label ?? v.label,
+      priceCents: toCents(v.price),
+      compareAtCents: v.compareAtPrice ? toCents(v.compareAtPrice) : null,
+      stockQty: v.stockQty,
+    });
+    byProduct.set(v.productId, list);
+  }
+  return byProduct;
+}
+
+interface ProductPricing {
+  price: string;
+  priceCents: number;
+  compareAtPrice: string | null;
+  stockQty: number;
+  hasVariants: boolean;
+  priceFrom: boolean;
+}
+
+/**
+ * The single place listing/detail prices come from. For a product with
+ * variants, the headline price is the cheapest variant that's in stock (or
+ * the cheapest overall when everything is sold out), and stock is the sum
+ * across variants — so "Out of stock" only shows when no variant can sell.
+ */
+function priceProduct(
+  product: { id: number; categoryId: number; price: string; compareAtPrice: string | null; currency: string; stockQty: number },
+  variants: VariantRow[],
+  autoDiscounts: DiscountLike[],
+  locale: Locale,
+): ProductPricing {
+  const money = (cents: number) => formatMoney(cents, product.currency, locale);
+
+  let baseCents = toCents(product.price);
+  let compareCents = product.compareAtPrice ? toCents(product.compareAtPrice) : null;
+  let stockQty = product.stockQty;
+  let priceFrom = false;
+
+  if (variants.length > 0) {
+    const inStock = variants.filter((v) => v.stockQty > 0);
+    const pool = inStock.length > 0 ? inStock : variants;
+    const cheapest = pool.reduce((min, v) => (v.priceCents < min.priceCents ? v : min), pool[0]);
+    baseCents = cheapest.priceCents;
+    compareCents = cheapest.compareAtCents;
+    stockQty = variants.reduce((sum, v) => sum + v.stockQty, 0);
+    priceFrom = new Set(variants.map((v) => v.priceCents)).size > 1;
+  }
+
+  const discountedCents = applyAutoDiscount(baseCents, product.categoryId, product.id, autoDiscounts);
+  const hasAutoDiscount = discountedCents < baseCents;
+
+  return {
+    price: money(hasAutoDiscount ? discountedCents : baseCents),
+    priceCents: hasAutoDiscount ? discountedCents : baseCents,
+    compareAtPrice: hasAutoDiscount ? money(baseCents) : compareCents ? money(compareCents) : null,
+    stockQty,
+    hasVariants: variants.length > 0,
+    priceFrom,
+  };
+}
+
+function formatVariants(
+  product: { id: number; categoryId: number; currency: string },
+  variants: VariantRow[],
+  autoDiscounts: DiscountLike[],
+  locale: Locale,
+): StoreVariantView[] {
+  const money = (cents: number) => formatMoney(cents, product.currency, locale);
+  return variants.map((v) => {
+    const discounted = applyAutoDiscount(v.priceCents, product.categoryId, product.id, autoDiscounts);
+    const onSale = discounted < v.priceCents;
+    return {
+      id: v.id,
+      label: v.label,
+      price: money(onSale ? discounted : v.priceCents),
+      compareAtPrice: onSale ? money(v.priceCents) : v.compareAtCents ? money(v.compareAtCents) : null,
+      stockQty: v.stockQty,
+    };
+  });
+}
+
 async function getStoreCategoriesImpl(locale: Locale = "en"): Promise<StoreCategoryView[]> {
   const categoryRows = await db
     .select()
@@ -85,14 +222,23 @@ async function getStoreCategoriesImpl(locale: Locale = "en"): Promise<StoreCateg
     .orderBy(asc(storeCategories.sortOrder));
   if (categoryRows.length === 0) return [];
 
-  const translations = await db
-    .select()
-    .from(storeCategoryTranslations)
-    .where(inArray(storeCategoryTranslations.categoryId, categoryRows.map((c) => c.id)));
+  const imageIds = categoryRows.map((c) => c.imageMediaId).filter((id): id is number => id != null);
+  const [translations, images] = await Promise.all([
+    db
+      .select()
+      .from(storeCategoryTranslations)
+      .where(inArray(storeCategoryTranslations.categoryId, categoryRows.map((c) => c.id))),
+    imageIds.length ? db.select({ id: media.id, url: media.url }).from(media).where(inArray(media.id, imageIds)) : Promise.resolve([]),
+  ]);
 
   return categoryRows.map((cat) => {
     const t = pickTranslation(translations.filter((x) => x.categoryId === cat.id), locale);
-    return { slug: cat.slug, name: t?.name ?? cat.slug };
+    return {
+      slug: cat.slug,
+      name: t?.name ?? cat.slug,
+      description: t?.description ?? null,
+      image: images.find((m) => m.id === cat.imageMediaId)?.url ?? null,
+    };
   });
 }
 
@@ -147,42 +293,46 @@ async function getStoreProductsImpl(locale: Locale = "en", filter: string | Stor
   if (products.length === 0) return [];
 
   const productIds = products.map((p) => p.id);
-  const [translations, mediaRows, autoDiscounts] = await Promise.all([
+  const [translations, mediaRows, autoDiscounts, variantsByProduct] = await Promise.all([
     db.select().from(storeProductTranslations).where(inArray(storeProductTranslations.productId, productIds)),
     db
       .select({ productId: storeProductMedia.productId, url: media.url, isPrimary: storeProductMedia.isPrimary })
       .from(storeProductMedia)
       .innerJoin(media, eq(media.id, storeProductMedia.mediaId))
-      .where(inArray(storeProductMedia.productId, productIds)),
+      .where(inArray(storeProductMedia.productId, productIds))
+      .orderBy(asc(storeProductMedia.sortOrder)),
     getAutoDiscounts(),
+    loadVariants(productIds, locale),
   ]);
 
   return products.map((p) => {
     const t = pickTranslation(translations.filter((x) => x.productId === p.id), locale);
-    const primaryMedia = mediaRows.find((m) => m.productId === p.id && m.isPrimary) ?? mediaRows.find((m) => m.productId === p.id);
+    const productMedia = mediaRows.filter((m) => m.productId === p.id);
+    const primaryMedia = productMedia.find((m) => m.isPrimary) ?? productMedia[0];
+    const hoverMedia = productMedia.find((m) => m !== primaryMedia);
     const category = categoryById.get(p.categoryId);
-
-    const priceCents = toCents(p.price);
-    const discountedCents = applyAutoDiscount(priceCents, p.categoryId, p.id, autoDiscounts);
-    const hasAutoDiscount = discountedCents < priceCents;
+    const productVariants = variantsByProduct.get(p.id) ?? [];
+    const pricing = priceProduct(p, productVariants, autoDiscounts, locale);
 
     return {
       id: p.id,
       slug: p.slug,
       name: t?.name ?? p.slug,
-      price: formatMoney(hasAutoDiscount ? discountedCents : priceCents, p.currency, locale),
-      compareAtPrice: hasAutoDiscount
-        ? formatMoney(priceCents, p.currency, locale)
-        : p.compareAtPrice
-          ? formatMoney(toCents(p.compareAtPrice), p.currency, locale)
-          : null,
+      brand: p.brand,
+      hasVariants: pricing.hasVariants,
+      priceFrom: pricing.priceFrom,
+      priceValue: pricing.priceCents,
+      variants: formatVariants(p, productVariants, autoDiscounts, locale),
+      price: pricing.price,
+      compareAtPrice: pricing.compareAtPrice,
       rating: p.rating ? Number(p.rating) : null,
       tag: category?.slug ?? "",
       badge: p.isBestSeller ? "Bestseller" : undefined,
       image: primaryMedia?.url ?? "",
+      hoverImage: hoverMedia?.url ?? null,
       alt: t?.name ?? p.slug,
       categorySlug: category?.slug ?? "",
-      stockQty: p.stockQty,
+      stockQty: pricing.stockQty,
       isFeaturedHome: p.isFeaturedHome,
       isBestSeller: p.isBestSeller,
     };
@@ -197,6 +347,8 @@ export interface StoreProductDetailView extends StoreProductView {
   description: string | null;
   notes: string | null;
   images: { url: string; alt: string }[];
+  variantAxis: VariantAxis | null;
+  variants: StoreVariantView[];
 }
 
 async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): Promise<StoreProductDetailView | null> {
@@ -207,7 +359,7 @@ async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): P
     .limit(1);
   if (!product) return null;
 
-  const [category, translations, mediaRows, autoDiscounts] = await Promise.all([
+  const [category, translations, mediaRows, autoDiscounts, variantsByProduct] = await Promise.all([
     db.select().from(storeCategories).where(eq(storeCategories.id, product.categoryId)).limit(1).then((r) => r[0]),
     db.select().from(storeProductTranslations).where(eq(storeProductTranslations.productId, product.id)),
     db
@@ -217,35 +369,37 @@ async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): P
       .where(eq(storeProductMedia.productId, product.id))
       .orderBy(asc(storeProductMedia.sortOrder)),
     getAutoDiscounts(),
+    loadVariants([product.id], locale),
   ]);
 
   const t = pickTranslation(translations, locale);
   const primaryMedia = mediaRows.find((m) => m.isPrimary) ?? mediaRows[0];
-
-  const priceCents = toCents(product.price);
-  const discountedCents = applyAutoDiscount(priceCents, product.categoryId, product.id, autoDiscounts);
-  const hasAutoDiscount = discountedCents < priceCents;
+  const variants = variantsByProduct.get(product.id) ?? [];
+  const pricing = priceProduct(product, variants, autoDiscounts, locale);
 
   return {
     id: product.id,
     slug: product.slug,
     name: t?.name ?? product.slug,
+    brand: product.brand,
     description: t?.description ?? null,
     notes: t?.notes ?? null,
-    price: formatMoney(hasAutoDiscount ? discountedCents : priceCents, product.currency, locale),
-    compareAtPrice: hasAutoDiscount
-      ? formatMoney(priceCents, product.currency, locale)
-      : product.compareAtPrice
-        ? formatMoney(toCents(product.compareAtPrice), product.currency, locale)
-        : null,
+    hasVariants: pricing.hasVariants,
+    priceFrom: pricing.priceFrom,
+    priceValue: pricing.priceCents,
+    price: pricing.price,
+    compareAtPrice: pricing.compareAtPrice,
+    variantAxis: variants[0]?.axis ?? null,
+    variants: formatVariants(product, variants, autoDiscounts, locale),
     rating: product.rating ? Number(product.rating) : null,
     tag: category?.slug ?? "",
     badge: product.isBestSeller ? "Bestseller" : undefined,
     image: primaryMedia?.url ?? "",
+    hoverImage: mediaRows.find((m) => m !== primaryMedia)?.url ?? null,
     alt: t?.name ?? product.slug,
     images: mediaRows.map((m) => ({ url: m.url, alt: t?.name ?? product.slug })),
     categorySlug: category?.slug ?? "",
-    stockQty: product.stockQty,
+    stockQty: pricing.stockQty,
     isFeaturedHome: product.isFeaturedHome,
     isBestSeller: product.isBestSeller,
   };
@@ -254,19 +408,6 @@ async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): P
 export const getStoreProductBySlug = unstable_cache(getStoreProductBySlugImpl, ["store-product-by-slug"], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
 });
-
-// Not cached: same rationale as getMenuHeroImages — this table is tiny and
-// rarely queried, so admin changes should appear immediately rather than
-// waiting out the 60s catalog cache window.
-export async function getStoreHeroImages(): Promise<string[]> {
-  const rows = await db
-    .select({ url: media.url })
-    .from(storeHeroImages)
-    .innerJoin(media, eq(media.id, storeHeroImages.mediaId))
-    .where(eq(storeHeroImages.isActive, true))
-    .orderBy(asc(storeHeroImages.sortOrder));
-  return rows.map((r) => r.url);
-}
 
 // Previously this called getStoreProductsImpl directly — bypassing the 60s
 // unstable_cache that /store's identical query pipeline gets. Store/menu
@@ -278,3 +419,24 @@ async function getBestSellerProductsImpl(locale: Locale = "en", limit = 8): Prom
 export const getBestSellerProducts = unstable_cache(getBestSellerProductsImpl, ["best-seller-products"], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
 });
+
+export interface BrandView {
+  name: string;
+  productCount: number;
+  /** A photo from one of the brand's products, for the brand index hover. */
+  image: string | null;
+}
+
+/** Brands in the live catalog, most products first — derived from the listing so it shares its cache. */
+export async function getStoreBrands(locale: Locale = "en"): Promise<BrandView[]> {
+  const products = await getStoreProducts(locale);
+  const byBrand = new Map<string, BrandView>();
+  for (const p of products) {
+    if (!p.brand) continue;
+    const entry = byBrand.get(p.brand) ?? { name: p.brand, productCount: 0, image: null };
+    entry.productCount += 1;
+    entry.image ??= p.image || null;
+    byBrand.set(p.brand, entry);
+  }
+  return [...byBrand.values()].sort((a, b) => b.productCount - a.productCount || a.name.localeCompare(b.name));
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { CheckCircle2, ShoppingCart, X } from "lucide-react";
 
 export function AddedToCartDialog({
@@ -30,12 +30,12 @@ export function AddedToCartDialog({
       role="status"
       dir={isArabic ? "rtl" : "ltr"}
       style={{ right: 0, left: "auto" }}
-      className="absolute top-full right-0 mt-2 z-[9999] w-[calc(100vw-32px)] max-w-[320px] rounded-2xl border border-[#e8d5bc] bg-white p-3.5 sm:p-4 shadow-[0_16px_40px_rgba(0,0,0,0.25)]"
+      className="absolute top-full right-0 mt-2 z-[9999] w-[calc(100vw-32px)] max-w-[320px] rounded-2xl border border-beige bg-white p-3.5 sm:p-4 shadow-[0_16px_40px_rgba(0,0,0,0.25)]"
     >
       <div className="flex items-center justify-between gap-2 pb-2.5 sm:pb-3">
         <div className="flex min-w-0 items-center gap-2">
           <CheckCircle2 size={18} className="shrink-0 text-[#2e7d32] sm:size-5" />
-          <p className="truncate font-[family-name:var(--font-plus-jakarta)] text-xs font-bold text-[#000000] sm:text-sm">
+          <p className="truncate font-[family-name:var(--font-display)] text-xs font-bold text-charcoal sm:text-sm">
             {labels.title}
           </p>
         </div>
@@ -43,7 +43,7 @@ export function AddedToCartDialog({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#8E7B6A] hover:bg-[#FCE8CD]/60 active:scale-95 transition-all"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container/60 active:scale-95 transition-all"
         >
           <X size={15} />
         </button>
@@ -52,13 +52,13 @@ export function AddedToCartDialog({
       {(productImage || productName) && (
         <div className="flex items-center gap-2.5 pb-3 sm:gap-3">
           {productImage && (
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#FCE8CD] sm:h-14 sm:w-14 border border-[#e8d5bc]/60">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-container sm:h-14 sm:w-14 border border-beige/60">
               <Image src={productImage} alt="" fill className="object-cover" />
             </div>
           )}
           <div className="min-w-0 flex-1">
-            {productName && <p className="truncate text-xs font-bold text-[#57392D] sm:text-sm">{productName}</p>}
-            {productMeta && <p className="truncate text-[11px] text-[#8E7B6A] font-medium sm:text-xs mt-0.5">{productMeta}</p>}
+            {productName && <p className="truncate text-xs font-bold text-gold-ink sm:text-sm">{productName}</p>}
+            {productMeta && <p className="truncate text-[11px] text-on-surface-variant font-medium sm:text-xs mt-0.5">{productMeta}</p>}
           </div>
         </div>
       )}
@@ -67,7 +67,7 @@ export function AddedToCartDialog({
         <Link
           href="/cart"
           onClick={onClose}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[#57392D] text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:bg-[#412B22] active:scale-95 transition-all"
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-charcoal text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:bg-primary-container active:scale-95 transition-all"
         >
           <ShoppingCart size={15} />
           {labels.goToCart}
@@ -75,7 +75,7 @@ export function AddedToCartDialog({
         <button
           type="button"
           onClick={onClose}
-          className="flex h-10 w-full items-center justify-center rounded-full border border-[#57392D]/30 text-xs font-bold uppercase tracking-wider text-[#57392D] hover:bg-[#FAECD2]/50 active:scale-95 transition-all"
+          className="flex h-10 w-full items-center justify-center rounded-full border border-charcoal/30 text-xs font-bold uppercase tracking-wider text-gold hover:bg-surface-container-low/50 active:scale-95 transition-all"
         >
           {labels.continueShopping}
         </button>

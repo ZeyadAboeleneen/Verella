@@ -1,12 +1,18 @@
-import { db, settings } from "@verella/db";
+import { asc } from "drizzle-orm";
+import { db, settings, paymentMethods } from "@verella/db";
+import { PAYMENT_METHOD_CODES, type PaymentMethodCode } from "@verella/core";
+import { BRAND_CONTACT } from "@/lib/brand";
 import { withDbTimeout } from "@/lib/db-timeout";
 import { SettingsForm } from "@/components/admin/settings/settings-form";
 import type { GovernorateFee } from "@/lib/settings/actions";
 
 export default async function AdminSettingsPage() {
-  const rows = await withDbTimeout(db.select().from(settings)).catch(() => null);
+  const [rows, methods] = await Promise.all([
+    withDbTimeout(db.select().from(settings)).catch(() => null),
+    withDbTimeout(db.select().from(paymentMethods).orderBy(asc(paymentMethods.sortOrder))).catch(() => null),
+  ]);
 
-  if (rows === null) {
+  if (rows === null || methods === null) {
     return (
       <div>
         <h1 className="mb-6 font-display text-2xl font-bold text-on-surface">Settings</h1>
@@ -35,11 +41,17 @@ export default async function AdminSettingsPage() {
           currency: (find("site", "currency") as string) ?? "EGP",
           deliveryFee: (find("checkout", "delivery_fee") as string) ?? "30.00",
           governorateFees,
-          notificationEmail: (find("notifications", "email") as string) ?? "zeyad5zoks@gmail.com",
+          notificationEmail: (find("notifications", "email") as string) ?? BRAND_CONTACT.email.address,
           taxEnabled: Boolean(find("checkout", "tax_enabled")),
           guestCheckoutEnabled: find("checkout", "guest_checkout_enabled") !== false,
           instapayNumber: (find("checkout", "instapay_number") as string) ?? "",
           instapayName: (find("checkout", "instapay_name") as string) ?? "",
+          vodafoneCashNumber: (find("checkout", "vodafone_cash_number") as string) ?? "",
+          vodafoneCashName: (find("checkout", "vodafone_cash_name") as string) ?? "",
+          pickupEnabled: Array.isArray(find("checkout", "fulfillment_types")) && (find("checkout", "fulfillment_types") as string[]).includes("pickup"),
+          paymentMethods: methods
+            .filter((m): m is typeof m & { code: PaymentMethodCode } => (PAYMENT_METHOD_CODES as readonly string[]).includes(m.code))
+            .map((m) => ({ code: m.code, isActive: m.isActive })),
         }}
       />
     </div>

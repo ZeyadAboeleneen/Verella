@@ -2,7 +2,7 @@ import { char, decimal, index, int, json, mysqlTable, timestamp, varchar } from 
 import { fk, id, timestamps, uuid } from "./_helpers";
 import { branches } from "./branches";
 import { users } from "./auth";
-import { storeProducts } from "./store";
+import { storeProducts, storeProductVariants } from "./store";
 
 export type CartStatus = "active" | "converted" | "abandoned";
 
@@ -33,6 +33,8 @@ export const cartItems = mysqlTable(
     storeProductId: fk("store_product_id")
       .notNull()
       .references(() => storeProducts.id),
+    /** NULL for simple products; otherwise the exact variant being bought. */
+    variantId: fk("variant_id").references(() => storeProductVariants.id, { onDelete: "cascade" }),
     quantity: int("quantity").notNull().default(1),
     unitPriceSnapshot: decimal("unit_price_snapshot", { precision: 12, scale: 2 }).notNull(),
     notes: varchar("notes", { length: 255 }),

@@ -3,7 +3,6 @@ export * from "./branches";
 export * from "./auth";
 export * from "./customers";
 export * from "./media";
-export * from "./menu";
 export * from "./store";
 export * from "./cms";
 export * from "./promotions";

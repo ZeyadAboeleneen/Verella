@@ -17,6 +17,7 @@ import {
   payments,
   paymentMethods,
   storeProducts,
+  storeProductVariants,
   carts,
   cartItems,
   settings,
@@ -29,6 +30,8 @@ import {
   generateOrderNumber,
   toCents,
   fromCents,
+  WALLET_PAYMENT_METHODS,
+  GATEWAY_PAYMENT_METHODS,
   type CartLineLike,
 } from "@verella/core";
 import { auth } from "@/auth";
@@ -36,9 +39,16 @@ import { getCart } from "@/lib/cart/queries";
 import { getAutoDiscounts, getDiscountByCode } from "@/lib/discounts/resolve";
 import { getGuestCartToken, clearGuestCartCookie } from "@/lib/cart/guest-token";
 import type { ActionResult } from "@/lib/auth/rbac";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email/mailer";
-import { getGovernorateFees, getNotificationEmail, isGuestCheckoutEnabled } from "@/lib/settings/queries";
+import { getFulfillmentTypes, getGovernorateFees, getNotificationEmail, isGuestCheckoutEnabled } from "@/lib/settings/queries";
 import { formatMoney } from "@verella/core";
+
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+/** "Amber Oud — 100ml" when the line is a variant, otherwise just the product name. */
+const lineTitle = (l: { name: string; variantLabel: string | null }) => (l.variantLabel ? `${l.name} — ${l.variantLabel}` : l.name);
 
 /**
  * Delivery fee for a governorate: the per-governorate table from Admin →
@@ -187,12 +197,22 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid checkout details." };
   const data = parsed.data;
 
+  // Cash-on-delivery orders reserve stock without payment, so a script
+  // hammering this action could empty the shelves. 8 orders / hour per IP is
+  // far above what a real shopper places.
+  const limited = await enforceRateLimit("place-order", 8, 60 * 60 * 1000);
+  if (!limited.ok) return { error: limited.error };
+
   // Defense in depth — the checkout page already redirects guests to /login
   // when this setting is off, but a direct call to this action shouldn't be
   // able to bypass it.
   const session = await auth();
   if (!session?.user && !(await isGuestCheckoutEnabled())) {
     return { error: "Guest checkout is currently disabled. Please sign in to place an order." };
+  }
+
+  if (!(await getFulfillmentTypes()).includes(data.fulfillmentType)) {
+    return { error: "That delivery option isn't available." };
   }
 
   // Resolve the delivery governorate first — it determines the delivery fee.
@@ -210,7 +230,7 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
   if (cart.lines.length === 0) return { error: "Your cart is empty." };
 
   for (const line of cart.lines) {
-    if (line.quantity > line.stockQty) return { error: `${line.name} no longer has enough stock.` };
+    if (line.quantity > line.stockQty) return { error: `${lineTitle(line)} no longer has enough stock.` };
   }
 
   // An invalid/inapplicable/expired discount code doesn't block checkout —
@@ -219,6 +239,12 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
 
   const [method] = await db.select().from(paymentMethods).where(and(eq(paymentMethods.code, data.paymentMethodCode), eq(paymentMethods.isActive, true))).limit(1);
   if (!method) return { error: "Selected payment method is not available." };
+  // Card / Apple Pay need the payment gateway, which isn't connected yet —
+  // never create an order that looks paid-by-card but was never charged.
+  if (GATEWAY_PAYMENT_METHODS.includes(data.paymentMethodCode)) {
+    return { error: "Online payment isn't available yet. Please choose another payment method." };
+  }
+  const isWallet = WALLET_PAYMENT_METHODS.includes(data.paymentMethodCode);
 
   let customerId: number | null = null;
   if (userId) {
@@ -288,7 +314,10 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
       cart.lines.map((l) => ({
         orderId: orderRow.id,
         storeProductId: l.productId,
+        variantId: l.variantId,
         nameSnapshot: l.name,
+        variantLabelSnapshot: l.variantLabel,
+        skuSnapshot: l.sku,
         unitPrice: (l.unitPriceCents / 100).toFixed(2),
         quantity: l.quantity,
         lineTotal: (l.lineTotalCents / 100).toFixed(2),
@@ -329,11 +358,11 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
       orderId: orderRow.id,
       methodId: method.id,
       amount: totals.grandTotal,
-      // InstaPay orders arrive with proof already attached (required at
-      // checkout — see checkoutSchema) so they go straight to "submitted"
-      // for admin review, skipping the otherwise-meaningless "pending" state.
-      status: data.paymentMethodCode === "instapay" ? "submitted" : "pending",
-      proofMediaId: data.paymentMethodCode === "instapay" ? data.paymentProofMediaId : null,
+      // Wallet transfers (InstaPay / Vodafone Cash) arrive with the proof
+      // screenshot already attached (required by checkoutSchema), so they go
+      // straight to "submitted" for admin review.
+      status: isWallet ? "submitted" : "pending",
+      proofMediaId: isWallet ? data.paymentProofMediaId : null,
     });
 
     for (const line of cart.lines) {
@@ -342,12 +371,18 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
       // decrement past zero (TOCTOU race). If this doesn't match any row,
       // someone else's order already used up the remaining stock — abort
       // the whole transaction rather than sell something we don't have.
-      const [result] = await tx
-        .update(storeProducts)
-        .set({ stockQty: sql`${storeProducts.stockQty} - ${line.quantity}` })
-        .where(and(eq(storeProducts.id, line.productId), gte(storeProducts.stockQty, line.quantity)));
+      // Stock lives on the variant when there is one, otherwise on the product.
+      const [result] = line.variantId
+        ? await tx
+            .update(storeProductVariants)
+            .set({ stockQty: sql`${storeProductVariants.stockQty} - ${line.quantity}` })
+            .where(and(eq(storeProductVariants.id, line.variantId), gte(storeProductVariants.stockQty, line.quantity)))
+        : await tx
+            .update(storeProducts)
+            .set({ stockQty: sql`${storeProducts.stockQty} - ${line.quantity}` })
+            .where(and(eq(storeProducts.id, line.productId), gte(storeProducts.stockQty, line.quantity)));
       if (result.affectedRows === 0) {
-        throw new Error(`${line.name} no longer has enough stock.`);
+        throw new Error(`${lineTitle(line)} no longer has enough stock.`);
       }
     }
 
@@ -366,17 +401,23 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
 
   const recipientEmail = session?.user?.email ?? data.guestContact?.email;
   const recipientName = session?.user?.name ?? data.guestContact?.name ?? "there";
+  const itemsHtml = cart.lines
+    .map((l) => `<li>${escapeHtml(lineTitle(l))} × ${l.quantity} — ${formatMoney(l.lineTotalCents)}</li>`)
+    .join("");
+  const itemsText = cart.lines.map((l) => `- ${lineTitle(l)} x${l.quantity} — ${formatMoney(l.lineTotalCents)}`).join("\n");
+  // The order is already committed — a mail failure must not surface as a
+  // checkout error, or the shopper retries and places a duplicate order.
   if (recipientEmail) {
-    const itemsHtml = cart.lines
-      .map((l) => `<li>${l.name} × ${l.quantity} — ${formatMoney(l.lineTotalCents)}</li>`)
-      .join("");
-    const itemsText = cart.lines.map((l) => `- ${l.name} x${l.quantity} — ${formatMoney(l.lineTotalCents)}`).join("\n");
-    await sendEmail({
-      to: recipientEmail,
-      subject: `Order confirmed — ${orderNumber}`,
-      text: `Hello ${recipientName},\n\nThanks for your order! Your order ${orderNumber} has been received.\n\n${itemsText}\n\nTotal: ${formatMoney(toCents(totals.grandTotal))}\n\nTrack it at: ${(process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}/order/${orderNumber}`,
-      html: `<p>Hello ${recipientName},</p><p>Thanks for your order! Your order <strong>${orderNumber}</strong> has been received.</p><ul>${itemsHtml}</ul><p>Total: <strong>${formatMoney(toCents(totals.grandTotal))}</strong></p><p><a href="${(process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}/order/${orderNumber}">Track your order</a></p>`,
-    });
+    try {
+      await sendEmail({
+        to: recipientEmail,
+        subject: `Order confirmed — ${orderNumber}`,
+        text: `Hello ${recipientName},\n\nThanks for your order! Your order ${orderNumber} has been received.\n\n${itemsText}\n\nTotal: ${formatMoney(toCents(totals.grandTotal))}\n\nTrack it at: ${(process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}/order/${orderNumber}`,
+        html: `<p>Hello ${escapeHtml(recipientName)},</p><p>Thanks for your order! Your order <strong>${orderNumber}</strong> has been received.</p><ul>${itemsHtml}</ul><p>Total: <strong>${formatMoney(toCents(totals.grandTotal))}</strong></p><p><a href="${(process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}/order/${orderNumber}">Track your order</a></p>`,
+      });
+    } catch (err) {
+      console.error("Order confirmation email failed:", err);
+    }
   }
 
   // Admin alert — configurable address in Admin → Settings. Never let a mail
@@ -384,15 +425,15 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
   try {
     const adminEmail = await getNotificationEmail();
     if (adminEmail) {
-      const summaryText = cart.lines.map((l) => `- ${l.name} x${l.quantity} — ${formatMoney(l.lineTotalCents)}`).join("\n");
-      const summaryHtml = cart.lines.map((l) => `<li>${l.name} × ${l.quantity} — ${formatMoney(l.lineTotalCents)}</li>`).join("");
+      const summaryText = itemsText;
+      const summaryHtml = itemsHtml;
       const adminUrl = `${(process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}/admin/orders`;
       const who = recipientName !== "there" ? recipientName : recipientEmail ?? "Guest";
       await sendEmail({
         to: adminEmail,
         subject: `New order ${orderNumber} — ${formatMoney(toCents(totals.grandTotal))}`,
         text: `New ${data.fulfillmentType} order ${orderNumber} from ${who}.\n\n${summaryText}\n\nTotal: ${formatMoney(toCents(totals.grandTotal))}\n\nManage: ${adminUrl}`,
-        html: `<p>New <strong>${data.fulfillmentType}</strong> order <strong>${orderNumber}</strong> from ${who}.</p><ul>${summaryHtml}</ul><p>Total: <strong>${formatMoney(toCents(totals.grandTotal))}</strong></p><p><a href="${adminUrl}">Open the orders dashboard</a></p>`,
+        html: `<p>New <strong>${data.fulfillmentType}</strong> order <strong>${orderNumber}</strong> from ${escapeHtml(who)}.</p><ul>${summaryHtml}</ul><p>Total: <strong>${formatMoney(toCents(totals.grandTotal))}</strong></p><p><a href="${adminUrl}">Open the orders dashboard</a></p>`,
       });
     }
   } catch (err) {

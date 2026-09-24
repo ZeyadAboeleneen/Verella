@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { and, asc, eq } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import { db, storeCategories, storeCategoryTranslations, media } from "@verella/db";
@@ -36,7 +36,6 @@ export default async function AdminStoreCategoriesPage() {
         tabs={[
           { label: "Categories", href: "/admin/store" },
           { label: "Products", href: "/admin/store/products" },
-          { label: "Hero Images", href: "/admin/store/hero" },
         ]}
       />
 

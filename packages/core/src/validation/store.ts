@@ -1,13 +1,6 @@
 import { z } from "zod";
 import { slugSchema, decimalString, nullableDecimalString, requiredLocalizedText, optionalLocalizedText } from "./shared";
 
-export const storeHeroImageSchema = z.object({
-  mediaId: z.number().int().positive(),
-  sortOrder: z.coerce.number().int().default(0),
-  isActive: z.boolean().default(true),
-});
-export type StoreHeroImageInput = z.infer<typeof storeHeroImageSchema>;
-
 export const storeCategorySchema = z.object({
   slug: slugSchema,
   imageMediaId: z.number().int().positive().nullable().optional(),
@@ -18,10 +11,27 @@ export const storeCategorySchema = z.object({
 });
 export type StoreCategoryInput = z.infer<typeof storeCategorySchema>;
 
+export const storeVariantSchema = z.object({
+  /** Present when editing an existing variant; absent for a new one. */
+  id: z.number().int().positive().optional(),
+  label: z.string().trim().min(1, "Each variant needs a label").max(64),
+  labelAr: z.string().trim().max(64).optional(),
+  sku: z.string().trim().max(64).optional(),
+  price: decimalString,
+  compareAtPrice: nullableDecimalString.optional(),
+  stockQty: z.coerce.number().int().min(0).default(0),
+  isActive: z.boolean().default(true),
+});
+export type StoreVariantInput = z.infer<typeof storeVariantSchema>;
+
 export const storeProductSchema = z.object({
   categoryId: z.number().int().positive(),
   slug: slugSchema,
   sku: z.string().max(64).optional(),
+  brand: z.string().trim().max(120).optional(),
+  variantAxis: z.enum(["volume", "size", "color"]).default("volume"),
+  /** Empty = a simple product priced and stocked by `price` / `stockQty`. */
+  variants: z.array(storeVariantSchema).max(30).default([]),
   price: decimalString,
   compareAtPrice: nullableDecimalString.optional(),
   isBestSeller: z.boolean().default(false),

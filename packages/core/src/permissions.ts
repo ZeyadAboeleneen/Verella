@@ -7,8 +7,6 @@
 
 export const PERMISSION_SLUGS = [
   "dashboard.view",
-  "menu.view",
-  "menu.manage",
   "store.view",
   "store.manage",
   "discounts.view",
@@ -21,8 +19,6 @@ export const PERMISSION_SLUGS = [
   "customers.manage",
   "media.view",
   "media.manage",
-  "content.view",
-  "content.manage",
   "users.view",
   "users.manage",
   "roles.manage",
@@ -61,8 +57,6 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
     isSystem: true,
     permissions: [
       "dashboard.view",
-      "menu.view",
-      "menu.manage",
       "store.view",
       "store.manage",
       "discounts.view",
@@ -74,8 +68,6 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
       "customers.view",
       "media.view",
       "media.manage",
-      "content.view",
-      "content.manage",
       "branches.view",
       "activity.view",
     ],

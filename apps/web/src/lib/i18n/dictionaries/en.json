@@ -3,7 +3,6 @@
     "home": "Home",
     "menu": "Menu",
     "store": "Store",
-    "coffee": "Coffee",
     "about": "About",
     "branches": "Branches",
     "cart": "Cart",
@@ -13,22 +12,30 @@
     "register": "Sign up",
     "dashboard": "Dashboard",
     "orderNow": "Order Now",
-    "myOrders": "My Orders"
+    "myOrders": "My Orders",
+    "brands": "Brands"
   },
   "footer": {
-    "rights": "All rights reserved.",
-    "followUs": "Follow us",
-    "tagline": "Bringing people together through the rich tradition of Egyptian coffee. From our roastery in Taksem Khattab to your cup.",
-    "experienceTitle": "Experience",
-    "experienceLinks": ["Sourcing", "Brewing Guides", "Wholesale", "Careers"],
-    "careTitle": "Customer Care",
-    "careLinks": ["Contact Us", "Shipping & Returns", "Store Locator", "FAQ"],
-    "ourBranch": "Our Branch",
-    "ourBranches": "Our Branches",
-    "branchHint": "Visit us at Taksem Khattab, Mansoura for a premium coffee experience.",
-    "openDaily": "Open Daily",
-    "viewAllBranches": "View all branches",
-    "privacyPolicy": "Privacy Policy"
+    "tagline": "Original brands, fragrances and fashion — curated in one destination.",
+    "shopTitle": "Shop",
+    "shopAll": "Shop all",
+    "helpTitle": "Help",
+    "help": {
+      "contact": "Contact us",
+      "shipping": "Shipping & returns",
+      "faq": "FAQ"
+    },
+    "companyTitle": "Verella",
+    "company": {
+      "about": "About",
+      "privacy": "Privacy policy",
+      "terms": "Terms & conditions"
+    },
+    "contactTitle": "Contact",
+    "contact": {
+      "whatsapp": "WhatsApp"
+    },
+    "rights": "All rights reserved."
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -67,25 +74,84 @@
     "remove": "Remove",
     "quantity": "Quantity",
     "continueShopping": "Continue shopping",
-    "addToCart": "Add to cart"
+    "addToCart": "Add to cart",
+    "shippingNote": "Delivery is calculated at checkout based on your governorate.",
+    "emptyHint": "Discover original fragrances, musk and fashion from the brands worth knowing."
   },
   "checkout": {
     "title": "Checkout",
-    "fulfillment": "Fulfillment",
+    "fulfillment": "How would you like to receive it?",
     "delivery": "Delivery",
     "pickup": "Pickup",
-    "contactInfo": "Contact information",
+    "contactInfo": "Contact",
     "deliveryAddress": "Delivery address",
-    "paymentMethod": "Payment method",
-    "cashOnDelivery": "Cash on Delivery",
-    "instapay": "InstaPay",
-    "instapayUploadHint": "Upload a screenshot of your InstaPay transfer — we'll confirm your order once reviewed.",
+    "paymentMethod": "Payment",
     "discountCode": "Discount code",
     "placeOrder": "Place order",
     "orderSummary": "Order summary",
-    "deliveryFee": "Delivery fee",
+    "deliveryFee": "Delivery",
     "discount": "Discount",
-    "total": "Total"
+    "total": "Total",
+    "placing": "Placing your order…",
+    "subtotal": "Subtotal",
+    "deliveryPending": "Choose governorate",
+    "apply": "Apply",
+    "codeApplied": "Code “{code}” applied.",
+    "codePlaceholder": "Enter code",
+    "fixErrors": "Please check the following:",
+    "pickupWho": "Who will collect the order?",
+    "useDifferentAddress": "Use a different address",
+    "defaultAddress": "Default",
+    "saveAddress": "Save this address for next time",
+    "secureNote": "Your details are only used to prepare and deliver your order.",
+    "fields": {
+      "fullName": "Full name",
+      "phone": "Mobile number",
+      "email": "Email",
+      "emailHint": "Optional — for your order confirmation",
+      "recipientName": "Recipient name",
+      "governorate": "Governorate",
+      "city": "City",
+      "area": "Area / district",
+      "street": "Street",
+      "building": "Building",
+      "floor": "Floor",
+      "apartment": "Apartment",
+      "landmark": "Landmark (optional)"
+    },
+    "methods": {
+      "cash_on_delivery": {
+        "label": "Cash on delivery",
+        "hint": "Pay the courier when your order arrives."
+      },
+      "instapay": {
+        "label": "InstaPay",
+        "hint": "Transfer now and upload the screenshot."
+      },
+      "vodafone_cash": {
+        "label": "Vodafone Cash",
+        "hint": "Transfer now and upload the screenshot."
+      },
+      "card": {
+        "label": "Credit / debit card",
+        "hint": "Visa and Mastercard, paid securely online."
+      },
+      "apple_pay": {
+        "label": "Apple Pay",
+        "hint": "Pay with Face ID or Touch ID."
+      }
+    },
+    "wallet": {
+      "sendTo": "Send {amount} to",
+      "missing": "Transfer details aren't set up yet — message us on WhatsApp to get them.",
+      "proofTitle": "Transfer screenshot",
+      "proofHint": "We confirm your order as soon as we've verified the transfer.",
+      "upload": "Upload screenshot",
+      "uploading": "Uploading…",
+      "replace": "Replace screenshot",
+      "uploaded": "{name} uploaded",
+      "failed": "Upload failed — please try again."
+    }
   },
   "product": {
     "addToCart": "Add to Cart",
@@ -93,168 +159,170 @@
     "outOfStock": "Out of stock",
     "addedToCartTitle": "Added to your cart",
     "continueShopping": "Continue Shopping",
-    "goToCart": "Go to Cart"
+    "goToCart": "Go to Cart",
+    "from": "From",
+    "optionVolume": "Size",
+    "optionSize": "Size",
+    "optionColor": "Colour",
+    "soldOut": "Sold out",
+    "onlyLeft": "Only {n} left",
+    "inStock": "In stock",
+    "chooseOption": "Please choose an option",
+    "chooseSize": "Choose size",
+    "quickAddTitle": "Choose a size",
+    "close": "Close"
   },
   "store": {
-    "title": "Our Store",
-    "subtitle": "Every product is a story of craftsmanship, origin, and passion.",
+    "title": "The Store",
+    "subtitle": "Every original brand we carry, in one place.",
     "all": "All",
-    "empty": "No products in this category yet.",
-    "searchPlaceholder": "Search products…",
-    "searchEmpty": "No products match your search."
+    "empty": "Nothing here yet — try another world.",
+    "searchPlaceholder": "Search products, brands…",
+    "searchEmpty": "No matches. Try a brand or a product name.",
+    "results": "{n} pieces",
+    "brand": "Brand",
+    "allBrands": "All brands",
+    "sort": "Sort",
+    "sortFeatured": "Featured",
+    "sortNew": "Newest",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "inStockOnly": "In stock only",
+    "clear": "Clear",
+    "filters": "Filters",
+    "soldOut": "Sold out",
+    "sale": "Sale"
   },
   "home": {
     "hero": {
-      "kicker": "Egyptian Heritage Coffee",
-      "title": "A Taste of Egyptian Heritage in Every Cup",
-      "subtitle": "Premium coffee, deeply rooted in tradition, crafted for modern coffee lovers. Experience the rich soul of Cairo's coffee culture.",
-      "shopCoffee": "Shop Coffee",
-      "ourStory": "Our Story"
-    },
-    "categories": {
-      "title": "Shop by Category",
-      "coffeeBeansTitle": "Coffee Beans",
-      "coffeeBeansDesc": "Explore our world-class origins and signature blends.",
-      "coffeeBeansDescLong": "Explore our world-class origins and signature house blends.",
+      "kicker": "Original brands · One destination",
+      "shopNow": "Shop now",
       "explore": "Explore",
-      "exploreCollection": "Explore Collection",
-      "turkishCoffee": "Turkish Coffee",
-      "espresso": "Espresso",
-      "viewMore": "View More"
+      "scroll": "Scroll",
+      "lines": {
+        "fragrances": "Smell loud.",
+        "musk-oud": "Leave a trail.",
+        "personal-care": "Glow, daily.",
+        "women": "Wear it bold.",
+        "men": "Sharp by default.",
+        "gifts": "Give better."
+      }
     },
-    "about": {
-      "kicker": "Our Legacy",
-      "title": "Heritage in Every Single Detail",
-      "p1": "From the vibrant heart of Cairo, Verella brings the timeless coffee tradition to life with passion, craftsmanship, and authenticity. Our story began with a simple vision: to honor the complex rituals of Egyptian brewing while embracing the refinements of modern roasting.",
-      "p2": "We source only the finest beans from ethical farmers across the coffee belt, ensuring every bag tells a story of origin, resilience, and unparalleled flavor.",
-      "cta": "Discover Our Story"
+    "marquee": [
+      "Original brands",
+      "One destination",
+      "Fragrance",
+      "Fashion",
+      "Personal care",
+      "New drops weekly"
+    ],
+    "worlds": {
+      "eyebrow": "Shop by world",
+      "title": "Pick your world.",
+      "explore": "Explore",
+      "items": "items"
     },
-    "immersive": {
-      "title": "The Coffee Experience",
-      "subtitle": "More than just a drink, it's a sensory journey. We source the finest beans, roast with care, and craft each cup to deliver a rich and unforgettable experience.",
-      "stat1Label": "Ethically Sourced",
-      "stat1Sub": "Directly from the farm to our roastery.",
-      "stat2Label": "Artisan Roasted",
-      "stat2Sub": "Small batches for maximum flavor profile.",
-      "stat3Label": "Heritage Brewed",
-      "stat3Sub": "Combining old-world techniques with new technology.",
-      "viewMenu": "View Our Menu"
+    "showcase": {
+      "eyebrow": "New and loved",
+      "title": "The Edit",
+      "all": "All",
+      "viewAll": "View everything"
     },
-    "bestSellers": {
-      "title": "Best Sellers",
-      "swipeHint": "Swipe to see more →"
-    },
-    "featured": {
-      "title": "Featured Coffee",
-      "subtitle": "Handpicked blends, roasted to perfection.",
-      "viewAll": "View All"
-    },
-    "testimonials": {
-      "title": "What Our Guests Say"
-    },
-    "instagram": {
-      "title": "From Our Instagram",
-      "followUs": "Follow Us @verella.coffee"
-    },
-    "locations": {
-      "title": "Our Location",
-      "subtitle": "Experience the heritage in person. Visit our branch in the heart of Mansoura.",
-      "branchName": "Mansoura Branch",
-      "openDailyHours": "Open Daily — Morning to Late Evening",
-      "getDirections": "Get Directions"
-    },
-    "newsletter": {
-      "title": "Join Our Coffee Circle",
-      "subtitle": "Be the first to know about new blends, offers, and stories.",
-      "placeholder": "Your email address",
-      "subscribe": "Subscribe"
-    },
-    "heritage": {
-      "exploreHeritage": "Explore Our Heritage",
-      "ourStory": "Our Story",
-      "storyTitle": "From Mansoura to the World",
-      "storyP1": "Since 1920, Verella has been a beacon of Egyptian coffee culture. Our journey began in the bustling heart of Mansoura, bringing together the finest ethically sourced beans with time-honored roasting techniques, crafting a legacy of rich, aromatic blends.",
-      "storyP2": "We invite you to experience the tradition.",
-      "readFullStory": "Read Full Story",
-      "coffeeBeans": "Coffee Beans",
-      "turkishCoffee": "Turkish Coffee",
-      "espresso": "Espresso",
-      "accessories": "Accessories"
+    "manifesto": [
+      "Original brands.",
+      "One destination.",
+      "We don't create brands —",
+      "we bring them closer."
+    ],
+    "manifestoSig": "Authenticity × Variety × Value",
+    "features": [
+      {
+        "category": "fragrances",
+        "eyebrow": "The Fragrances",
+        "title": "Your signature is out there.",
+        "body": "Perfume, musk and oud from the houses worth knowing — original, sealed and ready to wear.",
+        "cta": "Shop fragrances"
+      },
+      {
+        "category": "women",
+        "eyebrow": "The Look",
+        "title": "Edited, not overloaded.",
+        "body": "Pieces picked by the Verella team to wear now and keep for later.",
+        "cta": "Shop the look"
+      }
+    ],
+    "brands": {
+      "eyebrow": "The brands",
+      "title": "Who we carry.",
+      "products": "products"
     }
   },
-  "coffeePage": {
-    "kicker": "The Bean Journey",
-    "title": "Our Coffee Collection",
-    "subtitle": "Sourced from the world's finest growing regions, each bean is selected by our master roasters for its unique character and terroir.",
-    "originsKicker": "Sourced With Care",
-    "originsTitle": "Coffee Origins",
-    "ethiopia": "Ethiopia",
-    "ethiopiaDesc": "Bright floral notes, sparkling citrus acidity, jasmine finish.",
-    "brazil": "Brazil",
-    "brazilDesc": "Chocolate body, low acidity, nutty sweetness.",
-    "colombia": "Colombia",
-    "colombiaDesc": "Balanced, caramel sweetness with a mild fruit undertone.",
-    "yemen": "Yemen",
-    "yemenDesc": "Wild, complex, wine-like with a distinctive earthy depth.",
-    "shopCoffee": "Shop Coffee"
-  },
-  "menuPage": {
-    "kicker": "Verella",
-    "title": "Our Menu",
-    "subtitle": "Every category has its own story — browse by what catches your eye.",
-    "itemSingular": "item",
-    "itemPlural": "items",
-    "footerKicker": "Can't decide?",
-    "footerTitle": "Visit Us In Person",
-    "footerBody": "Come experience the aromas, the warmth, and the heritage — in our Mansoura branch.",
-    "findBranch": "Find Our Branch"
-  },
   "aboutPage": {
-    "since": "Since 1952",
-    "title": "Our Story",
-    "subtitle": "From a single coffee cart in downtown Cairo to a beloved heritage brand.",
-    "storyP1": "Verella Coffee was born from a grandfather's passion. In 1952, Verella began roasting beans in a small cart near Al-Hussein Mosque in Islamic Cairo, serving the neighborhood's merchants, artists, and intellectuals.",
-    "storyP2": "His secret was simple: source only the best, roast with patience, and serve with pride. Three generations later, we carry that same philosophy into every bag we produce and every branch we open.",
-    "storyP3": "We source our beans directly from farmers in Ethiopia, Brazil, Colombia, and Yemen — building relationships that last decades. Each harvest is cupped, graded, and roasted in our Cairo facility before reaching your cup.",
-    "valuesTitle": "What We Stand For",
-    "value1Title": "Ethical Sourcing",
-    "value1Desc": "We partner directly with farmers who share our values of sustainability and fair trade.",
-    "value2Title": "Artisan Roasting",
-    "value2Desc": "Small-batch roasting in Cairo preserves the nuance of every origin we source.",
-    "value3Title": "Heritage First",
-    "value3Desc": "Every product design and brewing method honors centuries of Egyptian coffee culture.",
-    "value4Title": "Community",
-    "value4Desc": "Our branches are gathering places — spaces for conversation, culture, and connection.",
-    "followTitle": "Follow Our Journey",
-    "followBody": "Behind-the-scenes roasting, new blends, and life at our branch — follow along on social media."
-  },
-  "branchesPage": {
-    "ourLocation": "Our Location",
-    "ourLocations": "Our Locations",
-    "findABranch": "Find a Branch",
-    "address": "Address",
-    "hours": "Hours",
-    "openDaily": "Open Daily",
-    "getDirections": "Get Directions",
-    "whatWeOffer": "What We Offer",
-    "highlight1Title": "Specialty Coffee",
-    "highlight1Desc": "Full store of Egyptian heritage blends, Turkish coffee, and espresso drinks.",
-    "highlight2Title": "Dine In & Takeaway",
-    "highlight2Desc": "A warm, thoughtfully designed space perfect for staying in or grabbing on the go.",
-    "highlight3Title": "Free Wi-Fi",
-    "highlight3Desc": "Work, study, or simply relax in our comfortable seating areas.",
-    "highlight4Title": "Retail Corner",
-    "highlight4Desc": "Take home your favourite beans, grinders, and gift sets.",
-    "experienceKicker": "The Experience",
-    "experienceTitle": "Cairo's Heritage, In Every Branch",
-    "experienceBody": "Step inside and feel the warmth of Egyptian coffee culture. Every branch is designed to be a home away from home — rich interiors, the scent of freshly roasted beans, and the sound of quiet conversation.",
-    "tagDineIn": "Dine In",
-    "tagTakeaway": "Takeaway",
-    "tagFreeWifi": "Free Wi-Fi",
-    "tagRetailCorner": "Retail Corner",
-    "ctaTitle": "We'd Love to See You",
-    "ctaBody": "Come experience the tradition in person. No reservation needed — just follow the scent of freshly roasted coffee.",
-    "findUsOnMap": "Find Us on the Map"
+    "eyebrow": "About Verella",
+    "title": "Original brands. One destination.",
+    "intro": "Verella is a premium multi-brand destination for original imported products — fragrances, perfumes, musk and personal care, alongside women's and men's fashion. The idea is simple: bring the brands worth discovering into one place, with reliable authenticity and honest value.",
+    "not": [
+      "Not a traditional perfume shop.",
+      "Not a discount store.",
+      "Not an overpriced boutique."
+    ],
+    "is": "A curated destination to discover, compare and choose original brands with confidence.",
+    "pillarsTitle": "Three things, always together.",
+    "pillars": [
+      {
+        "title": "Original",
+        "body": "Imported, authentic products from brands you can trust."
+      },
+      {
+        "title": "Variety",
+        "body": "Many brands and categories, discovered in one place."
+      },
+      {
+        "title": "Value",
+        "body": "Competitive pricing, measured against what the product is really worth."
+      }
+    ],
+    "audienceTitle": "Who we're for.",
+    "audience": [
+      {
+        "title": "Women",
+        "items": [
+          "Perfume & musk",
+          "Personal care",
+          "Fashion",
+          "Beauty"
+        ]
+      },
+      {
+        "title": "Men",
+        "items": [
+          "Fragrance & oud",
+          "Personal care",
+          "Fashion",
+          "Grooming"
+        ]
+      },
+      {
+        "title": "Gift buyers",
+        "items": [
+          "Fragrance sets",
+          "Musk & oud",
+          "Premium gifts",
+          "Occasions"
+        ]
+      },
+      {
+        "title": "Brand seekers",
+        "items": [
+          "Known brands",
+          "Gulf & Saudi brands",
+          "New arrivals",
+          "Verella picks"
+        ]
+      }
+    ],
+    "quote": "We don't create brands. We bring them closer.",
+    "cta": "Start exploring"
   },
   "admin": {
     "brandName": "Verella",
@@ -299,5 +367,399 @@
     "active": "Active",
     "inactive": "Inactive",
     "language": "Language"
+  },
+  "order": {
+    "thanks": "Thank you — your order is in.",
+    "number": "Order {number}",
+    "payment": "Payment",
+    "deliverTo": "Delivering to",
+    "proofSubmitted": "We've received your transfer screenshot and will confirm your order shortly.",
+    "cancelled": "This order was cancelled.",
+    "questions": "Questions about your order?",
+    "whatsapp": "Message us on WhatsApp",
+    "continueShopping": "Continue shopping",
+    "steps": {
+      "pending": "Placed",
+      "confirmed": "Confirmed",
+      "preparing": "Preparing",
+      "out_for_delivery": "On its way",
+      "ready_for_pickup": "Ready for pickup",
+      "completed": "Delivered",
+      "pickedUp": "Picked up"
+    }
+  },
+  "contact": {
+    "eyebrow": "Get in touch",
+    "title": "Contact us",
+    "subtitle": "Questions about an order, a product or a brand? We're here to help.",
+    "whatsapp": "WhatsApp",
+    "whatsappHint": "Fastest reply",
+    "email": "Email",
+    "instagram": "Instagram",
+    "formTitle": "Send us a message",
+    "name": "Name",
+    "namePh": "Your name",
+    "emailLabel": "Email",
+    "emailPh": "you@example.com",
+    "subject": "Subject",
+    "subjectPh": "How can we help?",
+    "message": "Message",
+    "messagePh": "Tell us a little more…",
+    "send": "Send message",
+    "sending": "Sending…",
+    "sentTitle": "Message sent",
+    "sentBody": "Thanks for reaching out — we'll get back to you soon."
+  },
+  "meta": {
+    "tagline": "Original Brands. One Destination.",
+    "description": "Original fragrances, musk & oud, personal care and fashion from the brands worth discovering — curated in one destination, delivered across Egypt.",
+    "pages": {
+      "store": {
+        "title": "The Store",
+        "description": "Shop original fragrances, musk & oud, personal care and fashion from the brands worth discovering."
+      },
+      "about": {
+        "title": "About",
+        "description": "Verella brings original brands together in one destination — fragrance, fashion and more."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "description": "Get in touch with Verella — questions about orders, products or brands. WhatsApp, email or Instagram."
+      },
+      "faq": {
+        "title": "FAQ",
+        "description": "Answers about authenticity, ordering, payment, delivery across Egypt and returns at Verella."
+      },
+      "shipping": {
+        "title": "Shipping & Returns",
+        "description": "Delivery to all 27 Egyptian governorates, delivery fees and timelines, and Verella's 14-day return policy."
+      },
+      "privacy": {
+        "title": "Privacy Policy",
+        "description": "How Verella collects, uses and protects your personal information."
+      },
+      "terms": {
+        "title": "Terms & Conditions",
+        "description": "The terms that apply when you browse and shop at Verella."
+      },
+      "cart": {
+        "title": "Your Bag",
+        "description": "Review the items in your bag."
+      },
+      "checkout": {
+        "title": "Checkout",
+        "description": "Complete your Verella order."
+      },
+      "account": {
+        "title": "My Account",
+        "description": "Your Verella account."
+      },
+      "login": {
+        "title": "Log in",
+        "description": "Log in to your Verella account."
+      },
+      "register": {
+        "title": "Create an account",
+        "description": "Create a Verella account for faster checkout and order history."
+      },
+      "order": {
+        "title": "Order",
+        "description": "Your Verella order."
+      },
+      "productFallback": "Shop {name} at Verella — original and sealed, delivered across Egypt.",
+      "notFound": "Product not found"
+    }
+  },
+  "legal": {
+    "updated": "Last updated",
+    "questions": "Still have a question?",
+    "questionsBody": "Our team replies fastest on WhatsApp — or send us a message and we'll get back to you.",
+    "contactCta": "Contact us",
+    "onThisPage": "On this page"
+  },
+  "faqPage": {
+    "eyebrow": "Help",
+    "title": "Frequently asked questions",
+    "subtitle": "Everything about ordering, paying, delivery and returns — in one place.",
+    "groups": [
+      {
+        "title": "Products",
+        "items": [
+          {
+            "q": "Are your products original?",
+            "a": "Yes. Every product at Verella is 100% original, sourced from the brands themselves or from their authorised distributors. We never sell testers, copies or \"inspired by\" versions."
+          },
+          {
+            "q": "How do I choose a size?",
+            "a": "Many fragrances come in more than one size. Pick the size on the product page — the price, availability and code for that exact size update as you choose."
+          },
+          {
+            "q": "A product is sold out. Will it come back?",
+            "a": "Most of our range is restocked regularly. Message us on WhatsApp with the product name and we'll let you know when it's back."
+          }
+        ]
+      },
+      {
+        "title": "Ordering & payment",
+        "items": [
+          {
+            "q": "Do I need an account to order?",
+            "a": "No. You can check out as a guest with your name, phone number and address. An account just saves your addresses and keeps your order history in one place."
+          },
+          {
+            "q": "Which payment methods do you accept?",
+            "a": "Cash on delivery, InstaPay and Vodafone Cash. For InstaPay and Vodafone Cash, transfer the order total to the number shown at checkout and upload a screenshot of the transfer; we confirm your order as soon as the payment is verified."
+          },
+          {
+            "q": "How do I know my order went through?",
+            "a": "You'll see a confirmation page with your order number (it starts with VR-) straight after checkout. Keep that number — it's how we find your order quickly."
+          },
+          {
+            "q": "Can I change or cancel my order?",
+            "a": "Yes, as long as it hasn't been shipped yet. Message us on WhatsApp with your order number as soon as possible."
+          }
+        ]
+      },
+      {
+        "title": "Delivery",
+        "items": [
+          {
+            "q": "Where do you deliver?",
+            "a": "To all 27 governorates in Egypt. The delivery fee depends on your governorate and is shown at checkout before you place your order."
+          },
+          {
+            "q": "How long does delivery take?",
+            "a": "Orders are usually delivered within 2–5 business days, depending on your governorate. Orders confirmed on a Friday or public holiday are processed on the next business day."
+          },
+          {
+            "q": "How can I follow my order?",
+            "a": "If you have an account, your orders and their status are under My Account. Guests can message us on WhatsApp with their order number at any time."
+          }
+        ]
+      },
+      {
+        "title": "Returns",
+        "items": [
+          {
+            "q": "Can I return an item?",
+            "a": "Unopened items in their original sealed packaging can be returned within 14 days of delivery. For hygiene reasons, fragrances and personal care products that have been opened or used can't be returned. See Shipping & Returns for the full policy."
+          },
+          {
+            "q": "My order arrived damaged or wrong — what now?",
+            "a": "We're sorry! Send us your order number and photos on WhatsApp within 48 hours of delivery and we'll replace it or refund you at no extra cost."
+          }
+        ]
+      }
+    ]
+  },
+  "shippingPage": {
+    "eyebrow": "Help",
+    "title": "Shipping & Returns",
+    "subtitle": "Delivery across Egypt, and a simple 14-day return policy.",
+    "updated": "24 September 2026",
+    "highlights": [
+      {
+        "title": "All 27 governorates",
+        "body": "Delivered to your door, anywhere in Egypt."
+      },
+      {
+        "title": "2–5 business days",
+        "body": "Typical delivery time after your order is confirmed."
+      },
+      {
+        "title": "14-day returns",
+        "body": "On unopened items in their original packaging."
+      }
+    ],
+    "sections": [
+      {
+        "title": "Delivery areas & fees",
+        "body": [
+          "We deliver to all 27 governorates in Egypt. The delivery fee depends on the governorate you're shipping to, and you'll always see it at checkout before placing your order — there are no hidden charges at the door."
+        ]
+      },
+      {
+        "title": "Processing & delivery times",
+        "body": [
+          "Cash-on-delivery orders are prepared right away. InstaPay and Vodafone Cash orders are prepared once your transfer has been verified.",
+          "Most orders arrive within 2–5 business days of confirmation, depending on the governorate. During sales and holiday seasons delivery can take a little longer — we'll contact you if there's any delay."
+        ]
+      },
+      {
+        "title": "Receiving your order",
+        "body": [
+          "Our courier will call the phone number on your order before delivery, so please keep it reachable. For cash-on-delivery orders, have the order total ready.",
+          "Please check your parcel when it arrives. If the outer packaging is visibly damaged, you can refuse it and contact us."
+        ]
+      },
+      {
+        "title": "Returns",
+        "body": [
+          "You can return items within 14 days of delivery as long as they are unopened, unused and in their original packaging with any seals and cellophane intact. Fashion items must be unworn with their tags attached.",
+          "For hygiene reasons, fragrances, musk, oud and personal care products that have been opened, unsealed or used cannot be returned or exchanged.",
+          "To start a return, message us on WhatsApp or through the contact page with your order number and the items you'd like to return. We'll arrange collection or tell you where to send them."
+        ]
+      },
+      {
+        "title": "Damaged, faulty or incorrect items",
+        "body": [
+          "If something arrives damaged, faulty or isn't what you ordered, contact us within 48 hours of delivery with your order number and photos. We'll replace it or refund you in full, including any delivery costs."
+        ]
+      },
+      {
+        "title": "Refunds",
+        "body": [
+          "Once we receive and inspect a returned item, we'll refund the item price within 7 business days via InstaPay or Vodafone Cash. The original delivery fee isn't refundable, and return delivery is paid by the customer unless the item was damaged, faulty or incorrect."
+        ]
+      },
+      {
+        "title": "Exchanges",
+        "body": [
+          "Want a different size or product instead? Returns that meet the conditions above can be exchanged for another item of equal or higher value — just tell us when you start your return."
+        ]
+      }
+    ]
+  },
+  "privacyPage": {
+    "eyebrow": "Legal",
+    "title": "Privacy Policy",
+    "subtitle": "What we collect, why, and the choices you have.",
+    "updated": "24 September 2026",
+    "sections": [
+      {
+        "title": "Who we are",
+        "body": [
+          "This policy explains how Verella (\"we\", \"us\") handles personal information when you visit our website, create an account or place an order. We process personal data in line with applicable Egyptian law, including the Personal Data Protection Law No. 151 of 2020."
+        ]
+      },
+      {
+        "title": "Information we collect",
+        "body": [
+          "Information you give us: your name, phone number, email address, delivery addresses, the details of your orders, messages you send through our contact form, and — if you pay by InstaPay or Vodafone Cash — the transfer screenshot you upload.",
+          "Account information: if you create an account, your email address and a securely hashed password. We never store your password in readable form.",
+          "Information collected automatically: essential cookies that keep you signed in, remember your bag and your language, and — only if you accept analytics cookies — anonymous usage data such as the pages you visit and the device you use."
+        ]
+      },
+      {
+        "title": "How we use it",
+        "body": [
+          "To process, deliver and support your orders; to verify wallet payments; to reply to your messages; to keep your account secure; to prevent fraud and spam; and, with your consent, to understand how the site is used so we can improve it.",
+          "We don't sell your personal information, and we don't send marketing messages unless you've asked us to."
+        ]
+      },
+      {
+        "title": "Who we share it with",
+        "body": [
+          "Only with the service providers we need to run the store: the courier that delivers your order (name, phone and address), our hosting and image-storage providers, our email provider, and — if you accept analytics cookies — Google Analytics. Each of them may use your data only to provide their service to us.",
+          "We may also disclose information when required by law or to protect our customers and business from fraud."
+        ]
+      },
+      {
+        "title": "Cookies",
+        "body": [
+          "Essential cookies are required for the site to work (sign-in, bag, language) and can't be switched off. Analytics cookies are optional and are only set if you choose \"Accept\" in the cookie banner. You can change your choice at any time from the \"Cookie settings\" link in the footer."
+        ]
+      },
+      {
+        "title": "How long we keep it",
+        "body": [
+          "We keep order records for as long as needed for accounting, tax and warranty purposes. Account details are kept until you ask us to delete your account. Payment screenshots are kept only as long as needed to verify and reconcile the payment."
+        ]
+      },
+      {
+        "title": "Your rights",
+        "body": [
+          "You can ask to access, correct or delete your personal information, or withdraw a consent you've given. You can update most account details yourself from My Account; for anything else, contact us and we'll respond within a reasonable time."
+        ]
+      },
+      {
+        "title": "Security",
+        "body": [
+          "The site is served over an encrypted connection, passwords are hashed, and access to customer data in our dashboard is limited to staff who need it. No online service is perfectly secure, so please keep your password private."
+        ]
+      },
+      {
+        "title": "Changes & contact",
+        "body": [
+          "We may update this policy from time to time; the date at the top shows the latest version. Questions about your data? Email us at verellabrands@gmail.com or use our contact page."
+        ]
+      }
+    ]
+  },
+  "termsPage": {
+    "eyebrow": "Legal",
+    "title": "Terms & Conditions",
+    "subtitle": "The terms that apply when you shop at Verella.",
+    "updated": "24 September 2026",
+    "sections": [
+      {
+        "title": "About these terms",
+        "body": [
+          "These terms apply to your use of the Verella website and to every order placed through it. By placing an order you confirm that you have read and accept them, along with our Privacy Policy and Shipping & Returns policy."
+        ]
+      },
+      {
+        "title": "Products",
+        "body": [
+          "All products sold by Verella are original and sourced from the brands or their authorised distributors. We do our best to show products accurately, but colours and packaging may differ slightly from the photos, and brands sometimes update their packaging."
+        ]
+      },
+      {
+        "title": "Prices",
+        "body": [
+          "Prices are shown in Egyptian pounds (EGP). The delivery fee for your governorate is added at checkout and shown before you confirm. If a product is listed at an obviously incorrect price because of an error, we'll contact you before processing the order and you can cancel it at no cost."
+        ]
+      },
+      {
+        "title": "Orders",
+        "body": [
+          "Your order is an offer to buy. It is accepted when we confirm it — for InstaPay and Vodafone Cash, once your payment has been verified. We may decline or cancel an order, for example if a product is out of stock, the payment can't be verified or we suspect fraud; if you've already paid, you'll receive a full refund."
+        ]
+      },
+      {
+        "title": "Payment",
+        "body": [
+          "We accept cash on delivery, InstaPay and Vodafone Cash. For wallet payments, transfer the exact order total to the number shown at checkout and upload proof of the transfer. Orders with a transfer that can't be verified within 48 hours may be cancelled."
+        ]
+      },
+      {
+        "title": "Delivery, returns and refunds",
+        "body": [
+          "Delivery, returns, exchanges and refunds are handled as described in our Shipping & Returns policy, which forms part of these terms. Nothing in these terms affects your rights under the Egyptian Consumer Protection Law No. 181 of 2018."
+        ]
+      },
+      {
+        "title": "Your account",
+        "body": [
+          "If you create an account, keep your password confidential and let us know straight away if you think someone else has used it. You're responsible for the accuracy of the details you give us, including your delivery address and phone number."
+        ]
+      },
+      {
+        "title": "Intellectual property",
+        "body": [
+          "The Verella name, logo, V mark and the site's design and content belong to Verella. Brand names and trademarks of the products we sell belong to their respective owners."
+        ]
+      },
+      {
+        "title": "Liability",
+        "body": [
+          "We're responsible for delivering the products you order as described. We aren't liable for losses that weren't foreseeable, or for delays caused by events outside our reasonable control. Always follow the brand's instructions for using fragrance and personal care products, and do a patch test if you have sensitive skin."
+        ]
+      },
+      {
+        "title": "Governing law & contact",
+        "body": [
+          "These terms are governed by the laws of the Arab Republic of Egypt. We may update them from time to time; the version in force when you place an order applies to that order. Questions? Email verellabrands@gmail.com or message us on WhatsApp."
+        ]
+      }
+    ]
+  },
+  "cookies": {
+    "title": "Cookies at Verella",
+    "body": "We use essential cookies to run the store, and — only if you agree — analytics cookies to understand how the site is used.",
+    "accept": "Accept",
+    "decline": "Essential only",
+    "learnMore": "Privacy policy",
+    "settings": "Cookie settings"
   }
 }

@@ -44,7 +44,7 @@ export function LanguageSwitcher({ locale, className }: { locale: Locale; classN
         disabled={pending}
         aria-current={locale === "en"}
         aria-label="Switch to English"
-        className={`${textClass} disabled:opacity-50 ${locale === "en" ? "opacity-100" : "opacity-50 hover:opacity-80"}`}
+        className={`${textClass} disabled:opacity-50 ${locale === "en" ? "opacity-100" : "opacity-70 hover:opacity-100"}`}
       >
         EN
       </button>
@@ -57,7 +57,7 @@ export function LanguageSwitcher({ locale, className }: { locale: Locale; classN
         disabled={pending}
         aria-current={locale === "ar"}
         aria-label="التبديل إلى العربية"
-        className={`${textClass} disabled:opacity-50 ${locale === "ar" ? "opacity-100" : "opacity-50 hover:opacity-80"}`}
+        className={`${textClass} disabled:opacity-50 ${locale === "ar" ? "opacity-100" : "opacity-70 hover:opacity-100"}`}
       >
         AR
       </button>

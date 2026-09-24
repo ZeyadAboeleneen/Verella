@@ -1,47 +1,31 @@
 import type { MetadataRoute } from "next";
-import { getStoreProducts } from "@/lib/store/queries";
 import { DEFAULT_LOCALE } from "@verella/core";
+import { getStoreProducts } from "@/lib/store/queries";
+import { languageAlternates, localizedPath, siteUrl } from "@/lib/seo";
 
-function siteUrl() {
-  return (process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
-}
-
-const STATIC_ROUTES = [
-  "",
-  "/about",
-  "/branches",
-  "/coffee",
-  "/menu",
-  "/store",
-  "/faq",
-  "/contact",
-  "/shipping-returns",
-  "/privacy",
-  "/careers",
-  "/sourcing",
-  "/brewing-guides",
-  "/wholesale",
-];
+const STATIC_ROUTES = ["/", "/about", "/store", "/faq", "/contact", "/shipping-returns", "/privacy", "/terms"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const products = await getStoreProducts("en");
+  // A DB outage shouldn't take the sitemap down with it — fall back to the static pages.
+  const products = await getStoreProducts("en").catch(() => []);
 
-  // Every route now lives behind a visible /en or /ar prefix (see proxy.ts) —
-  // the bare paths below 307-redirect rather than serving content directly,
-  // so the sitemap must list the canonical prefixed URL search engines
-  // should actually index.
-  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((path) => ({
-    url: `${base}/${DEFAULT_LOCALE}${path}`,
-    changeFrequency: path === "" ? "daily" : "weekly",
-    priority: path === "" ? 1 : 0.7,
-  }));
+  // Every route lives behind a visible /en or /ar prefix (see proxy.ts); the
+  // bare paths redirect, so list the canonical English URL and point search
+  // engines at the Arabic twin through hreflang alternates.
+  const entry = (path: string, priority: number, changeFrequency: "daily" | "weekly" | "monthly") => ({
+    url: `${base}${localizedPath(DEFAULT_LOCALE, path)}`,
+    changeFrequency,
+    priority,
+    alternates: {
+      languages: Object.fromEntries(Object.entries(languageAlternates(path)).map(([l, p]) => [l, `${base}${p}`])),
+    },
+  });
 
-  const productEntries: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${base}/${DEFAULT_LOCALE}/store/${p.slug}`,
-    changeFrequency: "weekly",
-    priority: 0.5,
-  }));
-
-  return [...staticEntries, ...productEntries];
+  return [
+    ...STATIC_ROUTES.map((path) =>
+      entry(path, path === "/" ? 1 : path === "/store" ? 0.9 : 0.5, path === "/" || path === "/store" ? "daily" : "monthly"),
+    ),
+    ...products.map((p) => entry(`/store/${p.slug}`, 0.7, "weekly")),
+  ];
 }

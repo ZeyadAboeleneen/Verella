@@ -1,24 +1,35 @@
+import type { Metadata } from "next";
+import { privateMetadata } from "@/lib/seo";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db, paymentMethods, users } from "@verella/db";
 import { getCart } from "@/lib/cart/queries";
 import { getSessionUser } from "@/lib/auth/rbac";
 import { getDict, getLocale } from "@/lib/i18n";
-import { getGovernorateFees, getInstapayDetails, isGuestCheckoutEnabled } from "@/lib/settings/queries";
+import { getFulfillmentTypes, getWalletDetails, isGuestCheckoutEnabled } from "@/lib/settings/queries";
+import { PAYMENT_METHOD_CODES, type PaymentMethodCode } from "@verella/core";
 import { getCustomerAddresses } from "@/lib/addresses/queries";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDict();
+  return privateMetadata(dict.meta.pages.checkout.title);
+}
+
 export default async function CheckoutPage() {
   const locale = await getLocale();
-  const [cart, user, methods, dict, governorateFees, instapayDetails, guestCheckoutEnabled] = await Promise.all([
+  const [cart, user, methods, dict, wallets, guestCheckoutEnabled, fulfillmentTypes] = await Promise.all([
     getCart(locale),
     getSessionUser(),
-    db.select().from(paymentMethods).where(eq(paymentMethods.isActive, true)),
+    db.select().from(paymentMethods).where(eq(paymentMethods.isActive, true)).orderBy(asc(paymentMethods.sortOrder)),
     getDict(),
-    getGovernorateFees(),
-    getInstapayDetails(),
+    getWalletDetails(),
     isGuestCheckoutEnabled(),
+    getFulfillmentTypes(),
   ]);
+  const activeMethods = methods
+    .map((m) => m.code)
+    .filter((code): code is PaymentMethodCode => (PAYMENT_METHOD_CODES as readonly string[]).includes(code));
 
   if (cart.lines.length === 0) redirect("/cart");
   if (!user && !guestCheckoutEnabled) redirect("/login?callbackUrl=/checkout");
@@ -35,19 +46,19 @@ export default async function CheckoutPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-12 md:px-16 md:py-16">
-      <h1 className="mb-8 font-display text-3xl font-bold text-on-surface">{dict.checkout.title}</h1>
+    <div className="mx-auto max-w-6xl px-5 py-12 md:px-16 md:py-16">
+      <h1 className="mb-8 font-display text-3xl font-medium text-charcoal md:text-4xl">{dict.checkout.title}</h1>
       <CheckoutForm
         isLoggedIn={!!user}
         accountContact={accountContact}
         savedAddresses={savedAddresses}
-        instapayDetails={instapayDetails}
-        paymentMethods={methods.map((m) => ({ code: m.code, name: m.name }))}
+        wallets={wallets}
+        paymentMethods={activeMethods}
+        fulfillmentTypes={fulfillmentTypes}
         dict={dict}
         locale={locale}
         cartLines={cart.lines}
         initialSubtotalCents={cart.subtotalCents}
-        governorates={governorateFees.map((g) => g.name)}
       />
     </div>
   );

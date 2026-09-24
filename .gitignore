@@ -47,3 +47,6 @@ next-env.d.ts
 # docker volumes (bind-mounted local data, not app code)
 docker/mysql-data/
 docker/minio-data/
+
+# database dumps written by the compose "backup" service
+docker/backups/

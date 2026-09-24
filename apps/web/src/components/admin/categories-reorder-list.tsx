@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import NextImage from "next/image";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";

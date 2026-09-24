@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db, settings } from "@verella/db";
 import type { GovernorateFee } from "./actions";
+import { BRAND_CONTACT } from "@/lib/brand";
 
 // Settings are read constantly (site name alone is fetched by the root
 // layout's generateMetadata on EVERY page navigation site-wide) but change
@@ -13,6 +14,8 @@ import type { GovernorateFee } from "./actions";
 // (see store/queries.ts) — admin Settings saves already call revalidatePath,
 // this just bounds how stale the underlying read can be in between.
 const SETTINGS_REVALIDATE_SECONDS = 300;
+/** Busted by updateTag() when Admin → Settings saves, so changes show up immediately. */
+export const SETTINGS_CACHE_TAG = "settings";
 
 async function getSetting(group: string, key: string): Promise<unknown> {
   const [row] = await db
@@ -33,18 +36,20 @@ async function getGovernorateFeesImpl(): Promise<GovernorateFee[]> {
 }
 export const getGovernorateFees = unstable_cache(getGovernorateFeesImpl, ["settings-governorate-fees"], {
   revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
 });
 
 /** Where contact-form messages and admin alerts (new orders, etc.) are sent. */
 async function getNotificationEmailImpl(): Promise<string> {
   const value = await getSetting("notifications", "email").catch(() => null);
-  return typeof value === "string" && value.trim() ? value.trim() : "zeyad5zoks@gmail.com";
+  return typeof value === "string" && value.trim() ? value.trim() : BRAND_CONTACT.email.address;
 }
 export const getNotificationEmail = unstable_cache(getNotificationEmailImpl, ["settings-notification-email"], {
   revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
 });
 
-const DEFAULT_SITE_NAME = { en: "Verella", ar: "Verella" };
+const DEFAULT_SITE_NAME = { en: "Verella", ar: "ڤيريلا" };
 
 /** Site name configured in Admin → Settings → General. */
 async function getSiteNameImpl(): Promise<{ en: string; ar: string }> {
@@ -56,6 +61,7 @@ async function getSiteNameImpl(): Promise<{ en: string; ar: string }> {
 }
 export const getSiteName = unstable_cache(getSiteNameImpl, ["settings-site-name"], {
   revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
 });
 
 /** Default currency configured in Admin → Settings → General — used for new store products. */
@@ -65,6 +71,7 @@ async function getSiteCurrencyImpl(): Promise<string> {
 }
 export const getSiteCurrency = unstable_cache(getSiteCurrencyImpl, ["settings-site-currency"], {
   revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
 });
 
 /** Whether guests may check out without an account (Admin → Settings → General). */
@@ -74,19 +81,44 @@ async function isGuestCheckoutEnabledImpl(): Promise<boolean> {
 }
 export const isGuestCheckoutEnabled = unstable_cache(isGuestCheckoutEnabledImpl, ["settings-guest-checkout-enabled"], {
   revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
 });
 
-/** InstaPay account to display at checkout so customers know where to send the payment. */
-async function getInstapayDetailsImpl(): Promise<{ number: string; name: string }> {
-  const [number, name] = await Promise.all([
-    getSetting("checkout", "instapay_number").catch(() => null),
-    getSetting("checkout", "instapay_name").catch(() => null),
-  ]);
+export interface WalletAccount {
+  number: string;
+  name: string;
+}
+export interface WalletDetails {
+  instapay: WalletAccount;
+  vodafoneCash: WalletAccount;
+}
+
+const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+
+/** Where customers send InstaPay / Vodafone Cash transfers (Admin → Settings → Payments). */
+async function getWalletDetailsImpl(): Promise<WalletDetails> {
+  const [ipNumber, ipName, vcNumber, vcName] = await Promise.all(
+    ["instapay_number", "instapay_name", "vodafone_cash_number", "vodafone_cash_name"].map((key) =>
+      getSetting("checkout", key).catch(() => null),
+    ),
+  );
   return {
-    number: typeof number === "string" ? number.trim() : "",
-    name: typeof name === "string" ? name.trim() : "",
+    instapay: { number: text(ipNumber), name: text(ipName) },
+    vodafoneCash: { number: text(vcNumber), name: text(vcName) },
   };
 }
-export const getInstapayDetails = unstable_cache(getInstapayDetailsImpl, ["settings-instapay-details"], {
+export const getWalletDetails = unstable_cache(getWalletDetailsImpl, ["settings-wallet-details"], {
   revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
+});
+
+/** Fulfilment options offered at checkout. Delivery-only unless pickup is switched on. */
+async function getFulfillmentTypesImpl(): Promise<("delivery" | "pickup")[]> {
+  const value = await getSetting("checkout", "fulfillment_types").catch(() => null);
+  const types = Array.isArray(value) ? value.filter((t): t is "delivery" | "pickup" => t === "delivery" || t === "pickup") : [];
+  return types.length > 0 ? types : ["delivery"];
+}
+export const getFulfillmentTypes = unstable_cache(getFulfillmentTypesImpl, ["settings-fulfillment-types"], {
+  revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
 });

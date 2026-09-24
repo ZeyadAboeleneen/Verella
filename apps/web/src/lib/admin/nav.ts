@@ -52,8 +52,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: "Catalog",
     items: [
-      { label: "Menu", href: "/admin/menu", icon: "Coffee", permission: "menu.view" },
-      { label: "Store", href: "/admin/store", icon: "Store", permission: "store.view" },
+      { label: "Products", href: "/admin/store/products", icon: "Package", permission: "store.view" },
+      { label: "Categories", href: "/admin/store", icon: "LayoutGrid", permission: "store.view" },
       { label: "Discounts", href: "/admin/discounts", icon: "Percent", permission: "discounts.view" },
     ],
   },
@@ -66,10 +66,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
-    label: "Content",
+    label: "Library",
     items: [
-      { label: "Home Page", href: "/admin/content", icon: "Home", permission: "content.view" },
-      { label: "About Page", href: "/admin/about", icon: "Info", permission: "content.view" },
       { label: "Media Library", href: "/admin/media", icon: "Image", permission: "media.view" },
     ],
   },
@@ -78,7 +76,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { label: "Users & Roles", href: "/admin/users", icon: "ShieldCheck", permission: "users.view" },
       { label: "Roles", href: "/admin/roles", icon: "KeyRound", permission: "roles.manage" },
-      { label: "Branches", href: "/admin/branches", icon: "MapPin", permission: "branches.view" },
       { label: "Settings", href: "/admin/settings", icon: "Settings", permission: "settings.manage" },
       { label: "Activity Logs", href: "/admin/activity", icon: "History", permission: "activity.view" },
       // Every dashboard user (any role) can manage their own account.

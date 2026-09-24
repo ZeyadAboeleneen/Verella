@@ -1,18 +1,24 @@
 name: verella
 
+# Production stack: MySQL + the Next.js app + Caddy (automatic HTTPS).
+# Usage (from this folder, with ../.env filled in — see docs/SETUP.md):
+#   docker compose up -d --build
+#   docker compose run --rm migrator      # first deploy, and after schema changes
+
 services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-verella}
       MYSQL_USER: ${MYSQL_USER:-verella}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     volumes:
       - mysql-data:/var/lib/mysql
     ports:
-      - "127.0.0.1:3306:3306" # bind to localhost only; POS/ERP on the same host or VPN can still reach it
+      - "127.0.0.1:3306:3306" # localhost only — never exposed to the internet
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
@@ -30,8 +36,8 @@ services:
         condition: service_healthy
     env_file:
       - ../.env
-    ports:
-      - "127.0.0.1:3000:3000" # only nginx talks to this directly
+    expose:
+      - "3000" # reachable by Caddy on the compose network only
 
   migrator:
     build:
@@ -43,18 +49,53 @@ services:
         condition: service_healthy
     env_file:
       - ../.env
+    environment:
+      # Production gets categories, roles and settings — no demo products.
+      SEED_DEMO_CATALOG: ${SEED_DEMO_CATALOG:-false}
     profiles: ["tools"] # run on demand: docker compose run --rm migrator
 
-  nginx:
-    image: nginx:alpine
+  # Nightly gzipped dump into docker/backups/, 14 days kept. This protects
+  # against mistakes, not against losing the server — copy the folder
+  # off-site too (see docs/SETUP.md).
+  backup:
+    image: mysql:8.4
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_PWD: ${MYSQL_ROOT_PASSWORD}
+      DB: ${MYSQL_DATABASE:-verella}
+    volumes:
+      - ./backups:/backups
+    entrypoint:
+      - sh
+      - -c
+      - |
+        while true; do
+          mysqldump -h mysql -u root --single-transaction --routines --no-tablespaces "$$DB" | gzip > "/backups/$$DB-$$(date +%F).sql.gz"
+          find /backups -name '*.sql.gz' -mtime +14 -delete
+          sleep 86400
+        done
+
+  caddy:
+    image: caddy:2-alpine
     restart: unless-stopped
     depends_on:
       - web
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env, e.g. verella.com}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env (Let's Encrypt expiry notices)}
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
     ports:
       - "80:80"
-      # - "443:443" # add once TLS certs are provisioned — see docs/SETUP.md
+      - "443:443"
+      - "443:443/udp" # HTTP/3
 
 volumes:
   mysql-data:
+  caddy-data: # certificates — keep this volume
+  caddy-config:

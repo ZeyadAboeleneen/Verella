@@ -24,9 +24,15 @@ function cleanupIfDue() {
 
 export async function getClientIp(): Promise<string> {
   const h = await headers();
+  // The reverse proxy (docker/Caddyfile) sets these. X-Real-IP first; failing
+  // that, the LAST X-Forwarded-For hop — the one our proxy appended. The first
+  // hop is whatever the client claimed, so keying on it would let a bot dodge
+  // every limit by sending a fresh fake IP per request.
+  const realIp = h.get("x-real-ip");
+  if (realIp) return realIp.trim();
   const forwarded = h.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]!.trim();
-  return h.get("x-real-ip") ?? "unknown";
+  if (forwarded) return forwarded.split(",").at(-1)!.trim();
+  return "unknown";
 }
 
 /**

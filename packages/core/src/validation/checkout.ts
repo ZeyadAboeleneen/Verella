@@ -10,10 +10,20 @@ export type GuestContactInput = z.infer<typeof guestContactSchema>;
 
 export const cartItemInputSchema = z.object({
   storeProductId: z.number().int().positive(),
+  /** Required when the product sells in variants; omitted for simple products. */
+  variantId: z.number().int().positive().optional(),
   quantity: z.coerce.number().int().min(1).max(50),
   notes: z.string().max(255).optional(),
 });
 export type CartItemInput = z.infer<typeof cartItemInputSchema>;
+
+export const PAYMENT_METHOD_CODES = ["cash_on_delivery", "instapay", "vodafone_cash", "card", "apple_pay"] as const;
+export type PaymentMethodCode = (typeof PAYMENT_METHOD_CODES)[number];
+
+/** Manual transfers: the customer pays outside the site and uploads a screenshot for admin review. */
+export const WALLET_PAYMENT_METHODS: readonly PaymentMethodCode[] = ["instapay", "vodafone_cash"];
+/** Paid through the online payment gateway. */
+export const GATEWAY_PAYMENT_METHODS: readonly PaymentMethodCode[] = ["card", "apple_pay"];
 
 export const checkoutSchema = z
   .object({
@@ -21,7 +31,7 @@ export const checkoutSchema = z
     addressId: z.number().int().positive().optional(),
     newAddress: addressSchema.optional(),
     guestContact: guestContactSchema.optional(),
-    paymentMethodCode: z.enum(["cash_on_delivery", "instapay"]),
+    paymentMethodCode: z.enum(PAYMENT_METHOD_CODES),
     discountCode: z.string().max(50).optional(),
     paymentProofMediaId: z.number().int().positive().optional(),
   })
@@ -29,8 +39,8 @@ export const checkoutSchema = z
     message: "An address is required for delivery orders",
     path: ["addressId"],
   })
-  .refine((d) => d.paymentMethodCode !== "instapay" || d.paymentProofMediaId, {
-    message: "Please upload your InstaPay payment screenshot.",
+  .refine((d) => !WALLET_PAYMENT_METHODS.includes(d.paymentMethodCode) || d.paymentProofMediaId, {
+    message: "Please upload your payment screenshot.",
     path: ["paymentProofMediaId"],
   });
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

@@ -1,15 +1,20 @@
 "use client";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "@/components/LocaleLink";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, ShoppingCart, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { ChevronDown, Menu, ShoppingBag, X } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AddedToCartDialog } from "@/components/AddedToCartDialog";
 import { subscribeAddedToCart, type AddedToCartPayload } from "@/lib/cart/added-to-cart-bus";
 import { stripLocalePrefix } from "@/lib/i18n/client";
+import { AnimatedLockup } from "@/components/brand/AnimatedLockup";
+import { VMark } from "@/components/brand/Logo";
+import { EASE_OUT } from "@/components/motion/Reveal";
 import type { Dictionary, Locale } from "@/lib/i18n";
+import type { StoreCategoryView } from "@/lib/store/queries";
 
 interface NavUser {
   name?: string | null;
@@ -18,151 +23,83 @@ interface NavUser {
 }
 
 function CartBadge({ count }: { count: number }) {
-  if (count <= 0) return null;
   return (
-    <span className="absolute top-0.5 end-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#57392D] px-1 text-[10px] font-bold text-white">
-      {count > 99 ? "99+" : count}
-    </span>
-  );
-}
-
-/**
- * Logo + brand name lockup, always in that fixed left-to-right order (icon
- * first, name second) regardless of page direction — see BrandMark's caller
- * for why this is wrapped in dir="ltr".
- *
- * Both assets are the official brand SVGs (Icon.svg / Name Arabic.svg),
- * cropped only to trim the large empty margin baked into their source export
- * (a print/presentation canvas) — every path, mask, and color inside is
- * untouched, so the complete mark and complete Arabic wordmark always render
- * in full, never simplified or partially cropped.
- *
- * The name itself DOES flip to match the active language: the Arabic wordmark
- * isn't a translated label, it's the brand's actual Arabic name, so it should
- * render (as the official artwork, not styled text) when the site is in
- * Arabic — only the icon+name ORDER stays fixed for consistent brand
- * recognition, not the name's own script/direction.
- */
-function BrandMark({ locale, height }: { locale: Locale; height: number }) {
-  // Intrinsic aspect ratios of the crisp brand assets — height is the only
-  // thing callers choose; width follows so neither mark ever stretches.
-  const iconWidth = Math.round(height * (989 / 930));
-  const wordmarkWidth = Math.round(height * (551 / 212));
-
-  return (
-    <Link href="/" className="flex items-center gap-2.5 md:gap-3" aria-label="Verella — home">
-      <span className="relative shrink-0 flex items-center justify-center" style={{ width: iconWidth, height }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/brand/logo-icon-crisp.png"
-          alt="Verella"
-          width={iconWidth * 2}
-          height={height * 2}
-          className="h-full w-full object-contain"
-        />
-      </span>
-      {locale === "ar" ? (
-        <span className="relative shrink-0 flex items-center justify-center" style={{ width: wordmarkWidth, height }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/brand/wordmark-ar-crisp.png"
-            alt="Verella"
-            width={wordmarkWidth * 2}
-            height={height * 2}
-            className="h-full w-full object-contain"
-          />
-        </span>
-      ) : (
-        <span
-          className="font-[family-name:var(--font-plus-jakarta)] font-bold text-[#57392D] whitespace-nowrap"
-          style={{ fontSize: Math.max(16, Math.round(height * 0.44)) }}
+    <AnimatePresence>
+      {count > 0 && (
+        <motion.span
+          key={count}
+          className="absolute -end-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-champagne px-1 text-[10px] font-medium text-charcoal"
+          initial={{ scale: 0.3 }}
+          animate={{ scale: 1 }}
+          exit={{ scale: 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 20 }}
         >
-          Verella
-        </span>
+          {count > 99 ? "99+" : count}
+        </motion.span>
       )}
-    </Link>
+    </AnimatePresence>
   );
 }
+
+const linkClass = "relative whitespace-nowrap text-[11px] font-medium uppercase tracking-[0.25em] transition-opacity hover:opacity-60";
 
 export default function Navbar({
   dict,
   locale,
   user,
   cartCount,
+  categories = [],
 }: {
   dict: Dictionary;
   locale: Locale;
   user: NavUser | null;
   cartCount: number;
+  categories?: StoreCategoryView[];
 }) {
   const pathname = stripLocalePrefix(usePathname());
+  const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
+  const [preview, setPreview] = useState(0);
   const [addedToCart, setAddedToCart] = useState<AddedToCartPayload | null>(null);
 
   useEffect(() => subscribeAddedToCart(setAddedToCart), []);
 
-  const addedToCartDialog = (
-    <AddedToCartDialog
-      open={!!addedToCart}
-      onClose={() => setAddedToCart(null)}
-      productName={addedToCart?.name}
-      productImage={addedToCart?.image}
-      productMeta={addedToCart?.meta}
-      locale={locale}
-      labels={{
-        title: dict.product.addedToCartTitle,
-        continueShopping: dict.product.continueShopping,
-        goToCart: dict.product.goToCart,
-      }}
-    />
-  );
-
-  const links = [
-    { href: "/", label: dict.nav.home },
-    { href: "/menu", label: dict.nav.menu },
-    { href: "/store", label: dict.nav.store },
-    { href: "/coffee", label: dict.nav.coffee },
-    { href: "/about", label: dict.nav.about },
-    { href: "/branches", label: dict.nav.branches },
-  ];
-
   useEffect(() => {
     let lastY = window.scrollY;
-    const handleScroll = () => {
+    const onScroll = () => {
       const y = window.scrollY;
-      setScrolled(y > 20);
-      // Hide when scrolling down past the header, reveal on any scroll up.
-      // The small delta threshold avoids flickering from momentum jitter.
-      if (y < 80) {
-        setHidden(false);
-      } else if (y - lastY > 6) {
-        setHidden(true);
-      } else if (lastY - y > 6) {
-        setHidden(false);
-      }
+      setScrolled(y > 40);
+      setPastHero(y > window.innerHeight * 0.75);
+      if (y < 120) setHidden(false);
+      else if (y - lastY > 6) setHidden(true);
+      else if (lastY - y > 6) setHidden(false);
       lastY = y;
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Sticky elements further down the page (e.g. the menu's section nav) dock
-  // against the header via this variable instead of a hard-coded offset.
+  // Close any open menu on navigation (adjusted during render, not in an effect).
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setNavOpen(false);
+    setShopOpen(false);
+  }
+
+  // Sticky elements further down dock against the header via this variable.
   const navRef = useRef<HTMLElement>(null);
-  // The "Added to cart" toast is anchored to the cart icon in this header, so
-  // it needs the header on screen to anchor to — force it visible for as
-  // long as the toast is up, even if the shopper had scrolled it away, and
-  // let it resume normal scroll-hide behavior the moment the toast closes.
-  const navVisible = !hidden || navOpen || !!addedToCart;
+  const navVisible = !hidden || navOpen || shopOpen || !!addedToCart;
   useEffect(() => {
-    const height = navVisible ? navRef.current?.offsetHeight ?? 60 : 0;
+    const height = navVisible ? (navRef.current?.offsetHeight ?? 72) : 0;
     document.documentElement.style.setProperty("--nav-offset", `${height}px`);
   }, [navVisible, scrolled]);
 
-  // Lock page scroll while the mobile drawer is open.
   useEffect(() => {
     if (!navOpen) return;
     const prev = document.body.style.overflow;
@@ -172,202 +109,208 @@ export default function Navbar({
     };
   }, [navOpen]);
 
-  const toggleNav = () => setNavOpen((prev) => !prev);
-  const closeNav = () => setNavOpen(false);
-
-  const navBg = navOpen
-    ? "bg-[#F5F5DC] border-b border-[#e8d5bc]/60"
-    : scrolled
-    ? "bg-[#F5F5DC]/85 backdrop-blur-md shadow-sm border-b border-[#e8d5bc]/40"
-    : "bg-[#F5F5DC]/95 border-b border-[#e8d5bc]/10";
-
-  const navPy = scrolled ? "py-1 md:py-1.5" : "py-2 md:py-2.5";
-  // Any granted admin permission is enough to show the link — dashboard.view
-  // specifically only gates the KPI overview page, not dashboard access as a
-  // whole (see proxy.ts and admin/layout.tsx, which use the same rule).
+  // Over the home hero the bar is transparent with ivory type; everywhere else (or once scrolled) it's solid.
+  const overlay = isHome && !pastHero && !navOpen && !shopOpen;
+  const tone = overlay ? "text-ivory" : "text-charcoal";
   const canAccessDashboard = !!user && user.permissions.length > 0;
+  const links = [
+    { href: "/store", label: dict.nav.store },
+    { href: "/about", label: dict.nav.about },
+  ];
+
+  const addedToCartDialog = (
+    <AddedToCartDialog
+      open={!!addedToCart}
+      onClose={() => setAddedToCart(null)}
+      productName={addedToCart?.name}
+      productImage={addedToCart?.image}
+      productMeta={addedToCart?.meta}
+      locale={locale}
+      labels={{ title: dict.product.addedToCartTitle, continueShopping: dict.product.continueShopping, goToCart: dict.product.goToCart }}
+    />
+  );
+
+  const cartButton = (
+    <div className="relative">
+      <Link href="/cart" aria-label={dict.nav.cart} className="relative flex h-10 w-10 items-center justify-center transition-opacity hover:opacity-60">
+        <ShoppingBag size={19} strokeWidth={1.6} />
+        <CartBadge count={cartCount} />
+      </Link>
+      {addedToCartDialog}
+    </div>
+  );
 
   return (
     <nav
       ref={navRef}
-      className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${navBg} ${
-        navVisible ? "translate-y-0" : "-translate-y-full"
-      }`}
+      className={`sticky inset-x-0 top-0 z-50 transition-[transform,background-color,border-color] duration-500 ease-out ${
+        overlay ? "border-b border-transparent bg-transparent" : "border-b border-charcoal/10 bg-ivory/90 backdrop-blur-xl"
+      } ${navVisible ? "translate-y-0" : "-translate-y-full"} ${tone}`}
+      onMouseLeave={() => setShopOpen(false)}
     >
-      {/* ── Top bar ── */}
-      <div className={`px-4 md:px-16 max-w-[1280px] mx-auto w-full transition-all duration-300 ease-in-out ${navPy}`}>
-
-        {/* Mobile row: hamburger | logo+name | bag. Locked dir="ltr" so the
-            hamburger/logo/cart trio keeps the same visual order in Arabic —
-            only the brand name's own text flips to the Arabic wordmark. */}
-        <div className="flex items-center justify-between gap-2 lg:hidden" dir="ltr">
-          {/* Hamburger */}
+      <div className={`mx-auto grid max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center px-4 transition-[padding] duration-500 md:px-10 ${scrolled ? "py-3" : "py-5"}`} dir="ltr">
+        {/* Left */}
+        <div className="flex items-center gap-7">
           <button
             type="button"
-            onClick={toggleNav}
+            onClick={() => setNavOpen((v) => !v)}
             aria-label={navOpen ? "Close menu" : "Open menu"}
             aria-expanded={navOpen}
-            className="w-11 h-11 -ms-1.5 flex items-center justify-center text-[#000000] active:text-[#57392D] transition-colors shrink-0"
+            className="-ms-2 flex h-10 w-10 items-center justify-center lg:hidden"
           >
-            {navOpen ? <X size={24} strokeWidth={2} /> : <Menu size={24} strokeWidth={2} />}
+            {navOpen ? <X size={22} strokeWidth={1.6} /> : <Menu size={22} strokeWidth={1.6} />}
           </button>
-
-          <div className="min-w-0" onClick={closeNav}>
-            <BrandMark locale={locale} height={42} />
-          </div>
-
-          {/* Shopping bag */}
-          <div className="relative -me-1.5 shrink-0">
-            <Link
-              href="/cart"
-              aria-label={dict.nav.cart}
-              className="relative w-11 h-11 flex items-center justify-center text-[#000000] active:text-[#57392D] transition-colors"
+          <div className="hidden items-center gap-8 lg:flex">
+            <button
+              type="button"
+              className={`${linkClass} flex items-center gap-1.5`}
+              onMouseEnter={() => setShopOpen(true)}
+              onClick={() => setShopOpen((v) => !v)}
+              aria-expanded={shopOpen}
             >
-              <ShoppingCart size={22} strokeWidth={2} />
-              <CartBadge count={cartCount} />
-            </Link>
-            {addedToCartDialog}
+              {dict.nav.store}
+              <ChevronDown size={12} className={`transition-transform duration-300 ${shopOpen ? "rotate-180" : ""}`} />
+            </button>
+            {links.slice(1).map(({ href, label }) => (
+              <Link key={href} href={href} className={linkClass} onMouseEnter={() => setShopOpen(false)}>
+                {label}
+                {pathname === href && <motion.span layoutId="nav-active" className="absolute -bottom-1.5 inset-x-0 h-px bg-current" />}
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Desktop row: brand (logo+name) far left, nav+language+actions far
-            right. Locked dir="ltr" so this macro layout never mirrors in
-            Arabic — only the brand name text and nav labels themselves
-            change language; icon/nav/cart position stays put for consistent
-            brand recognition either way. */}
-        <div className="hidden lg:flex items-center justify-between gap-6" dir="ltr">
-          {/* Left: logo + name */}
-          <div className="shrink-0">
-            <BrandMark locale={locale} height={52} />
-          </div>
+        {/* Centre: the living logo */}
+        <Link href="/" aria-label="Verella — home" className="flex justify-center" onMouseEnter={() => setShopOpen(false)}>
+          <AnimatedLockup height={scrolled ? 26 : 34} compact={scrolled && !navOpen} className="text-current" />
+        </Link>
 
-          {/* Right: nav links, language switcher beside them, then account/cart/CTA */}
-          <div className="flex items-center gap-5 xl:gap-7 min-w-0">
-            <div className="flex items-center gap-5 xl:gap-7">
-              {links.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`whitespace-nowrap text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${
-                    pathname === href
-                      ? "text-[#57392D] border-b-2 border-[#57392D] pb-1"
-                      : "text-[#000000] hover:text-[#57392D]"
-                  }`}
-                >
-                  {label}
+        {/* Right */}
+        <div className="flex items-center justify-end gap-5 md:gap-7" onMouseEnter={() => setShopOpen(false)}>
+          <LanguageSwitcher locale={locale} className={`${linkClass} hidden md:inline-flex`} />
+          {user ? (
+            <div className="hidden items-center gap-6 lg:flex">
+              {canAccessDashboard && (
+                <Link href="/admin" className={linkClass}>
+                  {dict.nav.dashboard}
                 </Link>
-              ))}
-            </div>
-
-            <LanguageSwitcher locale={locale} className="shrink-0 whitespace-nowrap text-[#000000] hover:text-[#57392D] text-xs font-semibold uppercase tracking-widest transition-colors" />
-
-            <div className="h-4 w-px shrink-0 bg-[#e8d5bc]" aria-hidden="true" />
-
-            {user ? (
-              <div className="flex items-center gap-3 xl:gap-4">
-                {canAccessDashboard && (
-                  <Link href="/admin" className="shrink-0 whitespace-nowrap text-xs font-semibold uppercase tracking-widest text-[#000000] hover:text-[#57392D]">
-                    {dict.nav.dashboard}
-                  </Link>
-                )}
-                <Link
-                  href="/account"
-                  className="shrink-0 max-w-[9rem] truncate text-xs font-semibold uppercase tracking-widest text-[#000000] hover:text-[#57392D]"
-                >
-                  {dict.nav.account}
-                </Link>
-                <form action={logoutAction} className="shrink-0">
-                  <button type="submit" className="whitespace-nowrap text-xs font-semibold uppercase tracking-widest text-[#000000] hover:text-[#57392D]">
-                    {dict.nav.logout}
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <Link href="/login" className="shrink-0 whitespace-nowrap text-xs font-semibold uppercase tracking-widest text-[#000000] hover:text-[#57392D]">
-                {dict.nav.login}
+              )}
+              <Link href="/account" className={linkClass}>
+                {dict.nav.account}
               </Link>
-            )}
-
-            <div className="relative shrink-0">
-              <Link
-                href="/cart"
-                aria-label={dict.nav.cart}
-                className="relative flex h-9 w-9 items-center justify-center text-[#000000] hover:text-[#57392D] transition-colors"
-              >
-                <ShoppingCart size={18} strokeWidth={2} />
-                <CartBadge count={cartCount} />
-              </Link>
-              {addedToCartDialog}
             </div>
-            <Link
-              href="/store"
-              className="shrink-0 whitespace-nowrap bg-[#57392D] text-white px-6 xl:px-8 py-3 rounded-full text-xs font-semibold uppercase tracking-wider hover:bg-[#412B22] transition-colors"
-            >
-              {dict.nav.orderNow}
+          ) : (
+            <Link href="/login" className={`${linkClass} hidden lg:inline`}>
+              {dict.nav.login}
             </Link>
-          </div>
+          )}
+          {cartButton}
         </div>
       </div>
 
-      {/* ── Mobile drawer — overlays the page; backdrop closes it ── */}
-      {navOpen && (
-        <>
-          {/* -z-10 keeps the backdrop behind the bar and drawer (both children of
-              this stacking context) while it still overlays the page below. */}
-          <div
-            className="lg:hidden fixed inset-0 -z-10 bg-black/35"
-            onClick={closeNav}
-            aria-hidden="true"
-          />
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-[#F5F5DC] border-t border-[#e8d5bc]/60 px-5 py-5 space-y-1 shadow-[0_16px_32px_-16px_rgba(39,25,8,0.25)] max-h-[calc(100dvh-var(--nav-offset,60px))] overflow-y-auto">
-            {links.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={closeNav}
-                className={`block py-3 text-sm font-semibold uppercase tracking-widest border-b border-[#e8d5bc]/40 transition-colors ${
-                  pathname === href ? "text-[#57392D]" : "text-[#000000]"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-
-            <div className="flex items-center justify-between py-3 border-b border-[#e8d5bc]/40">
-              {user ? (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  {canAccessDashboard && (
-                    <Link href="/admin" onClick={closeNav} className="text-sm font-semibold uppercase tracking-widest text-[#000000]">
-                      {dict.nav.dashboard}
-                    </Link>
-                  )}
-                  <Link href="/account" onClick={closeNav} className="text-sm font-semibold uppercase tracking-widest text-[#000000]">
-                    {dict.nav.account}
+      {/* Shop mega panel — categories with a live photo preview. */}
+      <AnimatePresence>
+        {shopOpen && categories.length > 0 && (
+          <motion.div
+            className="absolute inset-x-0 top-full hidden border-b border-charcoal/10 bg-ivory text-charcoal lg:block"
+            initial={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
+            animate={{ opacity: 1, clipPath: "inset(0 0 0% 0)" }}
+            exit={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
+            transition={{ duration: 0.45, ease: EASE_OUT }}
+          >
+            <div className="mx-auto grid max-w-[1400px] grid-cols-12 gap-10 px-10 py-10">
+              <ul className="col-span-5 space-y-1">
+                <li>
+                  <Link href="/store" className="group flex items-center gap-4 py-2" onMouseEnter={() => setPreview(-1)}>
+                    <span className="font-[family-name:var(--font-display)] text-3xl font-medium uppercase tracking-tight transition-transform duration-300 group-hover:translate-x-2">
+                      {dict.store.all}
+                    </span>
                   </Link>
+                </li>
+                {categories.map((c, i) => (
+                  <motion.li key={c.slug} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i + 0.1 }}>
+                    <Link href={`/store?category=${c.slug}`} className="group flex items-baseline gap-4 py-2" onMouseEnter={() => setPreview(i)}>
+                      <span className="text-[10px] tracking-[0.2em] text-gold-ink">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="font-[family-name:var(--font-display)] text-3xl font-medium uppercase tracking-tight transition-transform duration-300 group-hover:translate-x-2">
+                        {c.name}
+                      </span>
+                    </Link>
+                  </motion.li>
+                ))}
+              </ul>
+              <div className="col-span-7 grid grid-cols-2 gap-4">
+                {[0, 1].map((offset) => {
+                  const cat = categories[(Math.max(preview, 0) + offset) % categories.length];
+                  return (
+                    <div key={offset} className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-charcoal">
+                      <AnimatePresence mode="popLayout">
+                        {cat?.image ? (
+                          <motion.div
+                            key={cat.slug}
+                            className="absolute inset-0"
+                            initial={{ opacity: 0, scale: 1.1 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.6, ease: EASE_OUT }}
+                          >
+                            <Image src={cat.image} alt="" fill sizes="30vw" className="object-cover" />
+                          </motion.div>
+                        ) : (
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <VMark size={80} className="text-champagne/20" />
+                          </span>
+                        )}
+                      </AnimatePresence>
+                      <span className="absolute bottom-4 start-4 text-xs font-medium uppercase tracking-[0.25em] text-ivory">{cat?.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile full-screen menu */}
+      <AnimatePresence>
+        {navOpen && (
+          <motion.div
+            className="fixed inset-x-0 bottom-0 top-[var(--nav-offset,64px)] z-40 flex flex-col overflow-y-auto bg-ivory px-6 pb-10 pt-6 text-charcoal lg:hidden"
+            initial={{ clipPath: "inset(0 0 100% 0)" }}
+            animate={{ clipPath: "inset(0 0 0% 0)" }}
+            exit={{ clipPath: "inset(0 0 100% 0)" }}
+            transition={{ duration: 0.55, ease: EASE_OUT }}
+          >
+            <ul className="space-y-1">
+              {[{ href: "/store", label: dict.store.all }, ...categories.map((c) => ({ href: `/store?category=${c.slug}`, label: c.name })), { href: "/about", label: dict.nav.about }].map(
+                (l, i) => (
+                  <motion.li key={l.href} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.05, ease: EASE_OUT }}>
+                    <Link href={l.href} onClick={() => setNavOpen(false)} className="block py-2 font-[family-name:var(--font-display)] text-4xl font-medium uppercase tracking-tight">
+                      {l.label}
+                    </Link>
+                  </motion.li>
+                ),
+              )}
+            </ul>
+            <div className="mt-auto flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-charcoal/10 pt-6 text-xs font-medium uppercase tracking-[0.25em]">
+              {user ? (
+                <>
+                  {canAccessDashboard && <Link href="/admin">{dict.nav.dashboard}</Link>}
+                  <Link href="/account">{dict.nav.account}</Link>
                   <form action={logoutAction}>
-                    <button type="submit" className="text-sm font-semibold uppercase tracking-widest text-[#000000]">
+                    <button type="submit" className="uppercase tracking-[0.25em]">
                       {dict.nav.logout}
                     </button>
                   </form>
-                </div>
+                </>
               ) : (
-                <Link href="/login" onClick={closeNav} className="text-sm font-semibold uppercase tracking-widest text-[#000000]">
-                  {dict.nav.login}
-                </Link>
+                <Link href="/login">{dict.nav.login}</Link>
               )}
-              <LanguageSwitcher locale={locale} className="text-sm font-semibold uppercase tracking-widest text-[#57392D]" />
+              <LanguageSwitcher locale={locale} className="text-gold-ink" />
             </div>
-
-            <Link
-              href="/store"
-              onClick={closeNav}
-              className="block mt-4 bg-[#57392D] text-white text-center py-4 rounded-full text-xs font-semibold uppercase tracking-wider hover:bg-[#412B22] transition-colors"
-            >
-              {dict.nav.orderNow}
-            </Link>
-          </div>
-        </>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

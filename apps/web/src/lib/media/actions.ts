@@ -7,11 +7,6 @@ import {
   media,
   storeProductMedia,
   storeCategories,
-  storeHeroImages,
-  menuItems,
-  menuCategories,
-  menuHeroImages,
-  banners,
 } from "@verella/db";
 import { presignUploadSchema } from "@verella/core";
 import { guardPermission } from "@/lib/auth/rbac";
@@ -110,28 +105,13 @@ async function findMediaUsage(id: number): Promise<string | null> {
   const [
     productMedia,
     categoryImage,
-    storeHero,
-    itemImage,
-    menuCategoryImage,
-    menuHero,
-    banner,
   ] = await Promise.all([
     db.select({ id: storeProductMedia.id }).from(storeProductMedia).where(eq(storeProductMedia.mediaId, id)).limit(1),
     db.select({ id: storeCategories.id }).from(storeCategories).where(eq(storeCategories.imageMediaId, id)).limit(1),
-    db.select({ id: storeHeroImages.id }).from(storeHeroImages).where(eq(storeHeroImages.mediaId, id)).limit(1),
-    db.select({ id: menuItems.id }).from(menuItems).where(eq(menuItems.imageMediaId, id)).limit(1),
-    db.select({ id: menuCategories.id }).from(menuCategories).where(eq(menuCategories.imageMediaId, id)).limit(1),
-    db.select({ id: menuHeroImages.id }).from(menuHeroImages).where(eq(menuHeroImages.mediaId, id)).limit(1),
-    db.select({ id: banners.id }).from(banners).where(eq(banners.mediaId, id)).limit(1),
   ]);
 
   if (productMedia.length) return "a store product";
   if (categoryImage.length) return "a store category";
-  if (storeHero.length) return "the store's hero images";
-  if (itemImage.length) return "a menu item";
-  if (menuCategoryImage.length) return "a menu category";
-  if (menuHero.length) return "the menu's hero images";
-  if (banner.length) return "a homepage banner";
   return null;
 }
 

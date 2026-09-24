@@ -4,18 +4,19 @@ import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
-import { addressSchema, type AddressInput } from "@verella/core";
+import { addressSchema, governorateLabel, type AddressInput } from "@verella/core";
 import { createAddressAction, updateAddressAction, deleteAddressAction } from "@/lib/account/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GovernorateSelect } from "@/components/ui/governorate-select";
 import { Card, CardContent, FormError } from "@/components/ui/card";
 
 export interface AddressRow extends AddressInput {
   id: number;
 }
 
-export function AddressManager({ initialAddresses }: { initialAddresses: AddressRow[] }) {
+export function AddressManager({ initialAddresses, locale = "en" }: { initialAddresses: AddressRow[]; locale?: "en" | "ar" }) {
   const [addresses, setAddresses] = useState(initialAddresses);
   const [editing, setEditing] = useState<AddressRow | "new" | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -39,6 +40,7 @@ export function AddressManager({ initialAddresses }: { initialAddresses: Address
     return (
       <AddressForm
         initial={editing === "new" ? null : editing}
+        locale={locale}
         onCancel={() => setEditing(null)}
         onSaved={(saved) => handleSaved(saved, editing === "new")}
       />
@@ -69,7 +71,7 @@ export function AddressManager({ initialAddresses }: { initialAddresses: Address
                   </div>
                   <p className="text-sm text-on-surface-variant">{a.phone}</p>
                   <p className="text-sm text-on-surface-variant">
-                    {[a.street, a.building, a.area, a.city, a.governorate].filter(Boolean).join(", ")}
+                    {[a.street, a.building, a.area, a.city, governorateLabel(a.governorate, locale)].filter(Boolean).join(", ")}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
@@ -97,10 +99,12 @@ export function AddressManager({ initialAddresses }: { initialAddresses: Address
 
 function AddressForm({
   initial,
+  locale,
   onCancel,
   onSaved,
 }: {
   initial: AddressRow | null;
+  locale: "en" | "ar";
   onCancel: () => void;
   onSaved: (row: AddressRow) => void;
 }) {
@@ -153,7 +157,7 @@ function AddressForm({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <Label htmlFor="governorate">Governorate</Label>
-              <Input id="governorate" {...register("governorate")} />
+              <GovernorateSelect id="governorate" locale={locale} defaultValue={initial?.governorate ?? ""} {...register("governorate")} />
               {errors.governorate && <p className="mt-1 text-xs text-error">{errors.governorate.message}</p>}
             </div>
             <div>

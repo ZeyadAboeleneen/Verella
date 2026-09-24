@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { resetPasswordAction } from "@/lib/auth/password-reset";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";

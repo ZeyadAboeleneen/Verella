@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { desc, eq } from "drizzle-orm";
 import { db, customers, users, addresses, orders } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";

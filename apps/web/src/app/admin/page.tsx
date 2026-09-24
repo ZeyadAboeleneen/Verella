@@ -1,8 +1,8 @@
 import { count, sum, eq, inArray, lt, and, isNull, desc, gte, sql } from "drizzle-orm";
-import { db, orders, payments, storeProducts, orderItems, storeProductTranslations, customers, users } from "@verella/db";
+import { db, orders, payments, storeProducts, orderItems, customers } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";
-import Link from "next/link";
-import Image from "next/image";
+import Link from "@/components/LocaleLink";
+import { VMark } from "@/components/brand/Logo";
 import { RevenueBarChart, OrderStatusDonut } from "@/components/admin/dashboard-charts";
 import type { OrderStatus } from "@verella/db";
 
@@ -92,7 +92,7 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
   preparing:         "bg-purple-100 text-purple-800",
   out_for_delivery:  "bg-cyan-100 text-cyan-800",
   ready_for_pickup:  "bg-emerald-100 text-emerald-800",
-  completed:         "bg-[#57392D]/10 text-[#57392D]",
+  completed:         "bg-gold/10 text-gold",
   cancelled:         "bg-red-100 text-red-700",
 };
 
@@ -158,8 +158,8 @@ export default async function AdminOverviewPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#e8d5bc] bg-[#FAECD2]/40 shadow-xs">
-          <Image src="/brand/logo-icon-crisp.png" alt="Verella" width={32} height={30} className="h-8 w-auto object-contain" priority />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-beige bg-surface-container-low/40 shadow-xs">
+          <VMark size={30} className="text-gold" />
         </div>
         <div>
           <h1 className="font-display text-2xl font-bold text-on-surface">Dashboard</h1>
@@ -194,7 +194,7 @@ export default async function AdminOverviewPage() {
               <h2 className="font-display text-base font-semibold text-on-surface">Revenue — Last 7 Days</h2>
               <p className="text-xs text-on-surface-variant">Completed orders only (EGP)</p>
             </div>
-            <span className="material-symbols-outlined text-[#57392D] text-2xl select-none">bar_chart</span>
+            <span className="material-symbols-outlined text-gold text-2xl select-none">bar_chart</span>
           </div>
           <RevenueBarChart data={revenueData} />
         </div>
@@ -206,7 +206,7 @@ export default async function AdminOverviewPage() {
               <h2 className="font-display text-base font-semibold text-on-surface">Orders by Status</h2>
               <p className="text-xs text-on-surface-variant">All time breakdown</p>
             </div>
-            <span className="material-symbols-outlined text-[#57392D] text-2xl select-none">donut_large</span>
+            <span className="material-symbols-outlined text-gold text-2xl select-none">donut_large</span>
           </div>
           <OrderStatusDonut data={statusData} />
         </div>
@@ -218,7 +218,7 @@ export default async function AdminOverviewPage() {
         <div className="lg:col-span-2 rounded-2xl border border-outline-variant/60 bg-white shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40">
             <h2 className="font-display text-base font-semibold text-on-surface">Recent Orders</h2>
-            <Link href="/admin/orders" className="text-xs font-semibold text-[#57392D] hover:underline">
+            <Link href="/admin/orders" className="text-xs font-semibold text-gold hover:underline">
               View all →
             </Link>
           </div>
@@ -260,7 +260,7 @@ export default async function AdminOverviewPage() {
         <div className="rounded-2xl border border-outline-variant/60 bg-white shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/40">
             <h2 className="font-display text-base font-semibold text-on-surface">Top Products</h2>
-            <Link href="/admin/store/products" className="text-xs font-semibold text-[#57392D] hover:underline">
+            <Link href="/admin/store/products" className="text-xs font-semibold text-gold hover:underline">
               View all →
             </Link>
           </div>
@@ -270,7 +270,7 @@ export default async function AdminOverviewPage() {
             )}
             {topProducts.map((p, i) => (
               <div key={`${p.productId}-${i}`} className="flex items-center gap-3 px-6 py-3.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#57392D]/10 text-xs font-bold text-[#57392D]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold/10 text-xs font-bold text-gold">
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -301,7 +301,7 @@ export default async function AdminOverviewPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="inline-flex items-center gap-2 rounded-full border border-[#e8d5bc] bg-[#FAECD2]/60 px-4 py-2 text-xs font-semibold text-[#57392D] transition-all hover:bg-[#57392D] hover:text-white hover:border-[#57392D]"
+              className="inline-flex items-center gap-2 rounded-full border border-beige bg-surface-container-low/60 px-4 py-2 text-xs font-semibold text-gold transition-all hover:bg-charcoal hover:text-white hover:border-charcoal"
             >
               <span className="material-symbols-outlined text-base select-none">{item.icon}</span>
               {item.label}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { verifyEmailAction } from "@/lib/auth/email-verification";
 import { Card, CardContent, CardHeader, CardTitle, FormError } from "@/components/ui/card";
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import {
   db,
   storeCategories,
@@ -9,15 +9,14 @@ import {
   storeProducts,
   storeProductTranslations,
   storeProductMedia,
-  storeHeroImages,
+  storeProductVariants,
+  storeProductVariantTranslations,
 } from "@verella/db";
 import {
   storeCategorySchema,
   storeProductSchema,
-  storeHeroImageSchema,
   type StoreCategoryInput,
   type StoreProductInput,
-  type StoreHeroImageInput,
 } from "@verella/core";
 import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
@@ -127,6 +126,80 @@ export async function reorderStoreCategoriesAction(orderedIds: number[]): Promis
 
 // ── Products ──────────────────────────────────────────────────────────────
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * With variants, price and stock live on each variant: the product row keeps
+ * the cheapest variant as its "from" price and holds no stock of its own.
+ */
+function productPricing(data: StoreProductInput) {
+  if (data.variants.length === 0) {
+    return { price: data.price, compareAtPrice: data.compareAtPrice ?? null, stockQty: data.stockQty };
+  }
+  const cheapest = data.variants.reduce((min, v) => (Number(v.price) < Number(min.price) ? v : min), data.variants[0]);
+  return { price: cheapest.price, compareAtPrice: cheapest.compareAtPrice ?? null, stockQty: 0 };
+}
+
+/** Make the product's variants match the submitted list: update, insert, and drop the rest. */
+async function syncVariants(tx: Tx, productId: number, data: StoreProductInput) {
+  const existing = await tx
+    .select({ id: storeProductVariants.id })
+    .from(storeProductVariants)
+    .where(eq(storeProductVariants.productId, productId));
+  const existingIds = new Set(existing.map((v) => v.id));
+  const keptIds = data.variants.map((v) => v.id).filter((id): id is number => !!id && existingIds.has(id));
+
+  // Removed variants: order history keeps its own label snapshot, so deleting is safe.
+  await tx
+    .delete(storeProductVariants)
+    .where(
+      keptIds.length
+        ? and(eq(storeProductVariants.productId, productId), notInArray(storeProductVariants.id, keptIds))
+        : eq(storeProductVariants.productId, productId),
+    );
+
+  for (const [i, v] of data.variants.entries()) {
+    const values = {
+      axis: data.variantAxis,
+      label: v.label,
+      sku: v.sku || null,
+      price: v.price,
+      compareAtPrice: v.compareAtPrice ?? null,
+      stockQty: v.stockQty,
+      isActive: v.isActive,
+      sortOrder: i,
+    };
+    let variantId: number;
+    if (v.id && existingIds.has(v.id)) {
+      variantId = v.id;
+      await tx.update(storeProductVariants).set(values).where(eq(storeProductVariants.id, variantId));
+    } else {
+      const [row] = await tx.insert(storeProductVariants).values({ productId, ...values }).$returningId();
+      variantId = row.id;
+    }
+    await tx.delete(storeProductVariantTranslations).where(eq(storeProductVariantTranslations.variantId, variantId));
+    if (v.labelAr) {
+      await tx.insert(storeProductVariantTranslations).values([
+        { variantId, locale: "en", label: v.label },
+        { variantId, locale: "ar", label: v.labelAr },
+      ]);
+    }
+  }
+}
+
+/** Variant SKUs are globally unique — surface a clash as a readable error, not a DB exception. */
+async function findSkuClash(data: StoreProductInput, productId?: number): Promise<string | null> {
+  const skus = data.variants.map((v) => v.sku?.trim()).filter((s): s is string => !!s);
+  if (new Set(skus).size !== skus.length) return "Two variants share the same SKU.";
+  if (skus.length === 0) return null;
+  const clashes = await db
+    .select({ sku: storeProductVariants.sku, productId: storeProductVariants.productId })
+    .from(storeProductVariants)
+    .where(inArray(storeProductVariants.sku, skus));
+  const foreign = clashes.find((c) => c.productId !== productId);
+  return foreign ? `SKU "${foreign.sku}" is already used by another product.` : null;
+}
+
 export async function createStoreProductAction(input: StoreProductInput): Promise<ActionResult<{ id: number }>> {
   const guard = await guardPermission("store.manage");
   if ("error" in guard) return guard;
@@ -137,6 +210,8 @@ export async function createStoreProductAction(input: StoreProductInput): Promis
 
   const [existing] = await db.select({ id: storeProducts.id }).from(storeProducts).where(eq(storeProducts.slug, data.slug)).limit(1);
   if (existing) return { error: "A product with this slug already exists." };
+  const skuError = await findSkuClash(data);
+  if (skuError) return { error: skuError };
 
   const currency = await getSiteCurrency();
 
@@ -147,16 +222,16 @@ export async function createStoreProductAction(input: StoreProductInput): Promis
         categoryId: data.categoryId,
         slug: data.slug,
         sku: data.sku || null,
-        price: data.price,
+        brand: data.brand || null,
+        ...productPricing(data),
         currency,
-        compareAtPrice: data.compareAtPrice ?? null,
         isBestSeller: data.isBestSeller,
         isFeaturedHome: data.isFeaturedHome,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
-        stockQty: data.stockQty,
       })
       .$returningId();
+    await syncVariants(tx, row.id, data);
     await tx.insert(storeProductTranslations).values([
       { productId: row.id, locale: "en", name: data.name.en, description: data.description?.en || null, notes: data.notes?.en || null },
       ...(data.name.ar
@@ -184,6 +259,11 @@ export async function updateStoreProductAction(id: number, input: StoreProductIn
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
 
+  const [slugOwner] = await db.select({ id: storeProducts.id }).from(storeProducts).where(eq(storeProducts.slug, data.slug)).limit(1);
+  if (slugOwner && slugOwner.id !== id) return { error: "A product with this slug already exists." };
+  const skuError = await findSkuClash(data, id);
+  if (skuError) return { error: skuError };
+
   await db.transaction(async (tx) => {
     await tx
       .update(storeProducts)
@@ -191,15 +271,15 @@ export async function updateStoreProductAction(id: number, input: StoreProductIn
         categoryId: data.categoryId,
         slug: data.slug,
         sku: data.sku || null,
-        price: data.price,
-        compareAtPrice: data.compareAtPrice ?? null,
+        brand: data.brand || null,
+        ...productPricing(data),
         isBestSeller: data.isBestSeller,
         isFeaturedHome: data.isFeaturedHome,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
-        stockQty: data.stockQty,
       })
       .where(eq(storeProducts.id, id));
+    await syncVariants(tx, id, data);
 
     await tx.delete(storeProductTranslations).where(eq(storeProductTranslations.productId, id));
     await tx.insert(storeProductTranslations).values([
@@ -237,41 +317,6 @@ export async function deleteStoreProductAction(id: number): Promise<ActionResult
     .set({ deletedAt: new Date(), isActive: false, slug: `${existingProduct?.slug ?? "product"}-deleted-${id}` })
     .where(eq(storeProducts.id, id));
   await logActivity({ actorUserId: Number(guard.id), action: "store_product.deleted", entityType: "store_product", entityId: id });
-  revalidateStore();
-  return { success: true };
-}
-
-// ── Hero images ───────────────────────────────────────────────────────────
-
-export async function createStoreHeroImageAction(input: StoreHeroImageInput): Promise<ActionResult<{ id: number }>> {
-  const guard = await guardPermission("store.manage");
-  if ("error" in guard) return guard;
-
-  const parsed = storeHeroImageSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-
-  const [row] = await db.insert(storeHeroImages).values(parsed.data).$returningId();
-  await logActivity({ actorUserId: Number(guard.id), action: "store_hero_image.created", entityType: "store_hero_image", entityId: row.id });
-  revalidateStore();
-  return { success: true, data: { id: row.id } };
-}
-
-export async function toggleStoreHeroImageAction(id: number, isActive: boolean): Promise<ActionResult> {
-  const guard = await guardPermission("store.manage");
-  if ("error" in guard) return guard;
-
-  await db.update(storeHeroImages).set({ isActive }).where(eq(storeHeroImages.id, id));
-  await logActivity({ actorUserId: Number(guard.id), action: "store_hero_image.toggled", entityType: "store_hero_image", entityId: id, changes: { isActive } });
-  revalidateStore();
-  return { success: true };
-}
-
-export async function deleteStoreHeroImageAction(id: number): Promise<ActionResult> {
-  const guard = await guardPermission("store.manage");
-  if ("error" in guard) return guard;
-
-  await db.delete(storeHeroImages).where(eq(storeHeroImages.id, id));
-  await logActivity({ actorUserId: Number(guard.id), action: "store_hero_image.deleted", entityType: "store_hero_image", entityId: id });
   revalidateStore();
   return { success: true };
 }

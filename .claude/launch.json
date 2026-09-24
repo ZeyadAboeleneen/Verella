@@ -4,9 +4,25 @@
     {
       "name": "web-dev",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@verella/web", "dev"],
+      "runtimeArgs": [
+        "--filter",
+        "@verella/web",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "web-prod",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@verella/web",
+        "start",
+        "-p",
+        "3001"
+      ],
+      "port": 3001
     }
   ]
 }

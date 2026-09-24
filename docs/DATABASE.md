@@ -1,3 +1,5 @@
+> **Historical document.** Written for the Hamid Afandi café project this codebase was copied from. The menu module, branches and CMS tables it mentions have been removed. Current state: `HANDOVER.md`; setup and deployment: `docs/SETUP.md`.
+
 # Verella — Database Schema (MySQL 8, InnoDB, utf8mb4)
 
 > Phase 1 tables are marked **[build]**. Future POS/ERP tables are **[reserve]** (designed now, created later).

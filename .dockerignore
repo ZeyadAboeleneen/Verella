@@ -6,6 +6,8 @@ node_modules
 docs
 source-files
 *.md
-.env
-.env.*
+# Secrets never go into an image — root-level patterns don't match
+# apps/web/.env.local, hence the ** forms.
+**/.env
+**/.env.*
 !.env.example

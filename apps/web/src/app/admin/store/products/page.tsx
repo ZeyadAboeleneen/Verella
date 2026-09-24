@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { and, asc, eq, count, isNull } from "drizzle-orm";
+import Link from "@/components/LocaleLink";
+import { and, asc, eq, count, inArray, isNull } from "drizzle-orm";
 import { Plus, Pencil } from "lucide-react";
-import { db, storeProducts, storeProductTranslations, storeCategories } from "@verella/db";
+import { db, storeProducts, storeProductTranslations, storeProductVariants, storeCategories } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";
 import { Button } from "@/components/ui/button";
 import { Table, Thead, Th, Tr, Td, EmptyRow } from "@/components/admin/table";
@@ -26,6 +26,7 @@ export default async function AdminStoreProductsPage({
         price: storeProducts.price,
         currency: storeProducts.currency,
         stockQty: storeProducts.stockQty,
+        brand: storeProducts.brand,
         isActive: storeProducts.isActive,
         isBestSeller: storeProducts.isBestSeller,
         isFeaturedHome: storeProducts.isFeaturedHome,
@@ -42,6 +43,18 @@ export default async function AdminStoreProductsPage({
     db.select({ total: count() }).from(storeProducts).where(isNull(storeProducts.deletedAt)),
   ]);
 
+  const variantRows = rows.length
+    ? await db
+        .select({ productId: storeProductVariants.productId, stockQty: storeProductVariants.stockQty, isActive: storeProductVariants.isActive })
+        .from(storeProductVariants)
+        .where(inArray(storeProductVariants.productId, rows.map((r) => r.id)))
+    : [];
+  /** Stock that can actually sell: summed across active variants when the product has any. */
+  const stockFor = (p: (typeof rows)[number]) => {
+    const vs = variantRows.filter((v) => v.productId === p.id && v.isActive);
+    return vs.length ? { qty: vs.reduce((s, v) => s + v.stockQty, 0), variants: vs.length } : { qty: p.stockQty, variants: 0 };
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -57,7 +70,6 @@ export default async function AdminStoreProductsPage({
         tabs={[
           { label: "Categories", href: "/admin/store" },
           { label: "Products", href: "/admin/store/products" },
-          { label: "Hero Images", href: "/admin/store/hero" },
         ]}
       />
 
@@ -65,6 +77,7 @@ export default async function AdminStoreProductsPage({
         <Thead>
           <tr>
             <Th>Name</Th>
+            <Th>Brand</Th>
             <Th>Category</Th>
             <Th>Price</Th>
             <Th>Stock</Th>
@@ -74,12 +87,21 @@ export default async function AdminStoreProductsPage({
           </tr>
         </Thead>
         <tbody>
-          {rows.map((p) => (
+          {rows.map((p) => {
+            const stock = stockFor(p);
+            return (
             <Tr key={p.id}>
               <Td className="font-medium">{p.name ?? "—"}</Td>
+              <Td className="text-on-surface-variant">{p.brand ?? "—"}</Td>
               <Td className="text-on-surface-variant">{p.categoryName}</Td>
-              <Td>{formatMoney(toCents(p.price), p.currency)}</Td>
-              <Td className={p.stockQty < 10 ? "font-semibold text-error" : "text-on-surface-variant"}>{p.stockQty}</Td>
+              <Td>
+                {stock.variants > 0 && <span className="me-1 text-xs text-on-surface-variant">from</span>}
+                {formatMoney(toCents(p.price), p.currency)}
+              </Td>
+              <Td className={stock.qty < 10 ? "font-semibold text-error" : "text-on-surface-variant"}>
+                {stock.qty}
+                {stock.variants > 0 && <span className="ms-1 text-xs font-normal text-on-surface-variant">· {stock.variants} variants</span>}
+              </Td>
               <Td className="space-x-1">
                 {p.isBestSeller && <span className="rounded-full bg-secondary-container px-2 py-0.5 text-xs">Best seller</span>}
               </Td>
@@ -103,8 +125,9 @@ export default async function AdminStoreProductsPage({
                 </div>
               </Td>
             </Tr>
-          ))}
-          {rows.length === 0 && <EmptyRow colSpan={7}>No products yet.</EmptyRow>}
+            );
+          })}
+          {rows.length === 0 && <EmptyRow colSpan={8}>No products yet.</EmptyRow>}
         </tbody>
       </Table>
       <Pagination basePath="/admin/store/products" page={page} total={total} />

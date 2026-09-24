@@ -4,6 +4,7 @@ import { z } from "zod";
 import { sendEmail } from "@/lib/email/mailer";
 import { getNotificationEmail } from "@/lib/settings/queries";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { isHoneypotFilled } from "@/lib/spam";
 import type { ActionResult } from "@/lib/auth/rbac";
 
 const contactSchema = z.object({
@@ -14,6 +15,8 @@ const contactSchema = z.object({
 });
 
 export async function sendContactMessageAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  // Bots get the same "sent" screen as people, so there's nothing to probe.
+  if (isHoneypotFilled(formData)) return { success: true };
   const parsed = contactSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const { name, email, subject, message } = parsed.data;

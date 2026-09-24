@@ -1,5 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
+import { VMark } from "@/components/brand/Logo";
 import { LogOut, Menu } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -27,7 +27,7 @@ export function AdminTopbar({
           </button>
         )}
         <Link href="/admin" className="flex items-center gap-2">
-          <Image src="/brand/logo-icon-crisp.png" alt="Verella" width={26} height={24} className="h-6 w-auto object-contain" priority />
+          <VMark size={22} className="text-gold" />
           <span className="font-display text-sm font-bold text-on-surface">{dict.brandName}</span>
         </Link>
       </div>

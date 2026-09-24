@@ -1,3 +1,5 @@
+> **Historical document.** Written for the Hamid Afandi café project this codebase was copied from. The menu module, branches and CMS tables it mentions have been removed. Current state: `HANDOVER.md`; setup and deployment: `docs/SETUP.md`.
+
 # Verella — System Architecture (Phase 1)
 
 > Status: **Plan for approval.** No application code is written yet.

@@ -1,100 +1,126 @@
 import type { Metadata } from "next";
-import { getAboutHero } from "@/lib/content/queries";
-import { getDict } from "@/lib/i18n";
-import { SocialIconLinks } from "@/components/social-links";
-import About from "@/sections/About";
-import ImmersiveExperience from "@/sections/ImmersiveExperience";
-import InstagramGallery from "@/sections/InstagramGallery";
-import Newsletter from "@/sections/Newsletter";
+import { pageMetadata } from "@/lib/seo";
+import Link from "@/components/LocaleLink";
+import { ArrowUpRight } from "lucide-react";
+import { getDict, getLocale } from "@/lib/i18n";
+import { getStoreCategories } from "@/lib/store/queries";
+import { withDbTimeout } from "@/lib/db-timeout";
+import { VMark } from "@/components/brand/Logo";
+import { Reveal, RevealText } from "@/components/motion/Reveal";
+import { VMarquee } from "@/components/home/VMarquee";
+import { EditorialFeature } from "@/components/home/EditorialFeature";
 
-export const metadata: Metadata = {
-  title: "Our Story | Verella",
-  description: "From a single coffee cart in downtown Cairo to a beloved Egyptian heritage coffee brand.",
-};
-
-/** Shown until an image is set in Admin → About Page (or the DB is briefly unreachable). */
-const FALLBACK_HERO_IMAGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAkH61wZIeWDQVG7XwTYY-UgMR2izAozhpZN5O6mWPcOyaus5yRNk_4n4oibOL05Z6PrWnyq76Jyy5DN9vmYgILrOgkzm4Oy6FC5dw0xb0xW4srS8s4ZEY0_T6tGzyD5JRX6LfFNSUN3PK8-cDZEYEsfbXz3eK4r7CtXVCbbkzsTPCN-Wfxd-atfgg_0HdgsC5ePQxQ_jLN7ql_uko3b4gM2z1UkjdrnsC4QwCnNZVmQGX_y9Xy9DUhIB9X7Mkg6Tz7G9v1tSlk37s6";
+export async function generateMetadata(): Promise<Metadata> {
+  const [locale, dict] = await Promise.all([getLocale(), getDict()]);
+  return pageMetadata({ locale, path: "/about", ...dict.meta.pages.about });
+}
 
 export default async function AboutPage() {
-  const [heroImage, dict] = await Promise.all([
-    getAboutHero().catch(() => null).then((v) => v ?? FALLBACK_HERO_IMAGE),
-    getDict(),
-  ]);
-
-  const values = [
-    { icon: "eco", title: dict.aboutPage.value1Title, desc: dict.aboutPage.value1Desc },
-    { icon: "local_cafe", title: dict.aboutPage.value2Title, desc: dict.aboutPage.value2Desc },
-    { icon: "history_edu", title: dict.aboutPage.value3Title, desc: dict.aboutPage.value3Desc },
-    { icon: "groups", title: dict.aboutPage.value4Title, desc: dict.aboutPage.value4Desc },
-  ];
+  const locale = await getLocale();
+  const [dict, categories] = await Promise.all([getDict(), withDbTimeout(getStoreCategories(locale)).catch(() => [])]);
+  const t = dict.aboutPage;
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative h-[380px] md:h-[500px] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${heroImage}')` }} />
-        <div className="absolute inset-0 bg-black/55" />
-        <div className="relative z-10 text-center text-white space-y-4 px-5">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#57392D]">{dict.aboutPage.since}</span>
-          <h1 className="font-[family-name:var(--font-plus-jakarta)] text-3xl md:text-5xl font-bold">{dict.aboutPage.title}</h1>
-          <p className="text-[#FEE5C9] text-base md:text-lg max-w-xl mx-auto">{dict.aboutPage.subtitle}</p>
+      <section className="relative overflow-hidden bg-charcoal px-5 pb-24 pt-20 text-ivory md:px-16 md:pb-36 md:pt-32">
+        <VMark size={700} className="pointer-events-none absolute -end-40 -top-32 text-champagne/[0.06]" />
+        <div className="relative mx-auto max-w-[1400px]">
+          <Reveal>
+            <p className="mb-6 text-[11px] font-medium uppercase tracking-[0.35em] text-champagne">{t.eyebrow}</p>
+          </Reveal>
+          <RevealText
+            text={t.title}
+            as="h1"
+            className="max-w-5xl font-[family-name:var(--font-display)] text-[clamp(3rem,9vw,8.5rem)] font-medium uppercase leading-[0.9] tracking-[-0.02em]"
+          />
+          <Reveal delay={0.2}>
+            <p className="mt-10 max-w-2xl text-lg leading-relaxed text-ivory/75">{t.intro}</p>
+          </Reveal>
         </div>
       </section>
 
-      {/* Story */}
-      <section className="py-12 md:py-20 px-5 md:px-16 max-w-[1280px] mx-auto">
-        <div className="max-w-3xl mx-auto space-y-5 md:space-y-6 text-[#4A3026] text-base md:text-lg leading-relaxed text-center">
-          <p>{dict.aboutPage.storyP1}</p>
-          <p>{dict.aboutPage.storyP2}</p>
-          <p>{dict.aboutPage.storyP3}</p>
-        </div>
+      <VMarquee items={dict.home.marquee} tone="light" />
+
+      <section className="mx-auto grid max-w-[1400px] gap-12 px-5 py-24 md:grid-cols-2 md:px-16 md:py-32">
+        <ul className="space-y-4">
+          {t.not.map((line, i) => (
+            <Reveal key={line} delay={i * 0.1}>
+              <li className="font-[family-name:var(--font-display)] text-3xl font-medium uppercase tracking-tight text-charcoal/50 line-through decoration-champagne decoration-2 md:text-5xl">
+                {line}
+              </li>
+            </Reveal>
+          ))}
+        </ul>
+        <Reveal delay={0.3} className="flex items-end">
+          <p className="font-[family-name:var(--font-display)] text-3xl font-medium uppercase leading-tight tracking-tight text-charcoal md:text-5xl">{t.is}</p>
+        </Reveal>
       </section>
 
-      {/* Heritage in Every Single Detail Section */}
-      <About />
-
-      {/* Values */}
-      <section className="py-12 md:py-20 bg-[#FFE2C6]">
-        <div className="px-5 md:px-16 max-w-[1280px] mx-auto">
-          <h2 className="font-[family-name:var(--font-plus-jakarta)] text-2xl md:text-[32px] font-semibold text-black mb-8 md:mb-12 text-center">
-            {dict.aboutPage.valuesTitle}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {values.map(({ icon, title, desc }) => (
-              <div key={title} className="text-center space-y-2.5 md:space-y-4">
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#57392D] flex items-center justify-center mx-auto">
-                  <span aria-hidden="true" className="material-symbols-outlined text-white text-xl md:text-2xl">{icon}</span>
-                </div>
-                <h3 className="font-[family-name:var(--font-plus-jakarta)] text-base md:text-xl font-semibold text-black">{title}</h3>
-                <p className="text-[#4A3026] text-xs md:text-sm leading-relaxed">{desc}</p>
-              </div>
+      <section className="bg-surface-container-low px-5 py-24 md:px-16 md:py-32">
+        <div className="mx-auto max-w-[1400px]">
+          <RevealText
+            text={t.pillarsTitle}
+            className="mb-16 font-[family-name:var(--font-display)] text-4xl font-medium uppercase tracking-tight text-charcoal md:text-7xl"
+          />
+          <div className="grid gap-px overflow-hidden rounded-3xl bg-charcoal/10 md:grid-cols-3">
+            {t.pillars.map((p, i) => (
+              <Reveal key={p.title} delay={i * 0.12} className="group bg-ivory p-8 transition-colors duration-500 hover:bg-charcoal md:p-12">
+                <span className="text-[11px] tracking-[0.3em] text-gold-ink group-hover:text-champagne">0{i + 1}</span>
+                <h3 className="mt-10 font-[family-name:var(--font-display)] text-5xl font-medium uppercase tracking-tight text-charcoal transition-colors duration-500 group-hover:text-ivory md:text-6xl">
+                  {p.title}
+                </h3>
+                <p className="mt-4 text-sm leading-relaxed text-charcoal/70 transition-colors duration-500 group-hover:text-ivory/70">{p.body}</p>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* The Coffee Experience Section */}
-      <ImmersiveExperience />
-
-      {/* From Our Instagram Section */}
-      <InstagramGallery />
-
-      {/* Follow us */}
-      <section className="py-12 md:py-20 px-5 md:px-16 max-w-[1280px] mx-auto text-center">
-        <h2 className="font-[family-name:var(--font-plus-jakarta)] text-2xl md:text-[32px] font-semibold text-black mb-3">
-          {dict.aboutPage.followTitle}
-        </h2>
-        <p className="text-[#4A3026] max-w-md mx-auto mb-8">{dict.aboutPage.followBody}</p>
-        <SocialIconLinks
-          className="flex justify-center gap-4"
-          iconClassName="w-5 h-5"
-          linkClassName="border-[#e8d5bc] text-[#57392D] hover:border-[#57392D] hover:bg-[#57392D] hover:text-white"
+      <section className="mx-auto max-w-[1400px] px-5 py-24 md:px-16 md:py-32">
+        <RevealText
+          text={t.audienceTitle}
+          className="mb-14 font-[family-name:var(--font-display)] text-4xl font-medium uppercase tracking-tight text-charcoal md:text-7xl"
         />
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {t.audience.map((a, i) => (
+            <Reveal key={a.title} delay={i * 0.08} className="border-t border-charcoal pt-6">
+              <h3 className="text-sm font-medium uppercase tracking-[0.25em] text-charcoal">{a.title}</h3>
+              <ul className="mt-5 space-y-2 text-sm text-charcoal/70">
+                {a.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
-      {/* Join Our Coffee Circle (Newsletter) Section */}
-      <Newsletter dict={dict} />
+      <EditorialFeature
+        eyebrow={dict.home.features[0].eyebrow}
+        title={dict.home.features[0].title}
+        body={dict.home.features[0].body}
+        cta={dict.home.features[0].cta}
+        href="/store?category=fragrances"
+        image={categories.find((c) => c.slug === "fragrances")?.image ?? null}
+      />
+
+      <section className="relative overflow-hidden bg-charcoal px-5 py-28 text-center text-ivory md:px-16 md:py-40">
+        <VMark size={90} className="mx-auto mb-10 text-champagne" />
+        <RevealText
+          text={t.quote}
+          as="p"
+          className="mx-auto max-w-5xl font-[family-name:var(--font-display)] text-4xl font-medium uppercase leading-[0.95] tracking-tight md:text-7xl"
+        />
+        <Reveal delay={0.3}>
+          <Link
+            href="/store"
+            className="group mt-12 inline-flex h-14 items-center gap-3 rounded-full bg-ivory px-8 text-xs font-medium uppercase tracking-[0.25em] text-charcoal transition-colors hover:bg-champagne"
+          >
+            {t.cta}
+            <ArrowUpRight size={16} className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </Link>
+        </Reveal>
+      </section>
     </div>
   );
 }

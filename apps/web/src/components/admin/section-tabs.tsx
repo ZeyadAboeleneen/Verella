@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/LocaleLink";
 import { usePathname } from "next/navigation";
 import { stripLocalePrefix } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
