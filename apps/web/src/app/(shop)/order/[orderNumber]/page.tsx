@@ -87,7 +87,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
   return (
     <div className="mx-auto max-w-2xl px-5 py-14 md:py-20">
       <div className="text-center">
-        <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-charcoal">
+        <span className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-plum">
           <VMark size={26} className="text-champagne" />
         </span>
         <h1 className="font-display text-3xl font-medium text-charcoal md:text-4xl">{t.thanks}</h1>
@@ -174,7 +174,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
           href={BRAND_CONTACT.whatsapp.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-11 items-center gap-2 rounded-full border border-charcoal px-6 text-xs font-medium uppercase tracking-[0.2em] text-charcoal transition-colors hover:bg-charcoal hover:text-ivory"
+          className="inline-flex h-11 items-center gap-2 rounded-full border border-charcoal px-6 text-xs font-medium uppercase tracking-[0.2em] text-charcoal transition-colors hover:bg-plum hover:text-ivory"
         >
           <MessageCircle size={14} /> {t.whatsapp}
         </a>

@@ -63,7 +63,7 @@ export function CookieConsent({ labels, measurementId }: { labels: Dictionary["c
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
             transition={{ duration: 0.5, ease: EASE_OUT }}
-            className="fixed inset-x-3 bottom-3 z-[90] mx-auto max-w-3xl rounded-2xl bg-charcoal p-5 text-ivory shadow-2xl md:inset-x-6 md:bottom-6 md:p-6"
+            className="fixed inset-x-3 bottom-3 z-[90] mx-auto max-w-3xl rounded-2xl bg-plum-deep p-5 text-ivory shadow-2xl md:inset-x-6 md:bottom-6 md:p-6"
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
               <div className="flex-1 space-y-1.5">

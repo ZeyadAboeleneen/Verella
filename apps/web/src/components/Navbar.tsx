@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "@/components/LocaleLink";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, Menu, ShoppingBag, X } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
@@ -59,6 +60,8 @@ export default function Navbar({
   const pathname = stripLocalePrefix(usePathname());
   const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
+  // Phones only have room for the V mark between the menu and the bag.
+  const [narrow, setNarrow] = useState(false);
   const [pastHero, setPastHero] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -67,11 +70,15 @@ export default function Navbar({
   const [addedToCart, setAddedToCart] = useState<AddedToCartPayload | null>(null);
 
   useEffect(() => subscribeAddedToCart(setAddedToCart), []);
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- portal target exists only after hydration
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     let lastY = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
+      setNarrow(window.innerWidth < 640);
       setScrolled(y > 40);
       setPastHero(y > window.innerHeight * 0.75);
       if (y < 120) setHidden(false);
@@ -80,8 +87,12 @@ export default function Navbar({
       lastY = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
     onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   // Close any open menu on navigation (adjusted during render, not in an effect).
@@ -182,12 +193,12 @@ export default function Navbar({
 
         {/* Centre: the living logo */}
         <Link href="/" aria-label="Verella — home" className="flex justify-center" onMouseEnter={() => setShopOpen(false)}>
-          <AnimatedLockup height={scrolled ? 26 : 34} compact={scrolled && !navOpen} className="text-current" />
+          <AnimatedLockup height={scrolled || narrow ? 26 : 34} compact={narrow || (scrolled && !navOpen)} className="text-current" />
         </Link>
 
         {/* Right */}
-        <div className="flex items-center justify-end gap-5 md:gap-7" onMouseEnter={() => setShopOpen(false)}>
-          <LanguageSwitcher locale={locale} className={`${linkClass} hidden md:inline-flex`} />
+        <div className="flex items-center justify-end gap-3 sm:gap-5 md:gap-7" onMouseEnter={() => setShopOpen(false)}>
+          <LanguageSwitcher locale={locale} className={`${linkClass} text-[10px] md:text-[11px]`} />
           {user ? (
             <div className="hidden items-center gap-6 lg:flex">
               {canAccessDashboard && (
@@ -242,7 +253,7 @@ export default function Navbar({
                 {[0, 1].map((offset) => {
                   const cat = categories[(Math.max(preview, 0) + offset) % categories.length];
                   return (
-                    <div key={offset} className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-charcoal">
+                    <div key={offset} className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-plum">
                       <AnimatePresence mode="popLayout">
                         {cat?.image ? (
                           <motion.div
@@ -271,11 +282,13 @@ export default function Navbar({
         )}
       </AnimatePresence>
 
-      {/* Mobile full-screen menu */}
-      <AnimatePresence>
+      {/* Mobile full-screen menu — portalled to <body>: the nav's transform and
+          backdrop-filter would otherwise trap this fixed layer inside the bar
+          (zero height, invisible). */}
+      {mounted && createPortal(<AnimatePresence>
         {navOpen && (
           <motion.div
-            className="fixed inset-x-0 bottom-0 top-[var(--nav-offset,64px)] z-40 flex flex-col overflow-y-auto bg-ivory px-6 pb-10 pt-6 text-charcoal lg:hidden"
+            className="fixed inset-x-0 bottom-0 top-[var(--nav-offset,64px)] z-[45] flex flex-col overflow-y-auto bg-ivory px-6 pb-10 pt-6 text-charcoal lg:hidden"
             initial={{ clipPath: "inset(0 0 100% 0)" }}
             animate={{ clipPath: "inset(0 0 0% 0)" }}
             exit={{ clipPath: "inset(0 0 100% 0)" }}
@@ -285,7 +298,7 @@ export default function Navbar({
               {[{ href: "/store", label: dict.store.all }, ...categories.map((c) => ({ href: `/store?category=${c.slug}`, label: c.name })), { href: "/about", label: dict.nav.about }].map(
                 (l, i) => (
                   <motion.li key={l.href} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.05, ease: EASE_OUT }}>
-                    <Link href={l.href} onClick={() => setNavOpen(false)} className="block py-2 font-[family-name:var(--font-display)] text-4xl font-medium uppercase tracking-tight">
+                    <Link href={l.href} onClick={() => setNavOpen(false)} className="block py-2 font-[family-name:var(--font-display)] text-3xl font-medium uppercase tracking-tight break-words sm:text-4xl">
                       {l.label}
                     </Link>
                   </motion.li>
@@ -310,7 +323,7 @@ export default function Navbar({
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
     </nav>
   );
 }

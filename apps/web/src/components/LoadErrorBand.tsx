@@ -13,7 +13,7 @@ export function LoadErrorBand({ message, retryLabel, href }: { message: string; 
       <p className="text-sm leading-relaxed text-charcoal/80">{message}</p>
       <Link
         href={href}
-        className="rounded-full bg-charcoal px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-white transition-colors hover:bg-black"
+        className="rounded-full bg-plum px-6 py-2.5 text-xs font-semibold uppercase tracking-widest text-white transition-colors hover:bg-plum-deep"
       >
         {retryLabel}
       </Link>

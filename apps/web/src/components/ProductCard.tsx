@@ -77,7 +77,7 @@ export default function ProductCard({
                   alt=""
                   fill
                   sizes="(min-width: 1024px) 25vw, 50vw"
-                  className="scale-110 object-cover opacity-0 transition-all duration-700 ease-out group-hover/card:scale-100 group-hover/card:opacity-100"
+                  className="scale-105 bg-white object-contain p-2 opacity-0 transition-all duration-700 ease-out group-hover/card:scale-100 group-hover/card:opacity-100"
                 />
               )}
             </>
@@ -100,7 +100,7 @@ export default function ProductCard({
             </span>
           )}
           {!soldOut && badge && (
-            <span className="rounded-full bg-charcoal px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.2em] text-ivory">
+            <span className="rounded-full bg-plum px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.2em] text-ivory">
               {badge}
             </span>
           )}
@@ -139,7 +139,7 @@ export default function ProductCard({
                         className={`min-w-11 rounded-full border px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-all duration-200 active:scale-95 ${
                           out
                             ? "cursor-not-allowed border-transparent text-on-surface-variant/40 line-through"
-                            : "border-charcoal/15 text-charcoal hover:border-charcoal hover:bg-charcoal hover:text-ivory"
+                            : "border-charcoal/15 text-charcoal hover:border-charcoal hover:bg-plum hover:text-ivory"
                         }`}
                       >
                         {v.label}
@@ -152,7 +152,7 @@ export default function ProductCard({
                   type="button"
                   onClick={() => add()}
                   disabled={pending}
-                  className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-charcoal text-[11px] font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-primary-container"
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-full bg-plum text-[11px] font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-plum-deep"
                 >
                   {added ? <Check size={14} /> : <Plus size={14} />}
                   {added ? labels.added : labels.addToCart}
@@ -184,7 +184,7 @@ export default function ProductCard({
       </div>
 
       <Link href={href} className="mt-3 block">
-        {brand && <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.25em] text-gold-ink">{brand}</p>}
+        {brand && <p className="mb-1 truncate text-[10px] font-medium uppercase tracking-[0.2em] text-gold-ink">{brand}</p>}
         <h3 className="line-clamp-1 text-sm uppercase tracking-wide text-charcoal">{name}</h3>
         <p className="mt-1 flex items-baseline gap-1.5 text-sm">
           {priceFrom && <span className="text-[11px] text-on-surface-variant">{labels.from}</span>}

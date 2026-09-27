@@ -15,7 +15,13 @@
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { CATALOG_CATEGORIES } from "../../../packages/db/src/catalog/categories";
-import { composeScene, composeStyledImage } from "../src/lib/media/styled-image";
+import { composeFramedImage, composeScene, composeStyledImage } from "../src/lib/media/styled-image";
+
+/**
+ * Staged scene photos where the cut-out loses part of the product (the gift
+ * boxes behind the bottles) — these get the whole photo framed instead.
+ */
+const FRAMED = new Set(["p42-diamond-grey-box", "p43-diamond-blue-box", "p44-diamond-maroon-box"]);
 
 const [mappingPath, originalsDir, cutoutsDir, ...only] = process.argv.slice(2);
 if (!mappingPath || !originalsDir || !cutoutsDir) {
@@ -32,7 +38,9 @@ for (const { folder, src } of mapping) {
   const dir = path.join(publicDir, "products", folder);
   mkdirSync(dir, { recursive: true });
   copyFileSync(path.join(originalsDir, src), path.join(dir, "original.png"));
-  const styled = await composeStyledImage(cutout(folder), { seed: folder });
+  const styled = FRAMED.has(folder)
+    ? await composeFramedImage(readFileSync(path.join(originalsDir, src)), { seed: folder })
+    : await composeStyledImage(cutout(folder), { seed: folder });
   writeFileSync(path.join(dir, "styled.webp"), styled.buffer);
   console.log(`${folder}  hue ${styled.palette.hue.toFixed(0)}${styled.palette.neutral ? " (neutral)" : ""}`);
 }

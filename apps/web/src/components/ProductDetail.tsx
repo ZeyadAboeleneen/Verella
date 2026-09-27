@@ -11,6 +11,22 @@ import { VMark } from "@/components/brand/Logo";
 
 const LOW_STOCK_THRESHOLD = 5;
 
+/** "top | heart | base" → labelled tiers; a single tier is shown as plain notes. */
+function NotePyramid({ notes, dict }: { notes: string; dict: Dictionary["product"] }) {
+  const tiers = notes.split("|").map((t) => t.trim()).filter(Boolean);
+  const labels = tiers.length === 3 ? [dict.notesTop, dict.notesHeart, dict.notesBase] : [dict.notes];
+  return (
+    <dl className="mt-6 grid gap-3 rounded-2xl bg-surface-container-low p-5 text-sm">
+      {tiers.map((tier, i) => (
+        <div key={i} className="grid grid-cols-[92px_1fr] gap-3">
+          <dt className="text-[11px] font-medium uppercase tracking-[0.2em] text-gold-ink">{labels[i] ?? dict.notes}</dt>
+          <dd className="leading-relaxed text-charcoal/80">{tier}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function ProductDetail({ product, dict }: { product: StoreProductDetailView; dict: Dictionary["product"] }) {
   const validImages = product.images.filter((img) => Boolean(img?.url));
   const images = validImages.length > 0 ? validImages : product.image ? [{ url: product.image, alt: product.alt }] : [];
@@ -73,7 +89,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
     <div className="grid gap-10 md:grid-cols-2 md:gap-14">
       {/* Gallery */}
       <div>
-        <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-surface-container">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-white">
           {!imgError && currentImg && Boolean(currentImg.url) ? (
             <Image
               key={currentImg.url}
@@ -81,7 +97,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
               alt={currentImg.alt || ""}
               fill
               sizes="(min-width: 768px) 50vw, 100vw"
-              className="animate-[fadeIn_400ms_ease-out] object-cover"
+              className="animate-[fadeIn_400ms_ease-out] object-contain"
               onError={() => setImgError(true)}
             />
           ) : (
@@ -90,7 +106,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
             </div>
           )}
           {product.badge && (
-            <span className="absolute start-4 top-4 rounded-full bg-charcoal px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-ivory">
+            <span className="absolute start-4 top-4 rounded-full bg-plum px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-ivory">
               {product.badge}
             </span>
           )}
@@ -111,7 +127,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
                     i === activeImage ? "border-charcoal opacity-100" : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <Image src={img.url} alt="" width={64} height={80} className="h-full w-full object-cover" />
+                  <Image src={img.url} alt="" width={64} height={80} className="h-full w-full bg-white object-contain" />
                 </button>
               ) : null,
             )}
@@ -135,7 +151,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
         </div>
 
         {product.description && <p className="mt-6 leading-relaxed text-charcoal/75">{product.description}</p>}
-        {product.notes && <p className="mt-3 text-sm italic leading-relaxed text-on-surface-variant">{product.notes}</p>}
+        {product.notes && <NotePyramid notes={product.notes} dict={dict} />}
 
         {product.hasVariants && (
           <fieldset className="mt-8">
@@ -158,7 +174,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
                     onClick={() => selectVariant(v.id)}
                     className={`relative min-w-16 rounded-full border px-5 py-2.5 text-sm transition-all duration-300 active:scale-95 ${
                       selected
-                        ? "border-charcoal bg-charcoal text-ivory"
+                        ? "border-plum bg-plum text-ivory"
                         : soldOut
                           ? "cursor-not-allowed border-beige text-on-surface-variant/50 line-through"
                           : "border-outline-variant bg-surface-container-lowest text-charcoal hover:border-charcoal"
@@ -203,7 +219,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
                 onClick={handleAddToCart}
                 disabled={pending || (product.hasVariants && stock <= 0)}
                 className={`group flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-xs font-medium uppercase tracking-[0.2em] transition-all duration-300 active:scale-[0.98] disabled:opacity-50 ${
-                  added ? "bg-gold text-charcoal" : "bg-charcoal text-ivory hover:bg-primary-container"
+                  added ? "bg-gold text-charcoal" : "bg-plum text-ivory hover:bg-plum-deep"
                 }`}
               >
                 {added ? (

@@ -27,7 +27,10 @@ export interface DiscountLike {
 
 export interface CartLineLike {
   productId: number;
+  /** Primary category. */
   categoryId: number;
+  /** Every category the product appears in (primary included), when known. */
+  categoryIds?: number[];
   unitPriceCents: number;
   quantity: number;
 }
@@ -38,7 +41,9 @@ export function isDiscountWindowOpen(discount: DiscountLike, now = new Date()): 
 
 export function lineMatchesDiscount(discount: DiscountLike, line: CartLineLike): boolean {
   if (discount.scope === "all") return true;
-  if (discount.scope === "category") return discount.categoryIds?.includes(line.categoryId) ?? false;
+  if (discount.scope === "category") {
+    return (line.categoryIds ?? [line.categoryId]).some((id) => discount.categoryIds?.includes(id) ?? false);
+  }
   return discount.productIds?.includes(line.productId) ?? false;
 }
 

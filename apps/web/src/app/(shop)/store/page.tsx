@@ -46,11 +46,12 @@ export default async function StorePage({ searchParams }: { searchParams: Promis
             <p className="mt-6 max-w-sm text-base leading-relaxed text-charcoal/70">{active?.description ?? s.subtitle}</p>
           </Reveal>
         </div>
-        <Reveal className="md:col-span-8" y={40} delay={0.1}>
+        {/* Phones use the sticky category tabs below instead — seven stacked panels pushed the products off-screen. */}
+        <Reveal className="hidden md:col-span-8 md:block" y={40} delay={0.1}>
           <CategoryStrip
-            categories={categories.map((c) => ({ ...c, count: products.filter((p) => p.categorySlug === c.slug).length }))}
+            categories={categories.map((c) => ({ ...c, count: products.filter((p) => p.categorySlugs.includes(c.slug)).length }))}
             labels={{ explore: dict.home.worlds.explore, items: dict.home.worlds.items }}
-            height="h-[62vh] min-h-[440px] md:h-[520px]"
+            height="md:h-[520px]"
           />
         </Reveal>
       </section>

@@ -39,10 +39,10 @@ export interface CatalogProduct {
   isFeaturedHome?: boolean;
 }
 
-const IBRAQ = "Ibraq · Ibrahim Al Qurashi";
+const IBRAQ = "Ibrahim Al Qurashi";
 const ASSAF = "Assaf";
 const LAVERNE = "Laverne";
-const DUKHOON = "Dukhoon Al Emaratiya";
+const DUKHOON = "Dukhoon Emirates";
 const ARABIYAT = "Arabiyat Prestige";
 
 export const CATALOG_PRODUCTS: CatalogProduct[] = [
@@ -747,9 +747,9 @@ export const CATALOG_PRODUCTS: CatalogProduct[] = [
     gender: "unisex",
     categories: ["gift-sets"],
     descEn:
-      "Three Diamond fragrances in a royal-blue presentation box, including the smoky Black Diamond Incense — a trio that moves from crisp and marine to deep, oriental incense.",
+      "Three Diamond fragrances in a royal-blue presentation box: Sapphire Leather, Blue Diamond Aqua and the smoky Black Diamond Incense — a trio that moves from crisp aromatic leather and marine freshness to deep, oriental incense.",
     descAr:
-      "تلات عطور من مجموعة دايموند في علبة زرقا ملكية، منهم بلاك دايموند إنسنس المدخّن — ثلاثي بيتنقّل من المنعش والبحري لحد البخور الشرقي العميق.",
+      "تلات عطور من مجموعة دايموند في علبة زرقا ملكية: سافاير ليذر، وبلو دايموند أكوا، وبلاك دايموند إنسنس المدخّن — ثلاثي بيتنقّل من الجلد العطري والانتعاش البحري لحد البخور الشرقي العميق.",
     images: ["p43-diamond-blue-box"],
   },
   {

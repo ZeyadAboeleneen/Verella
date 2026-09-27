@@ -74,7 +74,7 @@ export default async function Home() {
         </div>
         <Reveal y={50}>
           <CategoryStrip
-            categories={categories.map((c) => ({ ...c, count: products.filter((p) => p.categorySlug === c.slug).length }))}
+            categories={categories.map((c) => ({ ...c, count: products.filter((p) => p.categorySlugs.includes(c.slug)).length }))}
             labels={{ explore: h.worlds.explore, items: h.worlds.items }}
           />
         </Reveal>

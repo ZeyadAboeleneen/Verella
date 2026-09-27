@@ -5,7 +5,7 @@ import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } f
 import { VMark } from "@/components/brand/Logo";
 
 function Word({ word, progress, range }: { word: string; progress: MotionValue<number>; range: [number, number] }) {
-  const opacity = useTransform(progress, range, [0.12, 1]);
+  const opacity = useTransform(progress, range, [0.28, 1]);
   return (
     <motion.span style={{ opacity }} className="me-[0.25em] inline-block">
       {word}
@@ -22,9 +22,9 @@ export function Manifesto({ lines, signature }: { lines: string[]; signature: st
   const words = lines.flatMap((line, li) => line.split(" ").map((w) => ({ w, li })));
 
   return (
-    <section ref={ref} className="relative overflow-hidden bg-ivory px-5 py-28 md:px-16 md:py-44">
+    <section ref={ref} className="relative overflow-hidden bg-bloom px-5 py-28 md:px-16 md:py-44">
       <motion.span className="pointer-events-none absolute -start-24 top-10 md:-start-10" style={reduce ? undefined : { rotate }}>
-        <VMark size={420} className="text-beige/60" />
+        <VMark size={420} className="text-beige/30 md:text-beige/60" />
       </motion.span>
       <div className="relative mx-auto max-w-6xl">
         <p className="font-[family-name:var(--font-display)] text-[clamp(2.4rem,7vw,6.5rem)] font-medium uppercase leading-[0.95] tracking-[-0.02em] text-charcoal">

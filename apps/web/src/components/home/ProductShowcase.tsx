@@ -28,12 +28,12 @@ export function ProductShowcase({
     () => [
       { slug: "all", name: labels.all, count: products.length },
       ...categories
-        .map((c) => ({ slug: c.slug, name: c.name, count: products.filter((p) => p.categorySlug === c.slug).length }))
+        .map((c) => ({ slug: c.slug, name: c.name, count: products.filter((p) => p.categorySlugs.includes(c.slug)).length }))
         .filter((c) => c.count > 0),
     ],
     [categories, products, labels.all],
   );
-  const shown = (tab === "all" ? products : products.filter((p) => p.categorySlug === tab)).slice(0, limit);
+  const shown = (tab === "all" ? products : products.filter((p) => p.categorySlugs.includes(tab))).slice(0, limit);
 
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-24 md:px-16 md:py-32">

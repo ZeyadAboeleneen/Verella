@@ -30,7 +30,7 @@ function Section({ step, title, children }: { step: number; title: string; child
   return (
     <section className="rounded-2xl bg-surface-container-lowest p-5 sm:p-7">
       <h2 className="mb-5 flex items-center gap-3 text-sm font-medium uppercase tracking-[0.2em] text-charcoal">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-charcoal text-xs tracking-normal text-ivory">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-plum text-xs tracking-normal text-ivory">
           {step}
         </span>
         {title}
@@ -190,7 +190,7 @@ export function CheckoutForm({
                 <VMark size={20} className="text-beige" />
               </span>
             )}
-            <span className="absolute -end-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-charcoal px-1 text-[10px] text-ivory">
+            <span className="absolute -end-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-plum px-1 text-[10px] text-ivory">
               {l.quantity}
             </span>
           </div>
@@ -249,7 +249,7 @@ export function CheckoutForm({
           type="button"
           onClick={applyDiscountCode}
           disabled={applyingDiscount || !codeInput.trim()}
-          className="rounded-xl border border-charcoal px-4 text-xs font-medium uppercase tracking-[0.15em] text-charcoal transition-colors hover:bg-charcoal hover:text-ivory disabled:opacity-40"
+          className="rounded-xl border border-charcoal px-4 text-xs font-medium uppercase tracking-[0.15em] text-charcoal transition-colors hover:bg-plum hover:text-ivory disabled:opacity-40"
         >
           {applyingDiscount ? <Loader2 size={14} className="animate-spin" /> : t.apply}
         </button>
@@ -307,7 +307,7 @@ export function CheckoutForm({
                   <label
                     key={type}
                     className={`flex cursor-pointer items-center justify-center rounded-xl border px-4 py-3 text-sm transition-all duration-300 ${
-                      fulfillmentType === type ? "border-charcoal bg-charcoal text-ivory" : "border-outline-variant hover:border-charcoal"
+                      fulfillmentType === type ? "border-plum bg-plum text-ivory" : "border-outline-variant hover:border-charcoal"
                     }`}
                   >
                     <input type="radio" value={type} className="sr-only" {...register("fulfillmentType")} />
@@ -524,7 +524,7 @@ export function CheckoutForm({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-charcoal text-xs font-medium uppercase tracking-[0.25em] text-ivory transition-all duration-300 hover:bg-primary-container active:scale-[0.99] disabled:opacity-50"
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-plum text-xs font-medium uppercase tracking-[0.25em] text-ivory transition-all duration-300 hover:bg-plum-deep active:scale-[0.99] disabled:opacity-50"
         >
           {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Lock size={14} />}
           {isSubmitting ? t.placing : `${t.placeOrder} · ${money(preview.grandTotalCents)}`}

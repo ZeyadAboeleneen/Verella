@@ -83,6 +83,7 @@ async function computeCheckoutPricing(
   const lines: CartLineLike[] = cart.lines.map((l) => ({
     productId: l.productId,
     categoryId: l.categoryId,
+    categoryIds: l.categoryIds,
     unitPriceCents: l.unitPriceCents,
     quantity: l.quantity,
   }));

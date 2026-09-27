@@ -42,6 +42,11 @@ describe("computeDiscountAmountCents", () => {
     expect(computeDiscountAmountCents(discount({ scope: "category", categoryIds: [3] }), LINES)).toBe(3200);
   });
 
+  it("matches a product through any of its categories, not just the primary one", () => {
+    const lines: CartLineLike[] = [{ productId: 30, categoryId: 1, categoryIds: [1, 4], unitPriceCents: 100000, quantity: 1 }];
+    expect(computeDiscountAmountCents(discount({ scope: "category", categoryIds: [4] }), lines)).toBe(10000);
+  });
+
   it("only counts the discounted product", () => {
     expect(computeDiscountAmountCents(discount({ scope: "product", productIds: [10] }), LINES)).toBe(29000);
   });

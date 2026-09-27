@@ -91,7 +91,7 @@ export default function Footer({ dict, categories = [] }: { dict: Dictionary; ca
   ];
 
   return (
-    <footer className="relative overflow-hidden bg-charcoal text-ivory">
+    <footer className="relative overflow-hidden bg-dusk text-ivory">
       {/* A single cropped mark at the edge — the guidelines prefer this over a full repeat. */}
       <VMark
         size={520}

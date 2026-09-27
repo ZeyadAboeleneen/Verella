@@ -66,6 +66,20 @@
   --color-beige: #DFD3C0;
   --color-paper-white: #FFFFFF;
 
+  /*
+   * Colour direction (Sep 2026): the site should feel alive, not black and
+   * white. Charcoal stays for type; large dark surfaces move to a deep plum →
+   * rose "dusk", and these complements pick up the colours of the products
+   * (see the styled product photos). All pass AA with ivory text where used.
+   */
+  --color-plum: #4A2140;
+  --color-plum-deep: #2B1426;
+  --color-rose: #C9566B;
+  --color-blush: #F3D9D6;
+  --color-saffron: #E4A951;
+  --color-teal: #2F6B66;
+  --color-sky: #CFE1EE;
+
   --color-secondary-fixed: #EFE4D0;
   --color-secondary-fixed-dim: #DFD3C0;
   --color-on-secondary-fixed: #3D3524;
@@ -164,4 +178,21 @@ html:lang(ar) {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Deep plum → rose — the brand's "dusk", for heroes, footer and bands. */
+.bg-dusk {
+  background-color: var(--color-plum-deep);
+  background-image:
+    radial-gradient(120% 90% at 100% 0%, rgba(201, 86, 107, 0.55) 0%, transparent 55%),
+    radial-gradient(90% 80% at 0% 100%, rgba(228, 169, 81, 0.22) 0%, transparent 60%),
+    linear-gradient(135deg, var(--color-plum-deep) 0%, var(--color-plum) 55%, #6B2A4E 100%);
+}
+
+/* Light, warm wash for content sections that used to be flat ivory. */
+.bg-bloom {
+  background-color: var(--color-ivory);
+  background-image:
+    radial-gradient(70% 60% at 0% 0%, rgba(243, 217, 214, 0.9) 0%, transparent 60%),
+    radial-gradient(60% 60% at 100% 100%, rgba(207, 225, 238, 0.8) 0%, transparent 60%);
 }

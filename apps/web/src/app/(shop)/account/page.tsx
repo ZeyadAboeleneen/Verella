@@ -47,9 +47,9 @@ export default async function AccountPage() {
   return (
     <div className="min-h-screen bg-ivory">
       {/* ── Profile header ── */}
-      <div className="bg-charcoal px-5 py-10 md:px-16 md:py-14">
+      <div className="bg-dusk px-5 py-10 md:px-16 md:py-14">
         <div className="mx-auto flex max-w-3xl items-center gap-5">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-charcoal font-[family-name:var(--font-display)] text-2xl font-bold text-white md:h-20 md:w-20 md:text-3xl">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-plum font-[family-name:var(--font-display)] text-2xl font-bold text-white md:h-20 md:w-20 md:text-3xl">
             {initial}
           </div>
           <div className="min-w-0 flex-1">
@@ -129,7 +129,7 @@ export default async function AccountPage() {
               <p className="text-sm text-on-surface-variant">You haven&apos;t placed any orders yet.</p>
               <Link
                 href="/store"
-                className="mt-4 inline-block rounded-full bg-charcoal px-8 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-colors hover:bg-primary-container"
+                className="mt-4 inline-block rounded-full bg-plum px-8 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-colors hover:bg-plum-deep"
               >
                 Start shopping
               </Link>

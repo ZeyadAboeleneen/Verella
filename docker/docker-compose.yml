@@ -49,9 +49,6 @@ services:
         condition: service_healthy
     env_file:
       - ../.env
-    environment:
-      # Production gets categories, roles and settings — no demo products.
-      SEED_DEMO_CATALOG: ${SEED_DEMO_CATALOG:-false}
     profiles: ["tools"] # run on demand: docker compose run --rm migrator
 
   # Nightly gzipped dump into docker/backups/, 14 days kept. This protects

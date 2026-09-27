@@ -68,7 +68,7 @@ export function VMarquee({
 
   return (
     <div
-      className={`overflow-hidden border-y py-5 md:py-7 ${dark ? "border-ivory/10 bg-charcoal text-ivory" : "border-charcoal/10 bg-ivory text-charcoal"}`}
+      className={`overflow-hidden border-y py-5 md:py-7 ${dark ? "border-ivory/10 bg-dusk text-ivory" : "border-charcoal/10 bg-bloom text-charcoal"}`}
       aria-label={items.join(" · ")}
       role="marquee"
       dir="ltr"

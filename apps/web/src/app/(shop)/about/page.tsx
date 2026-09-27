@@ -22,7 +22,7 @@ export default async function AboutPage() {
 
   return (
     <div>
-      <section className="relative overflow-hidden bg-charcoal px-5 pb-24 pt-20 text-ivory md:px-16 md:pb-36 md:pt-32">
+      <section className="relative overflow-hidden bg-dusk px-5 pb-24 pt-20 text-ivory md:px-16 md:pb-36 md:pt-32">
         <VMark size={700} className="pointer-events-none absolute -end-40 -top-32 text-champagne/[0.06]" />
         <div className="relative mx-auto max-w-[1400px]">
           <Reveal>
@@ -64,7 +64,7 @@ export default async function AboutPage() {
           />
           <div className="grid gap-px overflow-hidden rounded-3xl bg-charcoal/10 md:grid-cols-3">
             {t.pillars.map((p, i) => (
-              <Reveal key={p.title} delay={i * 0.12} className="group bg-ivory p-8 transition-colors duration-500 hover:bg-charcoal md:p-12">
+              <Reveal key={p.title} delay={i * 0.12} className="group bg-ivory p-8 transition-colors duration-500 hover:bg-plum md:p-12">
                 <span className="text-[11px] tracking-[0.3em] text-gold-ink group-hover:text-champagne">0{i + 1}</span>
                 <h3 className="mt-10 font-[family-name:var(--font-display)] text-5xl font-medium uppercase tracking-tight text-charcoal transition-colors duration-500 group-hover:text-ivory md:text-6xl">
                   {p.title}
@@ -100,11 +100,11 @@ export default async function AboutPage() {
         title={dict.home.features[0].title}
         body={dict.home.features[0].body}
         cta={dict.home.features[0].cta}
-        href="/store?category=fragrances"
-        image={categories.find((c) => c.slug === "fragrances")?.image ?? null}
+        href={`/store?category=${dict.home.features[0].category}`}
+        image={categories.find((c) => c.slug === dict.home.features[0].category)?.image ?? null}
       />
 
-      <section className="relative overflow-hidden bg-charcoal px-5 py-28 text-center text-ivory md:px-16 md:py-40">
+      <section className="relative overflow-hidden bg-dusk px-5 py-28 text-center text-ivory md:px-16 md:py-40">
         <VMark size={90} className="mx-auto mb-10 text-champagne" />
         <RevealText
           text={t.quote}

@@ -71,7 +71,7 @@ export function ContactForm({ labels: t }: { labels: Dictionary["contact"] }) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-full bg-charcoal py-4 text-xs font-semibold uppercase tracking-widest text-ivory transition-colors hover:bg-primary-container disabled:opacity-60 sm:w-auto sm:px-10"
+        className="w-full rounded-full bg-plum py-4 text-xs font-semibold uppercase tracking-widest text-ivory transition-colors hover:bg-plum-deep disabled:opacity-60 sm:w-auto sm:px-10"
       >
         {pending ? t.sending : t.send}
       </button>

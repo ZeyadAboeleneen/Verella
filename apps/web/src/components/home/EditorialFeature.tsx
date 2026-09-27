@@ -37,7 +37,7 @@ export function EditorialFeature({
       <div className={`grid items-center gap-10 md:grid-cols-12 md:gap-16 ${flip ? "md:[&>*:first-child]:order-2" : ""}`}>
         <motion.div
           ref={ref}
-          className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-charcoal md:col-span-7 md:aspect-[5/6]"
+          className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-blush md:col-span-7 md:aspect-[5/6]"
           style={reduce ? undefined : { clipPath: clip }}
         >
           {image ? (

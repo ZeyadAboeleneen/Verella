@@ -16,7 +16,7 @@
     "brands": "Brands"
   },
   "footer": {
-    "tagline": "Original brands, fragrances and fashion — curated in one destination.",
+    "tagline": "Original fragrances, musk and gift sets — curated in one destination.",
     "shopTitle": "Shop",
     "shopAll": "Shop all",
     "helpTitle": "Help",
@@ -170,7 +170,11 @@
     "chooseOption": "Please choose an option",
     "chooseSize": "Choose size",
     "quickAddTitle": "Choose a size",
-    "close": "Close"
+    "close": "Close",
+    "notes": "Notes",
+    "notesTop": "Top",
+    "notesHeart": "Heart",
+    "notesBase": "Base"
   },
   "store": {
     "title": "The Store",
@@ -200,21 +204,22 @@
       "explore": "Explore",
       "scroll": "Scroll",
       "lines": {
-        "fragrances": "Smell loud.",
-        "musk-oud": "Leave a trail.",
-        "personal-care": "Glow, daily.",
-        "women": "Wear it bold.",
-        "men": "Sharp by default.",
-        "gifts": "Give better."
+        "women": "Wear it softly.",
+        "men": "Own the room.",
+        "unisex": "Yours to define.",
+        "musk": "Clean. Close. Yours.",
+        "oud-tobacco": "Leave a trail.",
+        "gift-sets": "Give better.",
+        "accessories": "The finishing touch."
       }
     },
     "marquee": [
       "Original brands",
       "One destination",
-      "Fragrance",
-      "Fashion",
-      "Personal care",
-      "New drops weekly"
+      "Fragrances",
+      "Musk",
+      "Oud & tobacco",
+      "Gift sets"
     ],
     "worlds": {
       "eyebrow": "Shop by world",
@@ -237,18 +242,18 @@
     "manifestoSig": "Authenticity × Variety × Value",
     "features": [
       {
-        "category": "fragrances",
-        "eyebrow": "The Fragrances",
-        "title": "Your signature is out there.",
-        "body": "Perfume, musk and oud from the houses worth knowing — original, sealed and ready to wear.",
-        "cta": "Shop fragrances"
+        "category": "oud-tobacco",
+        "eyebrow": "Oud & Tobacco",
+        "title": "Warm, deep, unforgettable.",
+        "body": "Smoky incense, rich tobacco and white oud — extraits made for evenings that last.",
+        "cta": "Shop oud & tobacco"
       },
       {
-        "category": "women",
-        "eyebrow": "The Look",
-        "title": "Edited, not overloaded.",
-        "body": "Pieces picked by the Verella team to wear now and keep for later.",
-        "cta": "Shop the look"
+        "category": "gift-sets",
+        "eyebrow": "Gift sets",
+        "title": "Ready to give.",
+        "body": "Diamond boxes, musk duos and discovery sets — in their original packaging, ready for someone special.",
+        "cta": "Shop gift sets"
       }
     ],
     "brands": {

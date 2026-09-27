@@ -14,11 +14,11 @@ pnpm install
 cp .env.example .env                  # used by pnpm db:* scripts
 cp .env.example apps/web/.env.local   # used by Next.js (it only reads its own folder)
 # In both: DATABASE_URL=mysql://root@127.0.0.1:3306/verella
-#          AUTH_URL=http://localhost:3000, a fresh AUTH_SECRET,
-#          SEED_DEMO_CATALOG=true if you want the demo products.
+#          AUTH_URL=http://localhost:3000 and a fresh AUTH_SECRET.
 
 pnpm db:migrate
-pnpm db:seed        # only runs on an empty database
+pnpm db:seed        # roles, settings and the full Verella catalog (empty database only)
+pnpm db:import-catalog   # existing database: sync it to packages/db/src/catalog
 pnpm dev            # http://localhost:3000
 ```
 
@@ -118,7 +118,7 @@ docker compose --env-file ../.env logs -f caddy    # certificate / TLS problems
 - **Honeypot** spam trap on the contact and registration forms.
 - **Cookie consent**: GA4 only loads after the visitor accepts; "Cookie settings" in the footer reopens the banner.
 - **SEO**: per-page localized titles/descriptions, canonical + hreflang (en/ar), Open Graph + Twitter cards, `sitemap.xml` (with Arabic alternates), `robots.txt`, Product / FAQ / Organization structured data. Private pages (bag, checkout, account, order, auth) are `noindex`.
-- **Seed safety**: the seed refuses a weak admin password on a non-local database, and skips the demo catalog unless `SEED_DEMO_CATALOG=true`.
+- **Seed safety**: the seed refuses a weak admin password on a non-local database.
 
 ---
 

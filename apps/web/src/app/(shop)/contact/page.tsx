@@ -37,7 +37,7 @@ export default async function ContactPage() {
                   rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="group flex items-center gap-4 rounded-2xl bg-surface-container-lowest p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-16px_rgba(20,20,20,0.35)]"
                 >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-charcoal text-champagne transition-transform duration-300 group-hover:scale-105">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-plum text-champagne transition-transform duration-300 group-hover:scale-105">
                     {icon}
                   </span>
                   <span className="min-w-0">

@@ -58,14 +58,14 @@ export function BrandIndex({
               <span className="flex items-baseline gap-4 md:gap-8">
                 <span className="text-[11px] tabular-nums tracking-[0.2em] text-on-surface-variant">{String(i + 1).padStart(2, "0")}</span>
                 <span
-                  className={`font-[family-name:var(--font-display)] text-3xl font-medium uppercase tracking-tight transition-all duration-500 md:text-6xl ${
+                  className={`font-[family-name:var(--font-display)] text-2xl font-medium uppercase leading-tight tracking-tight transition-all duration-500 sm:text-3xl md:text-6xl ${
                     hovered && hovered !== b.name ? "text-charcoal/25" : "text-charcoal"
                   } group-hover:translate-x-3 rtl:group-hover:-translate-x-3`}
                 >
                   {b.name}
                 </span>
               </span>
-              <span className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-on-surface-variant">
+              <span className="flex shrink-0 items-center gap-3 whitespace-nowrap text-[10px] uppercase tracking-[0.15em] text-on-surface-variant md:text-xs md:tracking-[0.2em]">
                 {b.productCount} {labels.products}
                 <ArrowUpRight size={18} className="text-charcoal transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
               </span>

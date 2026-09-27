@@ -51,7 +51,8 @@ function neutralPalette(seed: string): Palette {
 async function loadCutout(input: Buffer, seed = ""): Promise<Cutout> {
   const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width, height } = info;
-  let minX = width, minY = height, maxX = -1, maxY = -1;
+  const rowCount = new Uint32Array(height);
+  const colCount = new Uint32Array(width);
   let x2 = 0, y2 = 0, weight = 0, colourful = 0, opaque = 0, satSum = 0;
 
   for (let y = 0; y < height; y++) {
@@ -59,10 +60,8 @@ async function loadCutout(input: Buffer, seed = ""): Promise<Cutout> {
       const i = (y * width + x) * 4;
       const a = data[i + 3];
       if (a <= ALPHA_SOLID) continue;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
+      rowCount[y]++;
+      colCount[x]++;
       if (a < 200 || (x + y) % 3 !== 0) continue; // sample the solid body
       opaque++;
       const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255;
@@ -82,7 +81,18 @@ async function loadCutout(input: Buffer, seed = ""): Promise<Cutout> {
       satSum += s * w;
     }
   }
-  if (maxX < 0) throw new Error("Cut-out is empty — nothing to place.");
+  // Frame on rows/columns with real substance, so a stray scratch or speck
+  // in the supplier photo doesn't shrink the product; anything outside that
+  // frame is dropped.
+  const span = (counts: Uint32Array) => {
+    const floor = Math.max(2, Math.max(...counts) * 0.03);
+    const first = counts.findIndex((c) => c >= floor);
+    const last = counts.length - 1 - [...counts].reverse().findIndex((c) => c >= floor);
+    return [first, last] as const;
+  };
+  const [minY, maxY] = span(rowCount);
+  const [minX, maxX] = span(colCount);
+  if (minX < 0 || minY < 0) throw new Error("Cut-out is empty — nothing to place.");
 
   const neutral = opaque === 0 || colourful / opaque < 0.08;
   const palette = neutral
@@ -94,6 +104,11 @@ async function loadCutout(input: Buffer, seed = ""): Promise<Cutout> {
   // — the product itself — are left exactly as they were.
   const out = Buffer.from(data);
   for (let i = 0; i < out.length; i += 4) {
+    const px = (i / 4) % width, py = Math.floor(i / 4 / width);
+    if (px < minX || px > maxX || py < minY || py > maxY) {
+      out[i + 3] = 0;
+      continue;
+    }
     const a = out[i + 3] / 255;
     if (a <= 0.04 || a >= 0.96) continue;
     for (let c = 0; c < 3; c++) {
@@ -235,7 +250,9 @@ export async function composeStyledImage(
   const cut = await loadCutout(cutoutPng, seed);
   const pal = palette ?? cut.palette;
   const floorY = Math.round(height * 0.8);
-  const sized = await placeProduct(cut, width * 0.62, height * 0.58);
+  // Tall bottles are limited by height; wide sets and glasses may use more width.
+  const wide = cut.bbox.width / cut.bbox.height > 1.2;
+  const sized = await placeProduct(cut, width * (wide ? 0.84 : 0.62), height * 0.58);
   const product: Placed = {
     ...sized,
     left: Math.round((width - sized.width) / 2),
@@ -244,6 +261,35 @@ export async function composeStyledImage(
   const shadow = await productShadow(product, pal, Math.round(width * 0.022));
   const buffer = await sharp(backdropSvg(width, height, floorY, pal, [{ cx: width / 2, rx: sized.width * 0.46 }]))
     .composite([shadow, product].map((l) => ({ input: l.input, left: l.left, top: l.top })))
+    .webp({ quality: 90 })
+    .toBuffer();
+  return { buffer, width, height, palette: pal };
+}
+
+/**
+ * For staged scene photos (a gift box on display plinths, several props)
+ * where cutting out would lose part of the product: the whole original photo,
+ * untouched, is set as a rounded card on the same coloured backdrop.
+ */
+export async function composeFramedImage(
+  originalImage: Buffer,
+  { width = 1200, height = 1500, palette, seed }: { width?: number; height?: number; palette?: Palette; seed?: string } = {},
+): Promise<StyledImageResult> {
+  const src = sharp(originalImage).rotate();
+  const meta = await src.metadata();
+  // Palette from the photo itself, sampled as if every pixel were product.
+  const pal = palette ?? (await loadCutout(await src.clone().ensureAlpha(1).png().toBuffer(), seed)).palette;
+  const floorY = Math.round(height * 0.8);
+  const maxW = width * 0.8, maxH = height * 0.62;
+  const scale = Math.min(maxW / (meta.width ?? 1), maxH / (meta.height ?? 1));
+  const w = Math.round((meta.width ?? 1) * scale), h = Math.round((meta.height ?? 1) * scale);
+  const radius = Math.round(width * 0.03);
+  const mask = Buffer.from(`<svg width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="${radius}" ry="${radius}"/></svg>`);
+  const card = await src.clone().resize(w, h, { kernel: "lanczos3" }).ensureAlpha().composite([{ input: mask, blend: "dest-in" }]).png().toBuffer();
+  const placed: Placed = { input: card, width: w, height: h, left: Math.round((width - w) / 2), top: floorY + Math.round(height * 0.012) - h };
+  const shadow = await productShadow(placed, pal, Math.round(width * 0.03));
+  const buffer = await sharp(backdropSvg(width, height, floorY, pal, [{ cx: width / 2, rx: w * 0.46 }]))
+    .composite([shadow, placed].map((l) => ({ input: l.input, left: l.left, top: l.top })))
     .webp({ quality: 90 })
     .toBuffer();
   return { buffer, width, height, palette: pal };

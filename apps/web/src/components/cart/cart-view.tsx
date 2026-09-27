@@ -47,7 +47,7 @@ export function CartView({
         <p className="mt-2 max-w-sm text-sm text-on-surface-variant">{dict.cart.emptyHint}</p>
         <Link
           href="/store"
-          className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-charcoal px-8 text-xs font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-primary-container"
+          className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-plum px-8 text-xs font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-plum-deep"
         >
           {dict.cart.continueShopping}
           <ArrowRight size={14} className="rtl:rotate-180" />
@@ -138,7 +138,7 @@ export function CartView({
         <p className="mt-3 text-xs leading-relaxed text-on-surface-variant">{dict.cart.shippingNote}</p>
         <Link
           href="/checkout"
-          className="group mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-charcoal text-xs font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-primary-container"
+          className="group mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-plum text-xs font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-plum-deep"
         >
           {dict.cart.checkout}
           <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />

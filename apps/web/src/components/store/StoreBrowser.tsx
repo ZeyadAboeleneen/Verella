@@ -71,7 +71,7 @@ export function StoreBrowser({
     const q = query.trim().toLowerCase();
     let list = products.filter(
       (p) =>
-        (category === "all" || p.categorySlug === category) &&
+        (category === "all" || p.categorySlugs.includes(category)) &&
         (!brand || p.brand === brand) &&
         (!inStock || p.stockQty > 0) &&
         (!q || p.name.toLowerCase().includes(q) || (p.brand ?? "").toLowerCase().includes(q)),
@@ -85,7 +85,7 @@ export function StoreBrowser({
 
   const tabs = [
     { slug: "all", name: labels.all, count: products.length },
-    ...categories.map((c) => ({ slug: c.slug, name: c.name, count: products.filter((p) => p.categorySlug === c.slug).length })),
+    ...categories.map((c) => ({ slug: c.slug, name: c.name, count: products.filter((p) => p.categorySlugs.includes(c.slug)).length })),
   ];
   const activeFilters = (brand ? 1 : 0) + (inStock ? 1 : 0) + (sort !== "featured" ? 1 : 0);
   const sorts: { value: Sort; label: string }[] = [
@@ -155,7 +155,7 @@ export function StoreBrowser({
           <button
             type="button"
             onClick={() => setBrand("")}
-            className="flex items-center gap-2 rounded-full bg-charcoal px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-ivory"
+            className="flex items-center gap-2 rounded-full bg-plum px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-ivory"
           >
             {brand} <X size={12} />
           </button>
@@ -230,7 +230,7 @@ export function StoreBrowser({
                     type="button"
                     onClick={() => setSort(s.value)}
                     className={`rounded-full border px-4 py-2 text-xs transition-all duration-300 ${
-                      sort === s.value ? "border-charcoal bg-charcoal text-ivory" : "border-charcoal/15 hover:border-charcoal"
+                      sort === s.value ? "border-plum bg-plum text-ivory" : "border-charcoal/15 hover:border-charcoal"
                     }`}
                   >
                     {s.label}
@@ -246,7 +246,7 @@ export function StoreBrowser({
                     type="button"
                     onClick={() => setBrand(b)}
                     className={`rounded-full border px-4 py-2 text-xs transition-all duration-300 ${
-                      brand === b ? "border-charcoal bg-charcoal text-ivory" : "border-charcoal/15 hover:border-charcoal"
+                      brand === b ? "border-plum bg-plum text-ivory" : "border-charcoal/15 hover:border-charcoal"
                     }`}
                   >
                     {b || labels.allBrands}
@@ -281,7 +281,7 @@ export function StoreBrowser({
                 <button
                   type="button"
                   onClick={() => setDrawer(false)}
-                  className="h-12 flex-[2] rounded-full bg-charcoal text-xs font-medium uppercase tracking-[0.2em] text-ivory"
+                  className="h-12 flex-[2] rounded-full bg-plum text-xs font-medium uppercase tracking-[0.2em] text-ivory"
                 >
                   {labels.results.replace("{n}", String(shown.length))}
                 </button>

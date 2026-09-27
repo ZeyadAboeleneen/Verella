@@ -61,7 +61,7 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
     nameAr: "أطقم الهدايا",
     descEn: "Collections and duos, boxed and ready to give.",
     descAr: "مجموعات وأطقم جاهزة للإهداء.",
-    cover: ["p09-special-musk-duo", "p44-diamond-maroon-box", "p37-laverne-little-garden"],
+    cover: ["p07-abaq-pomegranate-musk-duo", "p37-laverne-little-garden", "p09-special-musk-duo"],
   },
   {
     slug: "accessories",

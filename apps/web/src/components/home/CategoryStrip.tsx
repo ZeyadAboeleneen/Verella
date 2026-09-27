@@ -19,12 +19,13 @@ export interface StripCategory {
 /**
  * Collection strips in the spirit of AOI: every world is a tall panel with
  * its own photo; clicking one opens it wide, the photo settles from a zoom,
- * and the name, blurb and count rise in. On phones it stacks vertically.
+ * and the name, blurb and count rise in. On phones it stacks vertically:
+ * collapsed rows are a fixed 64px and the open one takes its full height.
  */
 export function CategoryStrip({
   categories,
   labels,
-  height = "h-[78vh] min-h-[560px]",
+  height = "md:h-[78vh] md:min-h-[560px]",
 }: {
   categories: StripCategory[];
   labels: { explore: string; items: string };
@@ -41,11 +42,10 @@ export function CategoryStrip({
         return (
           <motion.div
             key={cat.slug}
-            className="relative min-h-[72px] cursor-pointer overflow-hidden rounded-2xl bg-charcoal text-ivory md:min-h-0"
+            className={`relative cursor-pointer overflow-hidden rounded-2xl bg-plum text-ivory shrink-0 transition-[height] duration-700 md:h-auto md:min-h-0 md:shrink md:basis-0 ${open ? "h-[460px]" : "h-16"}`}
             animate={{ flexGrow: open ? 6 : 1 }}
             initial={false}
             transition={{ duration: reduce ? 0 : 0.8, ease: EASE_OUT }}
-            style={{ flexBasis: 0 }}
             onClick={() => setActive(i)}
             onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setActive(i))}
             role="button"
@@ -75,7 +75,7 @@ export function CategoryStrip({
             )}
             <div
               className={`absolute inset-0 transition-opacity duration-700 ${
-                open ? "bg-gradient-to-t from-charcoal/85 via-charcoal/10 to-transparent" : "bg-charcoal/40"
+                open ? "bg-gradient-to-t from-plum-deep/95 via-plum-deep/55 to-plum-deep/5" : "bg-gradient-to-t from-plum-deep/70 via-plum-deep/20 to-transparent"
               }`}
             />
 
@@ -89,7 +89,7 @@ export function CategoryStrip({
                   exit={{ opacity: 0, transition: { duration: 0.15 } }}
                 >
                   <span className="text-[11px] tracking-[0.3em] text-champagne md:order-2">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="text-sm font-medium uppercase tracking-[0.3em] md:[writing-mode:vertical-rl] md:rotate-180">
+                  <span className="truncate text-sm font-medium uppercase tracking-[0.3em] md:[writing-mode:vertical-rl] md:rotate-180">
                     {cat.name}
                   </span>
                 </motion.div>

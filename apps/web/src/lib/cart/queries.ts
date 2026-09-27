@@ -7,6 +7,7 @@ import {
   storeProducts,
   storeProductTranslations,
   storeProductMedia,
+  storeProductCategories,
   storeProductVariants,
   storeProductVariantTranslations,
   media,
@@ -30,6 +31,8 @@ export interface CartLineView {
   lineTotalCents: number;
   stockQty: number;
   categoryId: number;
+  /** Primary + extra categories — category discounts match on any of them. */
+  categoryIds: number[];
 }
 
 export interface CartView {
@@ -61,7 +64,7 @@ export async function getCart(locale: Locale = "en"): Promise<CartView> {
 
   const productIds = items.map((i) => i.storeProductId);
   const variantIds = items.map((i) => i.variantId).filter((v): v is number => v != null);
-  const [products, translations, mediaRows, variants, variantTranslations] = await Promise.all([
+  const [products, translations, mediaRows, variants, variantTranslations, extraCategories] = await Promise.all([
     db.select().from(storeProducts).where(and(inArray(storeProducts.id, productIds), isNull(storeProducts.deletedAt))),
     db.select().from(storeProductTranslations).where(inArray(storeProductTranslations.productId, productIds)),
     db
@@ -75,6 +78,7 @@ export async function getCart(locale: Locale = "en"): Promise<CartView> {
     variantIds.length
       ? db.select().from(storeProductVariantTranslations).where(inArray(storeProductVariantTranslations.variantId, variantIds))
       : Promise.resolve([]),
+    db.select().from(storeProductCategories).where(inArray(storeProductCategories.productId, productIds)),
   ]);
 
   const productById = new Map(products.map((p) => [p.id, p]));
@@ -107,6 +111,10 @@ export async function getCart(locale: Locale = "en"): Promise<CartView> {
       // A deactivated variant can't be bought any more — treat it as sold out.
       stockQty: variant ? (variant.isActive ? variant.stockQty : 0) : (product?.stockQty ?? 0),
       categoryId: product?.categoryId ?? 0,
+      categoryIds: [
+        product?.categoryId ?? 0,
+        ...extraCategories.filter((c) => c.productId === item.storeProductId).map((c) => c.categoryId),
+      ],
     };
   });
 

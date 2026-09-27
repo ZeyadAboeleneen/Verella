@@ -67,7 +67,7 @@ export function AddedToCartDialog({
         <Link
           href="/cart"
           onClick={onClose}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-charcoal text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:bg-primary-container active:scale-95 transition-all"
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-plum text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:bg-plum-deep active:scale-95 transition-all"
         >
           <ShoppingCart size={15} />
           {labels.goToCart}

@@ -27,7 +27,7 @@ export function HelpContactBand({ labels }: { labels: Dictionary["legal"] }) {
             href={BRAND_CONTACT.whatsapp.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-charcoal px-6 text-xs font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-black"
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-plum px-6 text-xs font-medium uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-plum-deep"
           >
             WhatsApp <ArrowUpRight size={14} className="rtl:-scale-x-100" />
           </a>

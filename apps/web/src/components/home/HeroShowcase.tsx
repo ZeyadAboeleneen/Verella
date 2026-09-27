@@ -52,7 +52,7 @@ export function HeroShowcase({
 
   return (
     <section
-      className="relative -mt-[var(--nav-offset,72px)] h-[100svh] min-h-[620px] overflow-hidden bg-charcoal text-ivory"
+      className="relative -mt-[var(--nav-offset,72px)] h-[100svh] min-h-[620px] overflow-hidden bg-plum-deep text-ivory"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-roledescription="carousel"
@@ -80,9 +80,11 @@ export function HeroShowcase({
               <VMark size={320} className="text-champagne/10" />
             </span>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-charcoal/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-plum-deep/85 via-plum-deep/10 to-transparent" />
           {/* Extra shade behind the copy so the champagne kicker holds up on bright photos. */}
-          <div className="absolute inset-0 bg-gradient-to-r from-charcoal/60 via-charcoal/15 to-transparent rtl:bg-gradient-to-l" />
+          <div className="absolute inset-0 bg-gradient-to-r from-plum-deep/55 via-transparent to-transparent rtl:bg-gradient-to-l" />
+          {/* Top shade so the transparent header (ivory type) reads over light photos. */}
+          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-plum-deep/60 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
@@ -100,7 +102,8 @@ export function HeroShowcase({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
         >
-          {labels.kicker} — {slide.name}
+          <span className="hidden md:inline">{labels.kicker} — </span>
+          {slide.name}
         </motion.p>
         <RevealText
           key={`h-${slide.slug}`}

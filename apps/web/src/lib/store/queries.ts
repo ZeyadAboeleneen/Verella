@@ -1,6 +1,6 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
-import { and, asc, eq, inArray, isNull, like } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, like, or } from "drizzle-orm";
 import {
   db,
   storeCategories,
@@ -8,6 +8,7 @@ import {
   storeProducts,
   storeProductTranslations,
   storeProductMedia,
+  storeProductCategories,
   storeProductVariants,
   storeProductVariantTranslations,
   media,
@@ -68,7 +69,10 @@ export interface StoreProductView {
   /** Second photo, revealed on hover in listings; null when there's only one. */
   hoverImage: string | null;
   alt: string;
+  /** Primary category. */
   categorySlug: string;
+  /** Every category the product is listed in, primary first. */
+  categorySlugs: string[];
   stockQty: number;
   isFeaturedHome: boolean;
   isBestSeller: boolean;
@@ -87,17 +91,29 @@ function pickTranslation<T extends { locale: string }>(rows: T[], locale: Locale
  * this is display only, so there's no need for the cart's proportional-split
  * stacking logic.
  */
-function applyAutoDiscount(priceCents: number, categoryId: number, productId: number, autoDiscounts: DiscountLike[], now = new Date()): number {
+function applyAutoDiscount(priceCents: number, categoryIds: number[], productId: number, autoDiscounts: DiscountLike[], now = new Date()): number {
   let bestDiscountCents = 0;
   for (const d of autoDiscounts) {
     if (!isDiscountWindowOpen(d, now)) continue;
     const matches =
-      d.scope === "all" || (d.scope === "category" && d.categoryIds?.includes(categoryId)) || (d.scope === "product" && d.productIds?.includes(productId));
+      d.scope === "all" ||
+      (d.scope === "category" && categoryIds.some((id) => d.categoryIds?.includes(id))) ||
+      (d.scope === "product" && d.productIds?.includes(productId));
     if (!matches) continue;
-    const amount = computeDiscountAmountCents(d, [{ productId, categoryId, unitPriceCents: priceCents, quantity: 1 }]);
+    const amount = computeDiscountAmountCents(d, [{ productId, categoryId: categoryIds[0], categoryIds, unitPriceCents: priceCents, quantity: 1 }]);
     if (amount > bestDiscountCents) bestDiscountCents = amount;
   }
   return Math.max(0, priceCents - bestDiscountCents);
+}
+
+/** productId → extra category ids (beyond the primary store_products.category_id). */
+async function loadExtraCategoryIds(productIds: number[]): Promise<Map<number, number[]>> {
+  const rows = productIds.length
+    ? await db.select().from(storeProductCategories).where(inArray(storeProductCategories.productId, productIds))
+    : [];
+  const map = new Map<number, number[]>();
+  for (const r of rows) map.set(r.productId, [...(map.get(r.productId) ?? []), r.categoryId]);
+  return map;
 }
 
 interface VariantRow {
@@ -159,7 +175,7 @@ interface ProductPricing {
  * across variants — so "Out of stock" only shows when no variant can sell.
  */
 function priceProduct(
-  product: { id: number; categoryId: number; price: string; compareAtPrice: string | null; currency: string; stockQty: number },
+  product: { id: number; categoryIds: number[]; price: string; compareAtPrice: string | null; currency: string; stockQty: number },
   variants: VariantRow[],
   autoDiscounts: DiscountLike[],
   locale: Locale,
@@ -181,7 +197,7 @@ function priceProduct(
     priceFrom = new Set(variants.map((v) => v.priceCents)).size > 1;
   }
 
-  const discountedCents = applyAutoDiscount(baseCents, product.categoryId, product.id, autoDiscounts);
+  const discountedCents = applyAutoDiscount(baseCents, product.categoryIds, product.id, autoDiscounts);
   const hasAutoDiscount = discountedCents < baseCents;
 
   return {
@@ -195,14 +211,14 @@ function priceProduct(
 }
 
 function formatVariants(
-  product: { id: number; categoryId: number; currency: string },
+  product: { id: number; categoryIds: number[]; currency: string },
   variants: VariantRow[],
   autoDiscounts: DiscountLike[],
   locale: Locale,
 ): StoreVariantView[] {
   const money = (cents: number) => formatMoney(cents, product.currency, locale);
   return variants.map((v) => {
-    const discounted = applyAutoDiscount(v.priceCents, product.categoryId, product.id, autoDiscounts);
+    const discounted = applyAutoDiscount(v.priceCents, product.categoryIds, product.id, autoDiscounts);
     const onSale = discounted < v.priceCents;
     return {
       id: v.id,
@@ -278,7 +294,19 @@ async function getStoreProductsImpl(locale: Locale = "en", filter: string | Stor
     : categoryRows.map((c) => c.id);
   if (categoryIds.length === 0) return [];
 
-  const conditions = [eq(storeProducts.isActive, true), isNull(storeProducts.deletedAt), inArray(storeProducts.categoryId, categoryIds)];
+  // In a category = primary category there, or listed there as an extra.
+  const alsoListed = categorySlug
+    ? (
+        await db
+          .select({ productId: storeProductCategories.productId })
+          .from(storeProductCategories)
+          .where(inArray(storeProductCategories.categoryId, categoryIds))
+      ).map((r) => r.productId)
+    : [];
+  const inCategory = alsoListed.length
+    ? or(inArray(storeProducts.categoryId, categoryIds), inArray(storeProducts.id, alsoListed))!
+    : inArray(storeProducts.categoryId, categoryIds);
+  const conditions = [eq(storeProducts.isActive, true), isNull(storeProducts.deletedAt), inCategory];
   if (onlyBestSeller) conditions.push(eq(storeProducts.isBestSeller, true));
   if (searchProductIds) conditions.push(inArray(storeProducts.id, searchProductIds));
 
@@ -293,7 +321,7 @@ async function getStoreProductsImpl(locale: Locale = "en", filter: string | Stor
   if (products.length === 0) return [];
 
   const productIds = products.map((p) => p.id);
-  const [translations, mediaRows, autoDiscounts, variantsByProduct] = await Promise.all([
+  const [translations, mediaRows, autoDiscounts, variantsByProduct, extraCategoryIds] = await Promise.all([
     db.select().from(storeProductTranslations).where(inArray(storeProductTranslations.productId, productIds)),
     db
       .select({ productId: storeProductMedia.productId, url: media.url, isPrimary: storeProductMedia.isPrimary })
@@ -303,9 +331,11 @@ async function getStoreProductsImpl(locale: Locale = "en", filter: string | Stor
       .orderBy(asc(storeProductMedia.sortOrder)),
     getAutoDiscounts(),
     loadVariants(productIds, locale),
+    loadExtraCategoryIds(productIds),
   ]);
 
-  return products.map((p) => {
+  return products.map((row) => {
+    const p = { ...row, categoryIds: [row.categoryId, ...(extraCategoryIds.get(row.id) ?? [])] };
     const t = pickTranslation(translations.filter((x) => x.productId === p.id), locale);
     const productMedia = mediaRows.filter((m) => m.productId === p.id);
     const primaryMedia = productMedia.find((m) => m.isPrimary) ?? productMedia[0];
@@ -332,6 +362,7 @@ async function getStoreProductsImpl(locale: Locale = "en", filter: string | Stor
       hoverImage: hoverMedia?.url ?? null,
       alt: t?.name ?? p.slug,
       categorySlug: category?.slug ?? "",
+      categorySlugs: p.categoryIds.map((id) => categoryById.get(id)?.slug).filter((slug): slug is string => Boolean(slug)),
       stockQty: pricing.stockQty,
       isFeaturedHome: p.isFeaturedHome,
       isBestSeller: p.isBestSeller,
@@ -352,15 +383,17 @@ export interface StoreProductDetailView extends StoreProductView {
 }
 
 async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): Promise<StoreProductDetailView | null> {
-  const [product] = await db
+  const [row] = await db
     .select()
     .from(storeProducts)
     .where(and(eq(storeProducts.slug, slug), eq(storeProducts.isActive, true), isNull(storeProducts.deletedAt)))
     .limit(1);
-  if (!product) return null;
+  if (!row) return null;
+  const extra = (await loadExtraCategoryIds([row.id])).get(row.id) ?? [];
+  const product = { ...row, categoryIds: [row.categoryId, ...extra] };
 
-  const [category, translations, mediaRows, autoDiscounts, variantsByProduct] = await Promise.all([
-    db.select().from(storeCategories).where(eq(storeCategories.id, product.categoryId)).limit(1).then((r) => r[0]),
+  const [categoryRows, translations, mediaRows, autoDiscounts, variantsByProduct] = await Promise.all([
+    db.select().from(storeCategories).where(inArray(storeCategories.id, product.categoryIds)),
     db.select().from(storeProductTranslations).where(eq(storeProductTranslations.productId, product.id)),
     db
       .select({ url: media.url, isPrimary: storeProductMedia.isPrimary, sortOrder: storeProductMedia.sortOrder })
@@ -372,6 +405,7 @@ async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): P
     loadVariants([product.id], locale),
   ]);
 
+  const category = categoryRows.find((c) => c.id === product.categoryId);
   const t = pickTranslation(translations, locale);
   const primaryMedia = mediaRows.find((m) => m.isPrimary) ?? mediaRows[0];
   const variants = variantsByProduct.get(product.id) ?? [];
@@ -399,6 +433,9 @@ async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): P
     alt: t?.name ?? product.slug,
     images: mediaRows.map((m) => ({ url: m.url, alt: t?.name ?? product.slug })),
     categorySlug: category?.slug ?? "",
+    categorySlugs: product.categoryIds
+      .map((id) => categoryRows.find((c) => c.id === id)?.slug)
+      .filter((slug): slug is string => Boolean(slug)),
     stockQty: pricing.stockQty,
     isFeaturedHome: product.isFeaturedHome,
     isBestSeller: product.isBestSeller,
