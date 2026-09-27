@@ -112,7 +112,7 @@ export function HeroShowcase({
           play
           delay={0.35}
           stagger={0.08}
-          className="max-w-5xl font-[family-name:var(--font-display)] text-[clamp(3.2rem,11vw,10rem)] font-medium uppercase leading-[0.88] tracking-[-0.03em]"
+          className="max-w-5xl font-[family-name:var(--font-display)] text-[clamp(2.5rem,11vw,10rem)] font-medium uppercase leading-[0.88] tracking-[-0.03em]"
         />
         <motion.div
           key={`c-${slide.slug}`}

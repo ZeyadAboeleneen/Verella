@@ -139,6 +139,19 @@ html:lang(ar) {
   --font-subheading: var(--font-tajawal), sans-serif;
 }
 
+/*
+ * Wide letter-spacing (the site's tracking-[...] utilities, used everywhere
+ * for uppercase kickers/eyebrows/buttons/category labels) is a Latin-only
+ * device — Arabic letters are meant to join, and adding space between them
+ * breaks that connection, making words look disconnected/cut apart. This
+ * plain rule sits outside Tailwind's `@layer utilities`, so — regardless of
+ * source order — it always wins over every tracking-* class (unlayered CSS
+ * beats layered CSS in Tailwind v4, no !important needed).
+ */
+html:lang(ar) * {
+  letter-spacing: normal;
+}
+
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }

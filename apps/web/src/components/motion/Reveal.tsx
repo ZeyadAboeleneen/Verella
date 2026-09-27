@@ -58,7 +58,7 @@ export function RevealText({
         <span
           key={`${word}-${i}`}
           aria-hidden="true"
-          className="inline-block max-w-full overflow-hidden pb-[0.08em] align-bottom break-words"
+          className="inline-block max-w-full overflow-hidden break-words pb-[0.08em] align-bottom"
         >
           <motion.span
             className="inline-block"

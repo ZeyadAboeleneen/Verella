@@ -201,7 +201,10 @@ export function StoreBrowser({
         {drawer && (
           <>
             <motion.div
-              className="fixed inset-0 z-[60] bg-charcoal/40 backdrop-blur-sm"
+              className="fixed inset-0 z-[60] backdrop-blur-sm"
+              // Plain rgba, not bg-charcoal/40 — see the product lightbox's
+              // backdrop for why (Safari + Tailwind's oklab() alpha).
+              style={{ backgroundColor: "rgba(20, 20, 20, 0.4)" }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
