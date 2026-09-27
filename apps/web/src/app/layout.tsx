@@ -4,7 +4,7 @@ import { Jost, Tajawal } from "next/font/google";
 import "./globals.css";
 import { getLocale, getDictionary, dir } from "@/lib/i18n";
 import { siteUrl } from "@/lib/seo";
-import { getSiteName } from "@/lib/settings/queries";
+import { getSiteName, getSiteTheme } from "@/lib/settings/queries";
 import { withDbTimeout } from "@/lib/db-timeout";
 
 // Jost (Latin) and Tajawal (Arabic) are the brand guidelines' typefaces.
@@ -61,11 +61,13 @@ export default async function RootLayout({
   const headersList = await headers();
   const isAdminRoute = (headersList.get("x-effective-pathname") ?? "").startsWith("/admin");
   const direction = isAdminRoute ? "ltr" : dir(locale);
+  const theme = await withDbTimeout(getSiteTheme()).catch(() => "classic" as const);
 
   return (
     <html
       lang={locale}
       dir={direction}
+      data-theme={theme}
       className={`${jost.variable} ${tajawal.variable} scroll-smooth`}
       data-scroll-behavior="smooth"
     >

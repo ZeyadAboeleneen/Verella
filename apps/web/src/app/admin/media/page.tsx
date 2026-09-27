@@ -21,7 +21,7 @@ export default async function AdminMediaPage({
     <div>
       <h1 className="font-display text-2xl font-bold text-on-surface">Media Library</h1>
       <p className="mt-1 text-sm text-on-surface-variant">
-        Upload images for the menu, store, and homepage. Files are stored in MinIO.
+        Upload images for the store and homepage. Files are stored in Cloudinary.
       </p>
 
       <div className="mt-6">

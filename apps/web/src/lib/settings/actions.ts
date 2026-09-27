@@ -7,6 +7,7 @@ import { GATEWAY_PAYMENT_METHODS, GOVERNORATE_NAMES, PAYMENT_METHOD_CODES, type 
 import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
 import { SETTINGS_CACHE_TAG } from "@/lib/settings/queries";
+import { SITE_THEMES, type SiteTheme } from "@/lib/settings/theme";
 
 export interface GovernorateFee {
   name: string;
@@ -16,6 +17,7 @@ export interface GovernorateFee {
 export interface SiteSettingsInput {
   siteNameEn: string;
   siteNameAr: string;
+  theme: SiteTheme;
   currency: string;
   deliveryFee: string;
   governorateFees: GovernorateFee[];
@@ -64,8 +66,11 @@ export async function updateSiteSettingsAction(input: SiteSettingsInput): Promis
   }
   if (!methods.some((m) => m.isActive)) return { error: "Keep at least one payment method switched on." };
 
+  const theme = (SITE_THEMES as readonly string[]).includes(input.theme) ? input.theme : "classic";
+
   await Promise.all([
     upsertSetting("site", "name", { en: input.siteNameEn, ar: input.siteNameAr }),
+    upsertSetting("site", "theme", theme),
     upsertSetting("site", "currency", input.currency),
     upsertSetting("checkout", "delivery_fee", Number(input.deliveryFee).toFixed(2)),
     upsertSetting("checkout", "governorate_fees", governorateFees),

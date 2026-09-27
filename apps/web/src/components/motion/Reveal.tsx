@@ -55,7 +55,11 @@ export function RevealText({
   return (
     <MotionTag className={className} initial={reduce ? false : "hidden"} {...trigger} aria-label={text}>
       {words.map((word, i) => (
-        <span key={`${word}-${i}`} aria-hidden="true" className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+        <span
+          key={`${word}-${i}`}
+          aria-hidden="true"
+          className="inline-block max-w-full overflow-hidden pb-[0.08em] align-bottom break-words"
+        >
           <motion.span
             className="inline-block"
             variants={{ hidden: { y: "110%" }, shown: { y: "0%" } }}

@@ -67,18 +67,21 @@
   --color-paper-white: #FFFFFF;
 
   /*
-   * Colour direction (Sep 2026): the site should feel alive, not black and
-   * white. Charcoal stays for type; large dark surfaces move to a deep plum →
-   * rose "dusk", and these complements pick up the colours of the products
-   * (see the styled product photos). All pass AA with ivory text where used.
+   * "Dusk" band colours — used by .bg-dusk (footer, page heroes, marquee) and
+   * a couple of direct bg-plum accents. Brand-default ("classic") is flat
+   * charcoal, per the guidelines above: these variables collapse to
+   * --color-charcoal so .bg-dusk paints as a plain charcoal band with no
+   * extra hue. Admin → Settings → Appearance can opt into a colourful theme
+   * ("dusk", "midnight", "emerald") instead — see the [data-theme] overrides
+   * below, which is the ONLY place non-brand colour is allowed to appear.
    */
-  --color-plum: #4A2140;
-  --color-plum-deep: #2B1426;
-  --color-rose: #C9566B;
-  --color-blush: #F3D9D6;
-  --color-saffron: #E4A951;
-  --color-teal: #2F6B66;
-  --color-sky: #CFE1EE;
+  --color-plum: #141414;
+  --color-plum-deep: #0A0A0A;
+  --color-rose: #141414;
+  --color-blush: #F5F0E8;
+  --color-saffron: #A8813E;
+  --color-teal: #141414;
+  --color-sky: #F5F0E8;
 
   --color-secondary-fixed: #EFE4D0;
   --color-secondary-fixed-dim: #DFD3C0;
@@ -180,13 +183,49 @@ html:lang(ar) {
   }
 }
 
-/* Deep plum → rose — the brand's "dusk", for heroes, footer and bands. */
+/*
+ * Optional colour themes for dark bands (footer, page heroes, marquee) —
+ * chosen in Admin → Settings → Appearance. Classic (no attribute, or
+ * data-theme="classic") is the brand default and adds no colour of its own;
+ * these three are opt-in.
+ */
+:root[data-theme="dusk"] {
+  --color-plum: #4A2140;
+  --color-plum-deep: #2B1426;
+  --color-rose: #C9566B;
+  --color-blush: #F3D9D6;
+  --color-saffron: #E4A951;
+  --color-teal: #2F6B66;
+  --color-sky: #CFE1EE;
+}
+:root[data-theme="midnight"] {
+  --color-plum: #1E2A54;
+  --color-plum-deep: #0E1530;
+  --color-rose: #5C77C9;
+  --color-blush: #D9E0F3;
+  --color-saffron: #E4A951;
+  --color-teal: #2F6B66;
+  --color-sky: #CFE1EE;
+}
+:root[data-theme="emerald"] {
+  --color-plum: #123B2E;
+  --color-plum-deep: #0A241B;
+  --color-rose: #3FA980;
+  --color-blush: #D8EFE4;
+  --color-saffron: #E4A951;
+  --color-teal: #2F6B66;
+  --color-sky: #CFE1EE;
+}
+
+/* Dark band background — a flat charcoal fill in Classic; a subtle gradient
+   in the colour themes above, driven entirely by the --color-* variables so
+   it follows whichever theme is active. */
 .bg-dusk {
   background-color: var(--color-plum-deep);
   background-image:
-    radial-gradient(120% 90% at 100% 0%, rgba(201, 86, 107, 0.55) 0%, transparent 55%),
-    radial-gradient(90% 80% at 0% 100%, rgba(228, 169, 81, 0.22) 0%, transparent 60%),
-    linear-gradient(135deg, var(--color-plum-deep) 0%, var(--color-plum) 55%, #6B2A4E 100%);
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--color-rose) 55%, transparent) 0%, transparent 55%),
+    radial-gradient(90% 80% at 0% 100%, color-mix(in srgb, var(--color-saffron) 22%, transparent) 0%, transparent 60%),
+    linear-gradient(135deg, var(--color-plum-deep) 0%, var(--color-plum) 55%, color-mix(in srgb, var(--color-plum) 65%, black) 100%);
 }
 
 /* Light, warm wash for content sections that used to be flat ivory. */

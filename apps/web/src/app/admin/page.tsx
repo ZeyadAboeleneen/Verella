@@ -164,7 +164,7 @@ export default async function AdminOverviewPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-on-surface">Dashboard</h1>
           <p className="mt-0.5 text-sm text-on-surface-variant">
-            Welcome back! Here&apos;s how the café is doing today.
+            Welcome back! Here&apos;s how the store is doing today.
           </p>
         </div>
       </div>

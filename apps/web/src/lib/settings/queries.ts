@@ -4,6 +4,9 @@ import { and, eq } from "drizzle-orm";
 import { db, settings } from "@verella/db";
 import type { GovernorateFee } from "./actions";
 import { BRAND_CONTACT } from "@/lib/brand";
+import { SITE_THEMES, type SiteTheme } from "@/lib/settings/theme";
+
+export { SITE_THEMES, type SiteTheme } from "@/lib/settings/theme";
 
 // Settings are read constantly (site name alone is fetched by the root
 // layout's generateMetadata on EVERY page navigation site-wide) but change
@@ -60,6 +63,18 @@ async function getSiteNameImpl(): Promise<{ en: string; ar: string }> {
   };
 }
 export const getSiteName = unstable_cache(getSiteNameImpl, ["settings-site-name"], {
+  revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
+});
+
+const DEFAULT_SITE_THEME: SiteTheme = "classic";
+
+/** Colour palette for dark bands (footer, page heroes, marquee) — Admin → Settings → Appearance. */
+async function getSiteThemeImpl(): Promise<SiteTheme> {
+  const value = await getSetting("site", "theme").catch(() => null);
+  return (SITE_THEMES as readonly string[]).includes(value as string) ? (value as SiteTheme) : DEFAULT_SITE_THEME;
+}
+export const getSiteTheme = unstable_cache(getSiteThemeImpl, ["settings-site-theme"], {
   revalidate: SETTINGS_REVALIDATE_SECONDS,
   tags: [SETTINGS_CACHE_TAG],
 });

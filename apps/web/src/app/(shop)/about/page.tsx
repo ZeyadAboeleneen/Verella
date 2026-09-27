@@ -64,9 +64,13 @@ export default async function AboutPage() {
           />
           <div className="grid gap-px overflow-hidden rounded-3xl bg-charcoal/10 md:grid-cols-3">
             {t.pillars.map((p, i) => (
-              <Reveal key={p.title} delay={i * 0.12} className="group bg-ivory p-8 transition-colors duration-500 hover:bg-plum md:p-12">
+              <Reveal
+                key={p.title}
+                delay={i * 0.12}
+                className="group min-w-0 bg-ivory p-8 transition-colors duration-500 hover:bg-plum md:p-12"
+              >
                 <span className="text-[11px] tracking-[0.3em] text-gold-ink group-hover:text-champagne">0{i + 1}</span>
-                <h3 className="mt-10 font-[family-name:var(--font-display)] text-5xl font-medium uppercase tracking-tight text-charcoal transition-colors duration-500 group-hover:text-ivory md:text-6xl">
+                <h3 className="mt-10 break-words font-[family-name:var(--font-display)] text-5xl font-medium uppercase tracking-tight text-charcoal transition-colors duration-500 group-hover:text-ivory md:text-6xl">
                   {p.title}
                 </h3>
                 <p className="mt-4 text-sm leading-relaxed text-charcoal/70 transition-colors duration-500 group-hover:text-ivory/70">{p.body}</p>

@@ -5,6 +5,7 @@ import { BRAND_CONTACT } from "@/lib/brand";
 import { withDbTimeout } from "@/lib/db-timeout";
 import { SettingsForm } from "@/components/admin/settings/settings-form";
 import type { GovernorateFee } from "@/lib/settings/actions";
+import { SITE_THEMES, type SiteTheme } from "@/lib/settings/theme";
 
 export default async function AdminSettingsPage() {
   const [rows, methods] = await Promise.all([
@@ -38,6 +39,9 @@ export default async function AdminSettingsPage() {
         initial={{
           siteNameEn: siteName.en ?? "Verella",
           siteNameAr: siteName.ar ?? "",
+          theme: ((SITE_THEMES as readonly string[]).includes(find("site", "theme") as string)
+            ? (find("site", "theme") as SiteTheme)
+            : "classic") as SiteTheme,
           currency: (find("site", "currency") as string) ?? "EGP",
           deliveryFee: (find("checkout", "delivery_fee") as string) ?? "30.00",
           governorateFees,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { EGYPT_GOVERNORATES, GATEWAY_PAYMENT_METHODS, type PaymentMethodCode } from "@verella/core";
 import { updateSiteSettingsAction, type SiteSettingsInput } from "@/lib/settings/actions";
+import { SITE_THEMES, THEME_LABELS, type SiteTheme } from "@/lib/settings/theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
     Object.fromEntries(initial.governorateFees.map((g) => [g.name, g.fee])),
   );
   const [methods, setMethods] = useState(initial.paymentMethods);
+  const [theme, setTheme] = useState<SiteTheme>(initial.theme);
 
   async function onSubmit(formData: FormData) {
     setPending(true);
@@ -33,6 +35,7 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
     const res = await updateSiteSettingsAction({
       siteNameEn: String(formData.get("siteNameEn")),
       siteNameAr: String(formData.get("siteNameAr")),
+      theme,
       currency: String(formData.get("currency")),
       deliveryFee: String(formData.get("deliveryFee")),
       governorateFees: Object.entries(fees).map(([name, fee]) => ({ name, fee })),
@@ -175,6 +178,43 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
             <input type="checkbox" name="pickupEnabled" defaultChecked={initial.pickupEnabled} className="h-4 w-4 accent-charcoal" />
             Offer in-store pickup at checkout
           </label>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-on-surface-variant">
+            Colour theme for the footer, page banners and marquee. Classic matches the brand guidelines exactly; the
+            others add an optional colour wash.
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {SITE_THEMES.map((t) => {
+              const info = THEME_LABELS[t];
+              const selected = theme === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTheme(t)}
+                  aria-pressed={selected}
+                  className={`rounded-xl border p-3 text-start transition-colors ${
+                    selected ? "border-charcoal ring-1 ring-charcoal" : "border-outline-variant hover:border-on-surface-variant"
+                  }`}
+                >
+                  <span
+                    className="block h-10 w-full rounded-lg"
+                    style={{ background: `linear-gradient(135deg, ${info.swatch[0]}, ${info.swatch[1]})` }}
+                    aria-hidden="true"
+                  />
+                  <span className="mt-2 block text-sm font-medium text-on-surface">{info.name}</span>
+                  <span className="mt-0.5 block text-xs text-on-surface-variant">{info.hint}</span>
+                </button>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
