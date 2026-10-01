@@ -109,6 +109,10 @@ export default function Navbar({
   useEffect(() => {
     const height = navVisible ? (navRef.current?.offsetHeight ?? 72) : 0;
     document.documentElement.style.setProperty("--nav-offset", `${height}px`);
+    // The bar's full (un-scrolled) height, for things that sit under it at the
+    // top of the page (the home hero) — must not change while scrolling, or the
+    // hero jumps and opens a gap under the announcement bar.
+    if (!scrolled && navRef.current) document.documentElement.style.setProperty("--nav-height", `${navRef.current.offsetHeight}px`);
   }, [navVisible, scrolled]);
 
   useEffect(() => {

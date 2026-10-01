@@ -9,6 +9,8 @@ import { ProductShowcase } from "@/components/home/ProductShowcase";
 import { Manifesto } from "@/components/home/Manifesto";
 import { EditorialFeature } from "@/components/home/EditorialFeature";
 import { BrandIndex } from "@/components/home/BrandIndex";
+import { OffersSection } from "@/components/offers/OffersSection";
+import { getActiveOffers } from "@/lib/offers/queries";
 import { Reveal, RevealText } from "@/components/motion/Reveal";
 import { BRAND_CONTACT } from "@/lib/brand";
 import { jsonLdHtml, pageMetadata, siteUrl } from "@/lib/seo";
@@ -39,11 +41,12 @@ function organizationJsonLd() {
 
 export default async function Home() {
   const locale = await getLocale();
-  const [dict, categories, products, brands] = await Promise.all([
+  const [dict, categories, products, brands, offers] = await Promise.all([
     getDict(),
     withDbTimeout(getStoreCategories(locale)).catch(() => []),
     withDbTimeout(getStoreProducts(locale)).catch(() => []),
     withDbTimeout(getStoreBrands(locale)).catch(() => []),
+    withDbTimeout(getActiveOffers(locale)).catch(() => []),
   ]);
   const h = dict.home;
   const lines = h.hero.lines as Record<string, string>;
@@ -79,6 +82,8 @@ export default async function Home() {
           />
         </Reveal>
       </section>
+
+      <OffersSection offers={offers.filter((o) => o.showInCards)} labels={dict.offers} />
 
       <ProductShowcase products={edit} categories={categories} labels={h.showcase} productLabels={dict.product} />
 

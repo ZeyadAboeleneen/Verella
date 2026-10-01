@@ -52,7 +52,7 @@ export function HeroShowcase({
 
   return (
     <section
-      className="relative -mt-[var(--nav-offset,72px)] h-[100svh] min-h-[620px] overflow-hidden bg-plum-deep text-ivory"
+      className="relative -mt-[var(--nav-height,81px)] h-[100svh] min-h-[620px] overflow-hidden bg-plum-deep text-ivory"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-roledescription="carousel"

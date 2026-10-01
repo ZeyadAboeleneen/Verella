@@ -7,6 +7,7 @@
 import { formatMoney, governorateLabel, toCents, WALLET_PAYMENT_METHODS, type PaymentMethodCode } from "@verella/core";
 import type { NotificationStatus, OrderStatus, PaymentStatus } from "@verella/db";
 import ar from "@/lib/i18n/dictionaries/ar.json";
+import en from "@/lib/i18n/dictionaries/en.json";
 import { isValidEgyptianPhone } from "./phone";
 
 export type InvoiceIneligibleReason =
@@ -75,26 +76,38 @@ export interface InvoiceData {
   } | null;
   /** Public order-tracking page. */
   trackingUrl?: string | null;
+  /** One-time "create your password" link, when the order's account has no password yet. */
+  accountSetupUrl?: string | null;
+  /** What they will sign in with afterwards: their email or mobile number. */
+  accountLogin?: string | null;
   storeName?: string;
+  /** Language the order was placed in. Default: Arabic. */
+  locale?: MessageLocale;
 }
 
-const money = (value: string) => formatMoney(toCents(value), "EGP", "ar");
+/** Customer messages follow the site language the order was placed in. */
+export type MessageLocale = "ar" | "en";
 
-/** Same Arabic labels the checkout page shows ("الدفع عند الاستلام", "فودافون كاش", …). */
-export function paymentMethodLabel(code: string): string {
-  const methods = ar.checkout.methods as Record<string, { label: string } | undefined>;
+const money = (value: string, locale: MessageLocale = "ar") => formatMoney(toCents(value), "EGP", locale);
+const sep = (locale: MessageLocale) => (locale === "ar" ? "، " : ", ");
+const defaultStore = (locale: MessageLocale) => (locale === "ar" ? "ڤيريلا" : "Verella");
+
+/** Same labels the checkout page shows ("الدفع عند الاستلام" / "Cash on delivery", …). */
+export function paymentMethodLabel(code: string, locale: MessageLocale = "ar"): string {
+  const methods = (locale === "en" ? en : ar).checkout.methods as Record<string, { label: string } | undefined>;
   return methods[code]?.label ?? code;
 }
 
-function formatAddress(a: NonNullable<InvoiceData["address"]>): string {
+function formatAddress(a: NonNullable<InvoiceData["address"]>, locale: MessageLocale = "ar"): string {
+  const L = locale === "ar" ? { building: "عمارة", floor: "الدور", apt: "شقة", landmark: "علامة مميزة" } : { building: "Building", floor: "Floor", apt: "Apt", landmark: "Landmark" };
   const line1 = [
     a.street,
-    a.building && `عمارة ${a.building}`,
-    a.floor && `الدور ${a.floor}`,
-    a.apartment && `شقة ${a.apartment}`,
+    a.building && `${L.building} ${a.building}`,
+    a.floor && `${L.floor} ${a.floor}`,
+    a.apartment && `${L.apt} ${a.apartment}`,
   ].filter(Boolean);
-  const line2 = [a.area, a.city, governorateLabel(a.governorate, "ar")].filter(Boolean);
-  return [line1.join("، "), line2.join("، "), a.landmark && `علامة مميزة: ${a.landmark}`].filter(Boolean).join("\n");
+  const line2 = [a.area, a.city, governorateLabel(a.governorate, locale)].filter(Boolean);
+  return [line1.join(sep(locale)), line2.join(sep(locale)), a.landmark && `${L.landmark}: ${a.landmark}`].filter(Boolean).join("\n");
 }
 
 export interface AdminNewOrderData {
@@ -133,28 +146,6 @@ export function buildAdminNewOrderMessage(d: AdminNewOrderData): string {
   return lines.join("\n");
 }
 
-export interface AccountCredentialsData {
-  login: string;
-  password: string;
-  loginUrl: string;
-  customerName?: string | null;
-  storeName?: string;
-}
-
-/** Login details for the account created with a guest's first order. */
-export function buildAccountCredentialsMessage(d: AccountCredentialsData): string {
-  const store = d.storeName ?? "ڤيريلا";
-  const lines: string[] = [];
-  lines.push(d.customerName?.trim() ? `أهلاً ${d.customerName.trim()} 👋` : "أهلاً 👋");
-  lines.push("", `عملنالك حساب على ${store} عشان تتابع طلباتك بسهولة.`);
-  lines.push("", `تسجيل الدخول: ${d.loginUrl}`);
-  lines.push(`الإيميل أو الموبايل: ${d.login}`);
-  lines.push(`كلمة المرور: ${d.password}`);
-  lines.push("", "تقدر تغيّر كلمة المرور من حسابك في أي وقت.");
-  lines.push("", `${store} ❤️`);
-  return lines.join("\n");
-}
-
 /** Order statuses that trigger a WhatsApp update ("confirmed" is covered by the invoice itself). */
 export const NOTIFIED_STATUSES = ["preparing", "out_for_delivery", "ready_for_pickup", "completed", "cancelled"] as const;
 export type NotifiedStatus = (typeof NOTIFIED_STATUSES)[number];
@@ -172,64 +163,127 @@ export interface StatusMessageData {
   customerName?: string | null;
   trackingUrl?: string | null;
   storeName?: string;
+  /** Language the order was placed in. Default: Arabic. */
+  locale?: MessageLocale;
 }
 
-/** Arabic status-update message, or null for statuses that don't notify the customer. */
+/** Status-update message in the order's language, or null for statuses that don't notify the customer. */
 export function buildOrderStatusMessage(d: StatusMessageData): string | null {
   if (!isNotifiedStatus(d.status)) return null;
-  const store = d.storeName ?? "ڤيريلا";
+  const locale = d.locale ?? "ar";
+  const store = d.storeName ?? defaultStore(locale);
   const n = `#${d.orderNumber}`;
   const isCod = d.paymentMethodCode === "cash_on_delivery";
-  const greeting = d.customerName?.trim() ? `أهلاً ${d.customerName.trim()}،\n` : "";
+  const name = d.customerName?.trim();
+  const due = money(d.grandTotal, locale);
+  const pickup = d.fulfillmentType === "pickup";
 
-  const body: Record<NotifiedStatus, string> = {
-    preparing: `طلبك ${n} بيتجهز دلوقتي 📦`,
-    out_for_delivery:
-      `طلبك ${n} خرج للتوصيل 🚚\nالمندوب هيتواصل معاك قريب.` +
-      (isCod ? `\nالمطلوب عند الاستلام: ${money(d.grandTotal)}` : ""),
-    ready_for_pickup: `طلبك ${n} جاهز للاستلام من الفرع ✅`,
-    completed:
-      d.fulfillmentType === "pickup"
-        ? `تم استلام طلبك ${n} بنجاح ✅`
-        : `تم توصيل طلبك ${n} بنجاح ✅\nنتمنى المنتجات تعجبك ❤️`,
-    cancelled: `تم إلغاء طلبك ${n}.\nلو عندك أي استفسار، كلّمنا على الرقم ده.`,
-  };
+  const T =
+    locale === "ar"
+      ? {
+          greeting: name ? `أهلاً ${name}،\n` : "",
+          preparing: `طلبك ${n} بيتجهز دلوقتي 📦`,
+          out_for_delivery: `طلبك ${n} خرج للتوصيل 🚚\nالمندوب هيتواصل معاك قريب.` + (isCod ? `\nالمطلوب عند الاستلام: ${due}` : ""),
+          ready_for_pickup: `طلبك ${n} جاهز للاستلام من الفرع ✅`,
+          completed: pickup ? `تم استلام طلبك ${n} بنجاح ✅` : `تم توصيل طلبك ${n} بنجاح ✅\nنتمنى المنتجات تعجبك ❤️`,
+          cancelled: `تم إلغاء طلبك ${n}.\nلو عندك أي استفسار، كلّمنا على الرقم ده.`,
+          track: "تابع طلبك",
+        }
+      : {
+          greeting: name ? `Hi ${name},\n` : "",
+          preparing: `Your order ${n} is being prepared 📦`,
+          out_for_delivery: `Your order ${n} is out for delivery 🚚\nThe courier will contact you soon.` + (isCod ? `\nAmount due on delivery: ${due}` : ""),
+          ready_for_pickup: `Your order ${n} is ready for pickup at the store ✅`,
+          completed: pickup ? `Your order ${n} has been picked up ✅` : `Your order ${n} has been delivered ✅\nWe hope you love it ❤️`,
+          cancelled: `Your order ${n} has been cancelled.\nIf you have any questions, just reply to this number.`,
+          track: "Track your order",
+        };
 
-  const lines = [greeting + body[d.status]];
-  if (d.trackingUrl && d.status !== "cancelled") lines.push("", `تابع طلبك: ${d.trackingUrl}`);
+  const lines = [T.greeting + T[d.status]];
+  if (d.trackingUrl && d.status !== "cancelled") lines.push("", `${T.track}: ${d.trackingUrl}`);
   lines.push("", `${store} ❤️`);
   return lines.join("\n");
 }
 
-/** The Arabic WhatsApp invoice. Built only from the order's own snapshot data. */
+/** The WhatsApp invoice, in the order's language. Built only from the order's own snapshot data. */
 export function buildOrderInvoiceMessage(d: InvoiceData): string {
-  const store = d.storeName ?? "ڤيريلا";
+  const locale = d.locale ?? "ar";
+  const store = d.storeName ?? defaultStore(locale);
   const isCod = d.paymentMethodCode === "cash_on_delivery";
-  const lines: string[] = [];
+  const m = (v: string) => money(v, locale);
+  const T =
+    locale === "ar"
+      ? {
+          confirmed: "تم تأكيد طلبك بنجاح ❤️",
+          hello: (x: string) => `أهلاً ${x}،`,
+          orderNo: "رقم الطلب",
+          items: "المنتجات:",
+          subtotal: "المجموع الفرعي",
+          discount: "الخصم",
+          delivery: "التوصيل",
+          total: "الإجمالي",
+          payment: "طريقة الدفع",
+          due: "المطلوب عند الاستلام",
+          paid: "تم استلام الدفع ✅",
+          address: "العنوان:",
+          pickup: "الاستلام: من الفرع",
+          track: "تابع طلبك",
+          accountSaved: "👤 طلبك اتحفظ في حساب باسمك.",
+          accountCta: "اعمل كلمة المرور بتاعتك من اللينك ده، وبعدها تتابع طلباتك وتشوف القديمة كمان:",
+          accountLogin: "هتسجّل دخول بـ",
+          accountNote: "(اللينك يشتغل مرة واحدة وصالح 30 يوم)",
+          thanks: `شكراً لطلبك من ${store} ❤️`,
+        }
+      : {
+          confirmed: "Your order is confirmed ❤️",
+          hello: (x: string) => `Hi ${x},`,
+          orderNo: "Order number",
+          items: "Items:",
+          subtotal: "Subtotal",
+          discount: "Discount",
+          delivery: "Delivery",
+          total: "Total",
+          payment: "Payment method",
+          due: "Amount due on delivery",
+          paid: "Payment received ✅",
+          address: "Address:",
+          pickup: "Pickup: from the store",
+          track: "Track your order",
+          accountSaved: "👤 Your order is saved to an account in your name.",
+          accountCta: "Create your password with this link to follow your orders and see your past ones too:",
+          accountLogin: "You'll sign in with",
+          accountNote: "(The link works once and is valid for 30 days)",
+          thanks: `Thank you for ordering from ${store} ❤️`,
+        };
 
-  lines.push("تم تأكيد طلبك بنجاح ❤️");
-  if (d.customerName?.trim()) lines.push(`أهلاً ${d.customerName.trim()}،`);
-  lines.push("", `رقم الطلب: #${d.orderNumber}`, "", "المنتجات:");
+  const lines: string[] = [T.confirmed];
+  if (d.customerName?.trim()) lines.push(T.hello(d.customerName.trim()));
+  lines.push("", `${T.orderNo}: #${d.orderNumber}`, "", T.items);
   for (const item of d.items) {
     const variant = item.variant ? ` (${item.variant})` : "";
-    lines.push(`- ${item.name}${variant} × ${item.quantity} — ${money(item.lineTotal)}`);
+    lines.push(`- ${item.name}${variant} × ${item.quantity} — ${m(item.lineTotal)}`);
   }
 
-  lines.push("", `المجموع الفرعي: ${money(d.subtotal)}`);
-  if (Number(d.discountTotal) > 0) lines.push(`الخصم: −${money(d.discountTotal)}`);
-  if (d.fulfillmentType === "delivery") lines.push(`التوصيل: ${money(d.deliveryFee)}`);
-  lines.push(`الإجمالي: ${money(d.grandTotal)}`);
+  lines.push("", `${T.subtotal}: ${m(d.subtotal)}`);
+  if (Number(d.discountTotal) > 0) lines.push(`${T.discount}: −${m(d.discountTotal)}`);
+  if (d.fulfillmentType === "delivery") lines.push(`${T.delivery}: ${m(d.deliveryFee)}`);
+  lines.push(`${T.total}: ${m(d.grandTotal)}`);
 
-  lines.push("", `طريقة الدفع: ${paymentMethodLabel(d.paymentMethodCode)}`);
-  lines.push(isCod ? `المطلوب عند الاستلام: ${money(d.grandTotal)}` : "تم استلام الدفع ✅");
+  lines.push("", `${T.payment}: ${paymentMethodLabel(d.paymentMethodCode, locale)}`);
+  lines.push(isCod ? `${T.due}: ${m(d.grandTotal)}` : T.paid);
 
   if (d.fulfillmentType === "delivery" && d.address) {
-    lines.push("", "العنوان:", formatAddress(d.address));
+    lines.push("", T.address, formatAddress(d.address, locale));
   } else if (d.fulfillmentType === "pickup") {
-    lines.push("", "الاستلام: من الفرع");
+    lines.push("", T.pickup);
   }
 
-  if (d.trackingUrl) lines.push("", `تابع طلبك: ${d.trackingUrl}`);
-  lines.push("", `شكراً لطلبك من ${store} ❤️`);
+  if (d.trackingUrl) lines.push("", `${T.track}: ${d.trackingUrl}`);
+  if (d.accountSetupUrl) {
+    lines.push("", T.accountSaved, T.accountCta, d.accountSetupUrl);
+    if (d.accountLogin) lines.push(`${T.accountLogin}: ${d.accountLogin}`);
+    lines.push(T.accountNote);
+  }
+  lines.push("", T.thanks);
   return lines.join("\n");
 }

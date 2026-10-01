@@ -2,13 +2,12 @@ import { int, index, mysqlTable, timestamp, uniqueIndex, varchar } from "drizzle
 import { fk, id, timestamps } from "./_helpers";
 import { orders, type OrderStatus } from "./orders";
 
-export type NotificationChannel = "whatsapp";
+export type NotificationChannel = "whatsapp" | "email";
 /**
  * "invoice" once per order, one "status_<status>" message per status reached,
- * one "admin_new_order" alert to the store's own number, and one
- * "account_credentials" message when a guest order created an account.
+ * and one "admin_new_order" alert to the store's own number.
  */
-export type NotificationKind = "invoice" | `status_${OrderStatus}` | "admin_new_order" | "account_credentials";
+export type NotificationKind = "invoice" | `status_${OrderStatus}` | "admin_new_order";
 /**
  * sending — claimed by one worker, send in flight
  * sent    — delivered to the gateway; never sent again

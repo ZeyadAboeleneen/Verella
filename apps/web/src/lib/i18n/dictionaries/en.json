@@ -65,6 +65,10 @@
     "newPassword": "New password",
     "resetSubmit": "Update password",
     "resetSuccess": "Your password has been updated. You can now sign in.",
+    "setupTitle": "Create your password",
+    "setupSubtitle": "Choose a password for your account, then sign in with your email or mobile number to see all your orders.",
+    "setupSubmit": "Create account",
+    "setupSuccess": "Your account is ready! Sign in with your email or mobile number and your new password.",
     "resetInvalid": "This reset link is invalid or has expired."
   },
   "cart": {
@@ -155,6 +159,17 @@
     }
   },
   "product": {
+    "buyNow": "Buy now",
+    "trustOriginal": "100% original",
+    "trustDelivery": "Delivery in 2–4 days",
+    "trustCod": "Cash on delivery",
+    "sectionDescription": "Description",
+    "sectionHowToUse": "How to use",
+    "howToUseText": "Spray on pulse points — neck, behind the ears and wrists — from 15–20 cm. Don’t rub your wrists together; it breaks the scent down faster. For longer wear, apply after a shower on moisturised skin.",
+    "sectionDelivery": "Delivery & returns",
+    "deliveryText": "We deliver to every governorate in Egypt within 2–4 working days. Pay on delivery or by InstaPay / Vodafone Cash. If anything’s wrong with your order, contact us within 3 days of delivery and we’ll sort it out.",
+    "relatedTitle": "You may also like",
+    "recentTitle": "Recently viewed",
     "addToCart": "Add to Cart",
     "added": "Added ✓",
     "outOfStock": "Out of stock",
@@ -768,5 +783,22 @@
     "decline": "Essential only",
     "learnMore": "Privacy policy",
     "settings": "Cookie settings"
+  },
+  "offers": {
+    "kicker": "Limited-time offers",
+    "title": "Offers",
+    "subtitle": "Our latest deals and discounts — grab them before they are gone.",
+    "code": "Code",
+    "copy": "Copy code",
+    "copied": "Copied!",
+    "endsIn": "Ends in",
+    "endsToday": "Ends today",
+    "days": "d",
+    "hours": "h",
+    "minutes": "m",
+    "shopNow": "Shop now",
+    "close": "Close",
+    "previous": "Previous",
+    "next": "Next"
   }
 }

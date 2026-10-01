@@ -37,6 +37,8 @@ export const orders = mysqlTable(
     deliveryFee: decimal("delivery_fee", { precision: 12, scale: 2 }).notNull().default("0.00"),
     grandTotal: decimal("grand_total", { precision: 12, scale: 2 }).notNull(),
     currency: char("currency", { length: 3 }).notNull().default("EGP"),
+    /** Site language the order was placed in — customer messages use it. */
+    locale: varchar("locale", { length: 5 }).notNull().default("ar").$type<"ar" | "en">(),
     placedAt: timestamp("placed_at").notNull().defaultNow(),
     ...timestamps,
     ...softDelete,

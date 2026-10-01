@@ -266,3 +266,18 @@ html:lang(ar) .reveal-mask {
     radial-gradient(70% 60% at 0% 0%, rgba(243, 217, 214, 0.9) 0%, transparent 60%),
     radial-gradient(60% 60% at 100% 100%, rgba(207, 225, 238, 0.8) 0%, transparent 60%);
 }
+
+/* Offer banners: slow zoom + drift ("Ken Burns") while a slide is on screen, alternating direction. */
+@keyframes ken-burns-a {
+  from { transform: scale(1.02) translateX(0); }
+  to { transform: scale(1.14) translateX(-2.5%); }
+}
+@keyframes ken-burns-b {
+  from { transform: scale(1.02) translateX(0); }
+  to { transform: scale(1.14) translateX(2.5%); }
+}
+.ken-burns-a { animation: ken-burns-a 8s linear forwards; }
+.ken-burns-b { animation: ken-burns-b 8s linear forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .ken-burns-a, .ken-burns-b { animation: none; }
+}

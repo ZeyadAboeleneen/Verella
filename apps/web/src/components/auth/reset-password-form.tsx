@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, FormError } from "@/components/ui/card";
 import type { Dictionary } from "@/lib/i18n";
 
-export function ResetPasswordForm({ dict, token }: { dict: Dictionary; token: string }) {
+export function ResetPasswordForm({ dict, token, setup = false }: { dict: Dictionary; token: string; setup?: boolean }) {
+  const title = setup ? dict.auth.setupTitle : dict.auth.resetTitle;
   const [state, formAction, pending] = useActionState(resetPasswordAction, null);
   const [newPassword, setNewPassword] = useState("");
   const done = state !== null && "success" in state;
@@ -19,7 +20,7 @@ export function ResetPasswordForm({ dict, token }: { dict: Dictionary; token: st
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{dict.auth.resetTitle}</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
           <FormError>{dict.auth.resetInvalid}</FormError>
@@ -36,14 +37,14 @@ export function ResetPasswordForm({ dict, token }: { dict: Dictionary; token: st
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{dict.auth.resetTitle}</CardTitle>
-        <p className="mt-1 text-sm text-on-surface-variant">{dict.auth.resetSubtitle}</p>
+        <CardTitle>{title}</CardTitle>
+        <p className="mt-1 text-sm text-on-surface-variant">{setup ? dict.auth.setupSubtitle : dict.auth.resetSubtitle}</p>
       </CardHeader>
       <CardContent>
         {done ? (
           <>
             <p className="rounded-lg bg-secondary-container px-3 py-3 text-sm text-on-secondary-container" role="status">
-              {dict.auth.resetSuccess}
+              {setup ? dict.auth.setupSuccess : dict.auth.resetSuccess}
             </p>
             <p className="mt-4 text-center text-sm">
               <Link href="/login" className="font-medium text-primary hover:underline">
@@ -73,7 +74,7 @@ export function ResetPasswordForm({ dict, token }: { dict: Dictionary; token: st
               <PasswordInput id="confirmPassword" name="confirmPassword" required minLength={8} autoComplete="new-password" />
             </div>
             <Button type="submit" className="w-full" disabled={pending}>
-              {pending ? "…" : dict.auth.resetSubmit}
+              {pending ? "…" : (setup ? dict.auth.setupSubmit : dict.auth.resetSubmit)}
             </Button>
           </form>
         )}

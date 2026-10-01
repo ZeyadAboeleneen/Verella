@@ -9,7 +9,6 @@
  */
 import assert from "node:assert/strict";
 import {
-  buildAccountCredentialsMessage,
   buildAdminNewOrderMessage,
   buildOrderInvoiceMessage,
   buildOrderStatusMessage,
@@ -178,17 +177,42 @@ for (const method of ["cash_on_delivery", "instapay"]) {
 }
 passed++;
 
-// New-account login details.
+// Confirmation carrying the "create your password" invite, right after تابع طلبك.
 {
-  const msg = buildAccountCredentialsMessage({
-    login: "01012345678",
-    password: "Kp7mQx2aRt",
-    loginUrl: "https://verella.com/ar/login",
-    customerName: "سارة أحمد",
+  const msg = buildOrderInvoiceMessage({
+    ...baseOrder,
+    orderNumber: "VR-INVITE",
+    paymentMethodCode: "cash_on_delivery",
+    accountSetupUrl: "https://verella.com/ar/reset-password?token=abc123&setup=1",
+    accountLogin: "01012345678",
   });
-  console.log("\n━━ Account login details");
+  console.log("\n━━ Confirmation with account invite");
   console.log(msg.replace(/^/gm, "   │ "));
-  assert.ok(msg.includes("01012345678") && msg.includes("Kp7mQx2aRt") && msg.includes("/ar/login"));
+  const track = msg.indexOf("تابع طلبك"), link = msg.indexOf("token=abc123");
+  assert.ok(track >= 0 && link > track, "invite comes after the tracking link");
+  assert.ok(msg.includes("01012345678") && !msg.includes("كلمة المرور:"));
+  // Without a setup link the confirmation has no account block.
+  assert.ok(!buildOrderInvoiceMessage({ ...baseOrder, orderNumber: "X", paymentMethodCode: "cash_on_delivery" }).includes("👤"));
+  passed++;
+}
+
+// English orders get English messages.
+{
+  const msg = buildOrderInvoiceMessage({
+    ...baseOrder,
+    orderNumber: "VR-EN",
+    paymentMethodCode: "cash_on_delivery",
+    locale: "en",
+    accountSetupUrl: "https://verella.com/en/reset-password?token=abc&setup=1",
+    accountLogin: "sara@example.com",
+  });
+  console.log("\n━━ English confirmation");
+  console.log(msg.replace(/^/gm, "   │ "));
+  assert.ok(msg.startsWith("Your order is confirmed") && msg.includes("Cash on delivery") && msg.includes("Cairo"));
+  assert.ok(!/[؀-ۿ]/.test(msg.replace(baseOrder.customerName ?? "", "").replace(/شارع مكرم عبيد|مدينة نصر/g, "")), "no Arabic UI text");
+  const status = buildOrderStatusMessage({ orderNumber: "VR-EN", status: "out_for_delivery", fulfillmentType: "delivery", paymentMethodCode: "cash_on_delivery", grandTotal: "100", locale: "en" });
+  console.log(status!.replace(/^/gm, "   │ "));
+  assert.ok(status!.includes("out for delivery") && status!.includes("Amount due on delivery"));
   passed++;
 }
 

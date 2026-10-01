@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `locale` varchar(5) DEFAULT 'ar' NOT NULL;

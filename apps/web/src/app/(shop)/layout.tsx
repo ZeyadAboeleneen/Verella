@@ -7,6 +7,8 @@ import { getStoreCategories } from "@/lib/store/queries";
 import { withDbTimeout } from "@/lib/db-timeout";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { CookieConsent } from "@/components/CookieConsent";
+import { AnnouncementBar } from "@/components/offers/AnnouncementBar";
+import { getActiveOffers } from "@/lib/offers/queries";
 
 export default async function ShopLayout({
   children,
@@ -17,16 +19,18 @@ export default async function ShopLayout({
   // hangs, render the page logged-out with an empty badge instead of failing
   // (or stalling) every route.
   const locale = await getLocale();
-  const [dict, user, cartCount, categories] = await Promise.all([
+  const [dict, user, cartCount, categories, offers] = await Promise.all([
     getDict(),
     withDbTimeout(getSessionUser()).catch(() => null),
     withDbTimeout(getCartItemCount()).catch(() => 0),
     withDbTimeout(getStoreCategories(locale)).catch(() => []),
+    withDbTimeout(getActiveOffers(locale)).catch(() => []),
   ]);
 
   return (
     <>
       <SmoothScroll />
+      <AnnouncementBar offers={offers.filter((o) => o.showInBar)} labels={dict.offers} />
       <Navbar dict={dict} locale={locale} user={user} cartCount={cartCount} categories={categories} />
       <main id="main-content">{children}</main>
       <Footer dict={dict} categories={categories} />

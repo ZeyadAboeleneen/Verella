@@ -107,7 +107,10 @@ export async function registerAction(_prev: ActionResult | null, formData: FormD
 }
 
 export async function logoutAction(): Promise<void> {
-  await signOut({ redirectTo: "/" });
+  // Relative redirect: Auth.js's own redirectTo is made absolute from AUTH_URL,
+  // which sent phones on the LAN to "localhost".
+  await signOut({ redirect: false });
+  redirect("/");
 }
 
 /** Re-parents any items from the anonymous guest cart onto the now-authenticated user's cart. */

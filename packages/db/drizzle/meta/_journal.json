@@ -36,6 +36,20 @@
       "when": 1790817302667,
       "tag": "0004_users_email_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1790869248580,
+      "tag": "0005_order_locale",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1790873492334,
+      "tag": "0006_offers",
+      "breakpoints": true
     }
   ]
 }

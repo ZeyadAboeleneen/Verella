@@ -55,6 +55,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: "Products", href: "/admin/store/products", icon: "Package", permission: "store.view" },
       { label: "Categories", href: "/admin/store", icon: "LayoutGrid", permission: "store.view" },
       { label: "Discounts", href: "/admin/discounts", icon: "Percent", permission: "discounts.view" },
+      { label: "Offers", href: "/admin/offers", icon: "Megaphone", permission: "discounts.view" },
     ],
   },
   {

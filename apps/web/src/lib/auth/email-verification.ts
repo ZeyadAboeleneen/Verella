@@ -7,11 +7,12 @@ import type { ActionResult } from "./rbac";
 import { getSessionUser } from "./rbac";
 import { sendEmail } from "@/lib/email/mailer";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { siteUrl } from "@/lib/seo";
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function appBaseUrl(): string {
-  return (process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  return siteUrl();
 }
 
 /** Fire-and-forget from registerAction — a delivery failure shouldn't block account creation. */

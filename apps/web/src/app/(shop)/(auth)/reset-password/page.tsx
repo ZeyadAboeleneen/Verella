@@ -4,8 +4,9 @@ import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; setup?: string }>;
 }) {
   const [dict, params] = await Promise.all([getDict(), searchParams]);
-  return <ResetPasswordForm dict={dict} token={params.token ?? ""} />;
+  // setup=1: the "create your password" link sent with a guest's order.
+  return <ResetPasswordForm dict={dict} token={params.token ?? ""} setup={params.setup === "1"} />;
 }
