@@ -152,6 +152,24 @@ html:lang(ar) * {
   letter-spacing: normal;
 }
 
+/*
+ * The display headings use very tight line-heights (leading-none, 0.88, 0.9…)
+ * tuned for the Latin uppercase face. Arabic letters rise higher (alef, lam,
+ * hamza, dots), so with those values the tops get cut off — especially inside
+ * the overflow-hidden reveal masks. Give Arabic room to breathe.
+ */
+html:lang(ar) [class*="leading-none"],
+html:lang(ar) [class*="leading-tight"],
+html:lang(ar) [class*="leading-[0."] {
+  line-height: 1.35;
+}
+
+/* Extra headroom inside each word's reveal mask (iOS Safari draws Arabic higher). */
+html:lang(ar) .reveal-mask {
+  padding-top: 0.15em;
+  padding-bottom: 0.15em;
+}
+
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }

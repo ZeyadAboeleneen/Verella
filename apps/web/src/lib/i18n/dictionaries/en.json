@@ -43,6 +43,7 @@
     "registerTitle": "Create your account",
     "registerSubtitle": "Join Verella",
     "email": "Email",
+    "emailOrPhone": "Email or mobile number",
     "password": "Password",
     "fullName": "Full name",
     "phone": "Phone (optional)",
@@ -107,7 +108,7 @@
     "fields": {
       "fullName": "Full name",
       "phone": "Mobile number",
-      "email": "Email",
+      "email": "Email (optional)",
       "emailHint": "Optional — for your order confirmation",
       "recipientName": "Recipient name",
       "governorate": "Governorate",

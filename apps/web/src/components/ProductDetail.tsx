@@ -50,6 +50,14 @@ function Lightbox({
   const reduce = useReducedMotion();
   const count = images.length;
   const current = images[index];
+  // Which way the photo should slide: compare against the last index shown.
+  const [prevIndex, setPrevIndex] = useState(index);
+  const [direction, setDirection] = useState(1);
+  if (prevIndex !== index) {
+    setDirection(index > prevIndex || (prevIndex === count - 1 && index === 0) ? 1 : -1);
+    setPrevIndex(index);
+  }
+  const go = (step: number) => onIndexChange((index + step + count) % count);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -65,113 +73,182 @@ function Lightbox({
     };
   }, [index, count, onClose, onIndexChange]);
 
+  // Solid dark circles (plain rgba, never Tailwind's /opacity colours — those
+  // compile to oklab(), whose alpha some Safari versions render as fully
+  // transparent). A faint light tint would vanish against light product photos.
+  const circle = { backgroundColor: "rgba(20, 20, 20, 0.72)" };
+  const slide = {
+    enter: (d: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: d * 80, scale: 0.96 }),
+    center: { opacity: 1, x: 0, scale: 1 },
+    exit: (d: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: d * -80, scale: 0.96 }),
+  };
+
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 p-4 md:p-10"
-      // Plain rgba instead of Tailwind's bg-charcoal/95 (an oklab() colour under
-      // the hood) — some Safari versions render oklab()'s alpha channel as fully
-      // transparent, leaving the backdrop invisible while the rest of the modal
-      // (close button, arrows) still shows up fine.
-      style={{ backgroundColor: "rgba(20, 20, 20, 0.95)" }}
+      // overflow-clip, not overflow-hidden: a hidden-overflow box is still
+      // scrollable by focus(), which shifted the whole overlay sideways.
+      className="fixed inset-0 z-[100] flex flex-col overflow-clip"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
+      exit={{ opacity: 0, transition: { duration: 0.3, delay: 0.1 } }}
+      transition={{ duration: 0.35 }}
       onClick={onClose}
     >
-      {/* Solid dark circles (plain rgba — see the backdrop comment above) rather
-          than a faint tint: against a light product photo, a near-transparent
-          light-on-light button all but disappears. */}
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close"
-        style={{ backgroundColor: "rgba(20, 20, 20, 0.7)" }}
-        className="absolute end-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full text-ivory backdrop-blur-sm transition-colors hover:bg-black/80"
-      >
-        <X size={20} />
-      </button>
-
-      {count > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onIndexChange((index - 1 + count) % count);
-            }}
-            aria-label="Previous"
-            style={{ backgroundColor: "rgba(20, 20, 20, 0.7)" }}
-            className="absolute start-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ivory backdrop-blur-sm transition-colors hover:bg-black/80"
+      {/* Backdrop: deep charcoal plus a soft blurred copy of the current photo
+          glowing behind it, so the colour of the product bleeds into the room. */}
+      <div className="absolute inset-0" style={{ backgroundColor: "rgba(14, 14, 14, 0.96)" }} />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-clip">
+      <AnimatePresence initial={false}>
+        {current?.url && !reduce && (
+          <motion.div
+            key={`glow-${current.url}`}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.35 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <ChevronLeft size={20} className="rtl:rotate-180" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onIndexChange((index + 1) % count);
-            }}
-            aria-label="Next"
-            style={{ backgroundColor: "rgba(20, 20, 20, 0.7)" }}
-            className="absolute end-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ivory backdrop-blur-sm transition-colors hover:bg-black/80"
-          >
-            <ChevronRight size={20} className="rtl:rotate-180" />
-          </button>
-        </>
-      )}
+            <Image src={current.url} alt="" fill sizes="30vw" className="scale-125 object-cover blur-3xl" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>
 
+      {/* Top bar */}
       <motion.div
-        className="relative w-full min-h-0 max-w-3xl flex-1"
-        initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
-        transition={{ duration: 0.3, ease: EASE_OUT }}
+        className="relative z-10 flex items-center justify-between gap-4 px-4 pt-4 md:px-8 md:pt-6"
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={reduce ? { opacity: 0 } : { opacity: 0, y: -16 }}
+        transition={{ duration: 0.4, delay: 0.15, ease: EASE_OUT }}
         onClick={(e) => e.stopPropagation()}
       >
-        <AnimatePresence mode="wait" initial={false}>
-          {current?.url && (
-            <motion.div
-              key={current.url}
-              className="absolute inset-0 touch-pan-y"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              // Swipe to move between photos — the main way to browse the
-              // lightbox on a phone; the arrow buttons are the fallback for
-              // mouse/keyboard. touch-pan-y above keeps vertical page scroll
-              // (blocked elsewhere by the body scroll-lock, but harmless to
-              // keep) from fighting the horizontal drag gesture.
-              drag={count > 1 ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.7}
-              onDragEnd={(_, { offset, velocity }) => {
-                const swipe = Math.abs(offset.x) * velocity.x;
-                if (swipe < -8000 || offset.x < -80) {
-                  onIndexChange((index + 1) % count);
-                } else if (swipe > 8000 || offset.x > 80) {
-                  onIndexChange((index - 1 + count) % count);
-                }
-              }}
-            >
-              <Image
-                src={current.url}
-                alt={current.alt || productName}
-                fill
-                sizes="90vw"
-                draggable={false}
-                className="pointer-events-none object-contain"
-              />
-            </motion.div>
+        <span className="min-w-0 truncate text-sm font-medium text-ivory/90">{productName}</span>
+        <div className="flex shrink-0 items-center gap-3">
+          {count > 1 && (
+            <span className="text-xs tabular-nums text-ivory/60" dir="ltr">
+              <span className="text-ivory">{String(index + 1).padStart(2, "0")}</span> / {String(count).padStart(2, "0")}
+            </span>
           )}
-        </AnimatePresence>
+          <motion.button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            style={circle}
+            whileHover={reduce ? undefined : { rotate: 90 }}
+            whileTap={reduce ? undefined : { scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ivory ring-1 ring-white/10 backdrop-blur-sm"
+          >
+            <X size={20} />
+          </motion.button>
+        </div>
       </motion.div>
 
+      {/* Stage */}
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-4 py-4 md:px-24">
+        <motion.div
+          className="relative h-full w-full max-w-3xl"
+          initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.85, y: 40 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.9, y: 30 }}
+          transition={reduce ? { duration: 0.2 } : { type: "spring", stiffness: 220, damping: 26 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+            {current?.url && (
+              <motion.div
+                key={current.url}
+                custom={direction}
+                variants={slide}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.45, ease: EASE_OUT }}
+                className="absolute inset-0 touch-pan-y cursor-grab active:cursor-grabbing"
+                // Swipe between photos — the main way to browse on a phone;
+                // the arrows are the fallback for mouse and keyboard.
+                drag={count > 1 ? "x" : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.7}
+                onDragEnd={(_, { offset, velocity }) => {
+                  const swipe = Math.abs(offset.x) * velocity.x;
+                  if (swipe < -8000 || offset.x < -80) go(1);
+                  else if (swipe > 8000 || offset.x > 80) go(-1);
+                }}
+              >
+                <Image
+                  src={current.url}
+                  alt={current.alt || productName}
+                  fill
+                  sizes="90vw"
+                  draggable={false}
+                  className="pointer-events-none object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {count > 1 &&
+          ([
+            { step: -1, label: "Previous", pos: "start-3 md:start-8", Icon: ChevronLeft, from: -20 },
+            { step: 1, label: "Next", pos: "end-3 md:end-8", Icon: ChevronRight, from: 20 },
+          ] as const).map(({ step, label, pos, Icon, from }) => (
+            <motion.button
+              key={label}
+              type="button"
+              aria-label={label}
+              style={circle}
+              onClick={(e) => {
+                e.stopPropagation();
+                go(step);
+              }}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, x: from }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              whileHover={reduce ? undefined : { scale: 1.08 }}
+              whileTap={reduce ? undefined : { scale: 0.92 }}
+              transition={{ duration: 0.4, delay: 0.25, ease: EASE_OUT }}
+              className={`absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-ivory ring-1 ring-white/10 backdrop-blur-sm md:h-12 md:w-12 ${pos}`}
+            >
+              <Icon size={20} className="rtl:rotate-180" />
+            </motion.button>
+          ))}
+      </div>
+
+      {/* Thumbnail strip */}
       {count > 1 && (
-        <span className="shrink-0 text-xs tabular-nums tracking-[0.2em] text-ivory/70" dir="ltr">
-          {String(index + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
-        </span>
+        <motion.div
+          className="relative z-10 flex justify-center gap-2 px-4 pb-6 pt-2 md:pb-8"
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+          transition={{ duration: 0.45, delay: 0.2, ease: EASE_OUT }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {images.map((img, i) => (
+            <button
+              key={img.url + i}
+              type="button"
+              onClick={() => onIndexChange(i)}
+              aria-label={`${productName} ${i + 1}`}
+              className={`relative h-14 w-12 shrink-0 overflow-hidden rounded-lg bg-white transition-all duration-300 md:h-16 md:w-14 ${
+                i === index ? "opacity-100" : "opacity-40 hover:opacity-80"
+              }`}
+            >
+              <Image src={img.url} alt="" fill sizes="56px" className="object-contain" />
+              {i === index && (
+                <motion.span
+                  layoutId="lightbox-thumb-ring"
+                  className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-champagne"
+                  transition={{ duration: 0.35, ease: EASE_OUT }}
+                />
+              )}
+            </button>
+          ))}
+        </motion.div>
       )}
     </motion.div>
   );

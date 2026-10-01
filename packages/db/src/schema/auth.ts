@@ -17,7 +17,8 @@ export type UserStatus = "active" | "suspended" | "pending";
 export const users = mysqlTable("users", {
   id: id(),
   uuid: uuid(),
-  email: varchar("email", { length: 191 }).notNull().unique(),
+  /** Null for phone-only customer accounts (auto-created at checkout without an email). */
+  email: varchar("email", { length: 191 }).unique(),
   phone: varchar("phone", { length: 32 }),
   passwordHash: varchar("password_hash", { length: 255 }),
   fullName: varchar("full_name", { length: 191 }).notNull(),

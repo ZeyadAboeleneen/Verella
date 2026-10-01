@@ -21,11 +21,11 @@ export function LoginForm({ dict, callbackUrl }: { dict: Dictionary; callbackUrl
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
-          <input type="hidden" name="callbackUrl" value={callbackUrl ?? "/"} />
+          <input type="hidden" name="callbackUrl" value={callbackUrl ?? ""} />
           {state && "error" in state && <FormError>{state.error}</FormError>}
           <div>
-            <Label htmlFor="email">{dict.auth.email}</Label>
-            <Input id="email" name="email" type="email" required autoComplete="email" />
+            <Label htmlFor="email">{dict.auth.emailOrPhone}</Label>
+            <Input id="email" name="email" type="text" inputMode="email" dir="ltr" required autoComplete="username" />
           </div>
           <div>
             <div className="flex items-center justify-between">

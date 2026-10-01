@@ -22,6 +22,20 @@
       "when": 1790255154377,
       "tag": "0002_product_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1790810240862,
+      "tag": "0003_order_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1790817302667,
+      "tag": "0004_users_email_optional",
+      "breakpoints": true
     }
   ]
 }

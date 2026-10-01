@@ -1,6 +1,8 @@
 "use server";
 
-import { eq, and, gte, count, sql } from "drizzle-orm";
+import crypto from "node:crypto";
+import bcrypt from "bcryptjs";
+import { eq, and, gte, count, inArray, sql } from "drizzle-orm";
 import {
   db,
   users,
@@ -41,6 +43,8 @@ import { getGuestCartToken, clearGuestCartCookie } from "@/lib/cart/guest-token"
 import type { ActionResult } from "@/lib/auth/rbac";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email/mailer";
+import { triggerNewOrderWhatsApp } from "@/lib/whatsapp/order-invoice";
+import { normalizeEgyptianPhone } from "@/lib/whatsapp/phone";
 import { getFulfillmentTypes, getGovernorateFees, getNotificationEmail, isGuestCheckoutEnabled } from "@/lib/settings/queries";
 import { formatMoney } from "@verella/core";
 
@@ -156,41 +160,107 @@ export async function previewOrderTotalsAction(
   };
 }
 
-/**
- * Guests who provide an email at checkout get an account created for them
- * automatically, so their order and address are there next time they sign
- * in. Deliberately does NOT attach the order to an existing password-
- * protected account just because someone typed that email — that would leak
- * a stranger's order history into their account. A pre-existing passwordless
- * (i.e. itself auto-created) account is safe to reuse/extend. The account has
- * no password yet; registerAction lets that email "claim" it later by
- * setting one, instead of bouncing with "already exists".
- */
-async function resolveOrCreateGuestCustomer(contact: { name: string; phone: string; email?: string }): Promise<number | null> {
-  const email = contact.email?.trim();
-  if (!email) return null;
+/** Login details for an account created at checkout — sent once, never stored in plain text. */
+export interface GuestCredentials {
+  /** What the customer types in the login field: their email, or their mobile number. */
+  login: string;
+  password: string;
+}
 
-  const [existingUser] = await db.select({ id: users.id, passwordHash: users.passwordHash }).from(users).where(eq(users.email, email)).limit(1);
-  if (existingUser) {
-    if (existingUser.passwordHash) return null;
-    const [existingCustomer] = await db.select({ id: customers.id }).from(customers).where(eq(customers.userId, existingUser.id)).limit(1);
-    if (existingCustomer) return existingCustomer.id;
-    const [newCustomer] = await db.insert(customers).values({ userId: existingUser.id }).$returningId();
-    return newCustomer.id;
-  }
+// No look-alike characters (0/O, 1/l/I) — customers type this from a WhatsApp message.
+const PASSWORD_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+function generatePassword(length = 10): string {
+  return Array.from({ length }, () => PASSWORD_ALPHABET[crypto.randomInt(PASSWORD_ALPHABET.length)]).join("");
+}
 
-  const [userRow] = await db
-    .insert(users)
-    .values({ email, phone: contact.phone || null, fullName: contact.name, passwordHash: null, status: "active" })
-    .$returningId();
-  const [customerRow] = await db.insert(customers).values({ userId: userRow.id }).$returningId();
+async function customerIdFor(userId: number): Promise<number> {
+  const [existing] = await db.select({ id: customers.id }).from(customers).where(eq(customers.userId, userId)).limit(1);
+  if (existing) return existing.id;
+  const [row] = await db.insert(customers).values({ userId }).$returningId();
+  return row.id;
+}
 
+async function createCustomerAccount(values: { email: string | null; phone: string; fullName: string; passwordHash: string }): Promise<number> {
+  const [userRow] = await db.insert(users).values({ ...values, status: "active" }).$returningId();
   const [customerRole] = await db.select({ id: roles.id }).from(roles).where(eq(roles.slug, "customer")).limit(1);
-  if (customerRole) {
-    await db.insert(userRoles).values({ userId: userRow.id, roleId: customerRole.id });
+  if (customerRole) await db.insert(userRoles).values({ userId: userRow.id, roleId: customerRole.id });
+  return customerIdFor(userRow.id);
+}
+
+/**
+ * Every guest order gets a customer account, so the order and address are
+ * there when they sign in. They sign in with the email they gave, or with
+ * their mobile number when they gave none, and a random password that is
+ * sent to them (WhatsApp + email) right after the order.
+ *
+ * Never attaches the order to an existing password-protected account just
+ * because someone typed that email or phone — that would leak a stranger's
+ * order history into their account (the owner simply signs in as usual). A
+ * pre-existing passwordless account (itself auto-created by an older guest
+ * checkout) is reused; it only gets a password when the phone matches too,
+ * so typing someone else's email can't hand you their account.
+ */
+async function resolveOrCreateGuestCustomer(contact: {
+  name: string;
+  phone: string;
+  email?: string;
+}): Promise<{ customerId: number | null; credentials: GuestCredentials | null }> {
+  const none = { customerId: null, credentials: null };
+  const email = contact.email?.trim().toLowerCase() || null;
+  const intl = normalizeEgyptianPhone(contact.phone);
+  const localPhone = intl ? `0${intl.slice(2)}` : null;
+  const password = generatePassword();
+
+  if (email) {
+    const [existing] = await db
+      .select({ id: users.id, passwordHash: users.passwordHash, phone: users.phone })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    if (existing) {
+      if (existing.passwordHash) return none;
+      const customerId = await customerIdFor(existing.id);
+      if (!intl || normalizeEgyptianPhone(existing.phone ?? "") !== intl) return { customerId, credentials: null };
+      await db.update(users).set({ passwordHash: await bcrypt.hash(password, 12) }).where(eq(users.id, existing.id));
+      return { customerId, credentials: { login: email, password } };
+    }
+    const customerId = await createCustomerAccount({
+      email,
+      phone: localPhone ?? contact.phone,
+      fullName: contact.name,
+      passwordHash: await bcrypt.hash(password, 12),
+    });
+    return { customerId, credentials: { login: email, password } };
   }
 
-  return customerRow.id;
+  // No email: the mobile number is the login, so it must be a real one.
+  if (!intl || !localPhone) return none;
+  const onPhone = await db
+    .select({ id: users.id, passwordHash: users.passwordHash })
+    .from(users)
+    .where(inArray(users.phone, [localPhone, intl, `+${intl}`]))
+    .limit(10);
+  // Someone already signs in with this number — leave their account alone.
+  if (onPhone.some((u) => u.passwordHash)) return none;
+  if (onPhone.length > 0) {
+    // An older passwordless (auto-created) account on this number: give it the
+    // password. The details only ever go to this number's WhatsApp, so only
+    // the phone's owner receives them.
+    const [existing] = onPhone;
+    await db
+      .update(users)
+      .set({ phone: localPhone, passwordHash: await bcrypt.hash(password, 12) })
+      .where(eq(users.id, existing.id));
+    return { customerId: await customerIdFor(existing.id), credentials: { login: localPhone, password } };
+  }
+
+  const customerId = await createCustomerAccount({
+    email: null,
+    phone: localPhone,
+    fullName: contact.name,
+    passwordHash: await bcrypt.hash(password, 12),
+  });
+  return { customerId, credentials: { login: localPhone, password } };
 }
 
 export async function placeOrderAction(input: CheckoutInput): Promise<ActionResult<{ orderNumber: string }>> {
@@ -248,11 +318,12 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
   const isWallet = WALLET_PAYMENT_METHODS.includes(data.paymentMethodCode);
 
   let customerId: number | null = null;
+  let credentials: GuestCredentials | null = null;
   if (userId) {
     const [customer] = await db.select().from(customers).where(eq(customers.userId, userId)).limit(1);
     customerId = customer?.id ?? null;
-  } else if (data.guestContact?.email) {
-    customerId = await resolveOrCreateGuestCustomer(data.guestContact);
+  } else if (data.guestContact) {
+    ({ customerId, credentials } = await resolveOrCreateGuestCustomer(data.guestContact));
   }
 
   // ── Address resolution (delivery only) ────────────────────────────────
@@ -288,8 +359,9 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
   // ── Create order ──────────────────────────────────────────────────────
   const orderNumber = generateOrderNumber();
 
+  let orderId: number;
   try {
-  await db.transaction(async (tx) => {
+  orderId = await db.transaction(async (tx) => {
     const [orderRow] = await tx
       .insert(orders)
       .values({
@@ -398,7 +470,13 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
     return { error: err instanceof Error ? err.message : "Could not place your order. Please try again." };
   }
 
-  if (!customerId) await clearGuestCartCookie();
+  if (!userId) await clearGuestCartCookie();
+
+  // WhatsApp, after the response, once each: the customer's invoice (cash on
+  // delivery now; InstaPay / Vodafone Cash wait for payment approval), their
+  // new account's login details, and the store-owner's new-order alert.
+  // Never affects the committed order.
+  triggerNewOrderWhatsApp(orderId, credentials);
 
   const recipientEmail = session?.user?.email ?? data.guestContact?.email;
   const recipientName = session?.user?.name ?? data.guestContact?.name ?? "there";
@@ -409,12 +487,19 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
   // The order is already committed — a mail failure must not surface as a
   // checkout error, or the shopper retries and places a duplicate order.
   if (recipientEmail) {
+    const base = (process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+    const accountText = credentials
+      ? `\n\nYour account / حسابك\nSign in at ${base}/login\nEmail or mobile: ${credentials.login}\nPassword: ${credentials.password}\nYou can change the password from your account.`
+      : "";
+    const accountHtml = credentials
+      ? `<div style="margin-top:16px;padding:12px 16px;border:1px solid #e5ddd3;border-radius:10px"><p style="margin:0 0 6px"><strong>Your account · حسابك</strong></p><p style="margin:0">Email or mobile: <strong>${escapeHtml(credentials.login)}</strong><br/>Password: <strong style="font-family:monospace">${escapeHtml(credentials.password)}</strong></p><p style="margin:8px 0 0"><a href="${base}/login">Sign in</a> to follow your orders. You can change the password from your account.</p></div>`
+      : "";
     try {
       await sendEmail({
         to: recipientEmail,
         subject: `Order confirmed — ${orderNumber}`,
-        text: `Hello ${recipientName},\n\nThanks for your order! Your order ${orderNumber} has been received.\n\n${itemsText}\n\nTotal: ${formatMoney(toCents(totals.grandTotal))}\n\nTrack it at: ${(process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}/order/${orderNumber}`,
-        html: `<p>Hello ${escapeHtml(recipientName)},</p><p>Thanks for your order! Your order <strong>${orderNumber}</strong> has been received.</p><ul>${itemsHtml}</ul><p>Total: <strong>${formatMoney(toCents(totals.grandTotal))}</strong></p><p><a href="${(process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "")}/order/${orderNumber}">Track your order</a></p>`,
+        text: `Hello ${recipientName},\n\nThanks for your order! Your order ${orderNumber} has been received.\n\n${itemsText}\n\nTotal: ${formatMoney(toCents(totals.grandTotal))}\n\nTrack it at: ${base}/order/${orderNumber}${accountText}`,
+        html: `<p>Hello ${escapeHtml(recipientName)},</p><p>Thanks for your order! Your order <strong>${orderNumber}</strong> has been received.</p><ul>${itemsHtml}</ul><p>Total: <strong>${formatMoney(toCents(totals.grandTotal))}</strong></p><p><a href="${base}/order/${orderNumber}">Track your order</a></p>${accountHtml}`,
       });
     } catch (err) {
       console.error("Order confirmation email failed:", err);

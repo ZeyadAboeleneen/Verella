@@ -90,7 +90,7 @@ export default async function AdminUsersPage({
                     key={u.userId}
                     userId={u.userId}
                     fullName={u.fullName}
-                    email={u.email}
+                    email={u.email ?? ""}
                     status={u.status}
                     roleSlug={u.roleSlug}
                     roleOptions={roleOptions}
@@ -122,7 +122,7 @@ export default async function AdminUsersPage({
                     key={u.userId}
                     userId={u.userId}
                     fullName={u.fullName}
-                    email={u.email}
+                    email={u.email ?? ""}
                     phone={u.phone}
                     status={u.status}
                     roleSlug="customer"

@@ -23,7 +23,8 @@ export const createStaffSchema = z.object({
 export type CreateStaffInput = z.infer<typeof createStaffSchema>;
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  /** Email, or the mobile number for accounts created at checkout without an email. */
+  email: z.string().trim().min(3, "Enter your email or mobile number").max(191),
   password: z.string().min(1, "Password is required"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;

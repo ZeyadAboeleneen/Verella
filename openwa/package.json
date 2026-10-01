@@ -1,0 +1,21 @@
+{
+  "name": "@verella/openwa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted WhatsApp gateway (Baileys). Internal only — sends order invoices for the Verella backend.",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "axios": "^1.12.2",
+    "dotenv": "^17.2.3",
+    "pino": "^9.13.1",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

@@ -1,10 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, users, userRoles, roles, rolePermissions, permissions, userPermissions } from "@verella/db";
 import { loginSchema } from "@verella/core";
 import { withDbTimeout } from "@/lib/db-timeout";
+import { normalizeEgyptianPhone } from "@/lib/whatsapp/phone";
 
 /**
  * Resolves a user's current roles + effective permissions straight from the
@@ -53,13 +54,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(raw) {
         const parsed = loginSchema.safeParse(raw);
         if (!parsed.success) return null;
-        const { email, password } = parsed.data;
+        const { email: identifier, password } = parsed.data;
 
-        const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-        if (!user || !user.passwordHash || user.status !== "active") return null;
+        // Email, or — for accounts created at checkout without one — the mobile
+        // number. Phones aren't unique, so try each active account on it.
+        let candidates: (typeof users.$inferSelect)[];
+        if (identifier.includes("@")) {
+          candidates = await db.select().from(users).where(eq(users.email, identifier)).limit(1);
+        } else {
+          const intl = normalizeEgyptianPhone(identifier);
+          if (!intl) return null;
+          candidates = await db
+            .select()
+            .from(users)
+            .where(inArray(users.phone, [`0${intl.slice(2)}`, intl, `+${intl}`]))
+            .limit(10);
+        }
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        let user: (typeof users.$inferSelect) | undefined;
+        for (const c of candidates) {
+          if (c.passwordHash && c.status === "active" && (await bcrypt.compare(password, c.passwordHash))) {
+            user = c;
+            break;
+          }
+        }
+        if (!user) return null;
 
         const access = await loadUserAccess(user.id);
         return {

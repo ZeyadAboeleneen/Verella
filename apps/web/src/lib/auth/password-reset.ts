@@ -53,7 +53,8 @@ export async function requestPasswordResetAction(
 
     const resetUrl = `${appBaseUrl()}/reset-password?token=${rawToken}`;
     await sendEmail({
-      to: user.email,
+      // Looked up by email above, so it is always set here.
+      to: user.email!,
       subject: "Reset your Verella password",
       text: `Hello ${user.fullName},\n\nWe received a request to reset your password. Use the link below within the next hour:\n\n${resetUrl}\n\nIf you didn't request this, you can safely ignore this email.`,
       html: `<p>Hello ${user.fullName},</p><p>We received a request to reset your password. Use the link below within the next hour:</p><p><a href="${resetUrl}">Reset your password</a></p><p>If you didn't request this, you can safely ignore this email.</p>`,

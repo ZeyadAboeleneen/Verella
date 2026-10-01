@@ -37,8 +37,13 @@ export async function loginAction(_prev: ActionResult | null, formData: FormData
 
   await mergeGuestCartIntoUser();
 
-  const callbackUrl = typeof raw.callbackUrl === "string" && raw.callbackUrl ? raw.callbackUrl : "/";
-  redirect(callbackUrl);
+  // A page that sent them to log in (checkout, an account page…) wins; a plain
+  // login lands staff on the dashboard and customers on their account.
+  // Only same-site paths — never "//evil.com" or an absolute URL.
+  const requested = typeof raw.callbackUrl === "string" ? raw.callbackUrl : "";
+  if (requested.startsWith("/") && !requested.startsWith("//") && requested !== "/") redirect(requested);
+  const session = await auth();
+  redirect(session?.user?.permissions?.length ? "/admin" : "/account");
 }
 
 export async function registerAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -98,7 +103,7 @@ export async function registerAction(_prev: ActionResult | null, formData: FormD
   }
 
   await mergeGuestCartIntoUser();
-  redirect("/");
+  redirect("/account");
 }
 
 export async function logoutAction(): Promise<void> {

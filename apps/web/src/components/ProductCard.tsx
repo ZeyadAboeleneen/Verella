@@ -114,39 +114,51 @@ export default function ProductCard({
               onClick={() => (hasVariants ? setTrayOpen((v) => !v) : add())}
               disabled={pending}
               aria-label={hasVariants ? labels.chooseSize : labels.addToCart}
-              className={`absolute bottom-3 end-3 z-10 flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 active:scale-90 [@media(hover:hover)]:hidden ${
-                added ? "bg-gold text-charcoal" : "bg-ivory text-charcoal"
+              aria-expanded={hasVariants ? trayOpen : undefined}
+              style={{ boxShadow: "0 6px 18px rgba(0,0,0,0.18)" }}
+              className={`absolute bottom-3 end-3 z-20 flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 active:scale-90 [@media(hover:hover)]:hidden ${
+                added ? "bg-gold text-charcoal" : trayOpen ? "bg-plum text-ivory" : "bg-ivory text-charcoal"
               }`}
             >
-              {added ? <Check size={16} /> : trayOpen ? <X size={16} /> : <Plus size={16} />}
+              <span className={`transition-transform duration-300 ${trayOpen ? "rotate-90" : ""}`}>
+                {added ? <Check size={16} /> : trayOpen ? <X size={16} /> : <Plus size={16} />}
+              </span>
             </button>
 
+            {/* On touch the tray pops up centred on the image, clear of the +; on hover devices it sits at the bottom. */}
             <div
-              className={`absolute inset-x-2 bottom-2 z-10 translate-y-3 rounded-lg bg-ivory/95 p-2.5 opacity-0 backdrop-blur-md transition-all duration-400 ease-out [@media(hover:hover)]:group-hover/card:pointer-events-auto [@media(hover:hover)]:group-hover/card:translate-y-0 [@media(hover:hover)]:group-hover/card:opacity-100 ${
-                trayOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none"
+              style={{ background: "rgba(255,255,255,0.97)", boxShadow: "0 10px 30px rgba(0,0,0,0.16)" }}
+              className={`absolute inset-x-2 top-1/2 z-10 -translate-y-1/2 rounded-2xl p-2.5 backdrop-blur-md transition-all duration-300 ease-out [@media(hover:hover)]:top-auto [@media(hover:hover)]:bottom-2 [@media(hover:hover)]:translate-y-0 [@media(hover:hover)]:group-hover/card:pointer-events-auto [@media(hover:hover)]:group-hover/card:scale-100 [@media(hover:hover)]:group-hover/card:opacity-100 ${
+                trayOpen ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
               }`}
             >
               {hasVariants ? (
-                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                  {variants.map((v) => {
-                    const out = v.stockQty <= 0;
-                    return (
-                      <button
-                        key={v.id}
-                        type="button"
-                        disabled={out || pending}
-                        onClick={() => add(v.id)}
-                        className={`min-w-11 rounded-full border px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider transition-all duration-200 active:scale-95 ${
-                          out
-                            ? "cursor-not-allowed border-transparent text-on-surface-variant/40 line-through"
-                            : "border-charcoal/15 text-charcoal hover:border-charcoal hover:bg-plum hover:text-ivory"
-                        }`}
-                      >
-                        {v.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <>
+                  <p className="mb-2 text-center text-[10px] font-medium uppercase tracking-[0.2em] text-on-surface-variant">
+                    {labels.chooseSize}
+                  </p>
+                  <div className={`grid gap-1.5 ${variants.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                    {variants.map((v) => {
+                      const out = v.stockQty <= 0;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          disabled={out || pending}
+                          onClick={() => add(v.id)}
+                          className={`flex flex-col items-center justify-center rounded-xl border px-2 py-1.5 transition-all duration-200 active:scale-95 ${
+                            out
+                              ? "cursor-not-allowed border-transparent opacity-40"
+                              : "border-[rgba(40,30,35,0.15)] text-charcoal hover:border-plum hover:bg-plum hover:text-ivory"
+                          }`}
+                        >
+                          <span className={`text-[11px] font-semibold uppercase ${out ? "line-through" : ""}`}>{v.label}</span>
+                          {v.price && <span className="text-[10px] opacity-70">{v.price}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
               ) : (
                 <button
                   type="button"

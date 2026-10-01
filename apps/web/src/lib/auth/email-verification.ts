@@ -66,6 +66,6 @@ export async function resendVerificationEmailAction(): Promise<ActionResult> {
   if (!user) return { error: "Account not found." };
   if (user.emailVerifiedAt) return { success: true };
 
-  await sendVerificationEmail(user.id, user.email, user.fullName);
+  await sendVerificationEmail(user.id, sessionUser.email, user.fullName);
   return { success: true };
 }

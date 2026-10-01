@@ -40,6 +40,7 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
       deliveryFee: String(formData.get("deliveryFee")),
       governorateFees: Object.entries(fees).map(([name, fee]) => ({ name, fee })),
       notificationEmail: String(formData.get("notificationEmail")),
+      notificationWhatsApp: String(formData.get("notificationWhatsApp") ?? ""),
       taxEnabled: formData.get("taxEnabled") === "on",
       guestCheckoutEnabled: formData.get("guestCheckoutEnabled") === "on",
       pickupEnabled: formData.get("pickupEnabled") === "on",
@@ -66,6 +67,28 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
   return (
     <form action={onSubmit} className="max-w-3xl space-y-6">
       <FormError>{error}</FormError>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>WhatsApp new-order alerts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="sm:w-1/2 sm:pe-2">
+            <Label htmlFor="notificationWhatsApp">New-order WhatsApp number</Label>
+            <Input
+              id="notificationWhatsApp"
+              name="notificationWhatsApp"
+              type="tel"
+              dir="ltr"
+              placeholder="01012345678"
+              defaultValue={initial.notificationWhatsApp}
+            />
+            <p className="mt-1 text-xs text-on-surface-variant">
+              Gets a WhatsApp message for every new website order. Leave empty to turn off.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

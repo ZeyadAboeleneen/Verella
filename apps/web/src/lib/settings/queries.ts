@@ -52,6 +52,16 @@ export const getNotificationEmail = unstable_cache(getNotificationEmailImpl, ["s
   tags: [SETTINGS_CACHE_TAG],
 });
 
+/** WhatsApp number that gets a message for every new website order (empty = off). */
+async function getAdminWhatsAppPhoneImpl(): Promise<string | null> {
+  const value = await getSetting("notifications", "whatsapp_phone").catch(() => null);
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+export const getAdminWhatsAppPhone = unstable_cache(getAdminWhatsAppPhoneImpl, ["settings-admin-whatsapp-phone"], {
+  revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
+});
+
 const DEFAULT_SITE_NAME = { en: "Verella", ar: "ڤيريلا" };
 
 /** Site name configured in Admin → Settings → General. */

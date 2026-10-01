@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronUp, Loader2, Lock } from "lucide-react";
+import { ChevronUp, Loader2, Lock, Tag } from "lucide-react";
 import {
   checkoutSchema,
   formatMoney,
@@ -25,6 +25,15 @@ import type { CartLineView } from "@/lib/cart/queries";
 import type { SavedAddressView } from "@/lib/addresses/queries";
 import type { WalletDetails } from "@/lib/settings/queries";
 import type { Dictionary, Locale } from "@/lib/i18n";
+
+/** Required-field marker next to a label. */
+function Req() {
+  return (
+    <span aria-hidden="true" className="ms-0.5 text-error">
+      *
+    </span>
+  );
+}
 
 function Section({ step, title, children }: { step: number; title: string; children: React.ReactNode }) {
   return (
@@ -278,7 +287,6 @@ export function CheckoutForm({
         </summary>
         <div className="max-h-[60vh] space-y-5 overflow-y-auto border-t border-beige px-5 py-5">
           {summaryLines}
-          {discountBox}
           {totals}
         </div>
       </details>
@@ -323,12 +331,12 @@ export function CheckoutForm({
               {isLoggedIn && <p className="text-xs text-on-surface-variant">{t.pickupWho}</p>}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="guestContact.name">{t.fields.fullName}</Label>
+                  <Label htmlFor="guestContact.name">{t.fields.fullName}<Req /></Label>
                   <Input id="guestContact.name" autoComplete="name" {...register("guestContact.name")} />
                   <FieldError message={errors.guestContact?.name?.message} />
                 </div>
                 <div>
-                  <Label htmlFor="guestContact.phone">{t.fields.phone}</Label>
+                  <Label htmlFor="guestContact.phone">{t.fields.phone}<Req /></Label>
                   <Input id="guestContact.phone" type="tel" inputMode="tel" autoComplete="tel" {...register("guestContact.phone")} />
                   <FieldError message={errors.guestContact?.phone?.message} />
                 </div>
@@ -336,7 +344,6 @@ export function CheckoutForm({
               <div>
                 <Label htmlFor="guestContact.email">{t.fields.email}</Label>
                 <Input id="guestContact.email" type="email" autoComplete="email" {...register("guestContact.email")} />
-                <p className="mt-1 text-xs text-on-surface-variant">{t.fields.emailHint}</p>
               </div>
             </div>
           )}
@@ -407,19 +414,19 @@ export function CheckoutForm({
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <Label htmlFor="newAddress.recipientName">{isLoggedIn ? t.fields.recipientName : t.fields.fullName}</Label>
+                      <Label htmlFor="newAddress.recipientName">{isLoggedIn ? t.fields.recipientName : t.fields.fullName}<Req /></Label>
                       <Input id="newAddress.recipientName" autoComplete="name" {...register("newAddress.recipientName")} />
                       <FieldError message={errors.newAddress?.recipientName?.message} />
                     </div>
                     <div>
-                      <Label htmlFor="newAddress.phone">{t.fields.phone}</Label>
+                      <Label htmlFor="newAddress.phone">{t.fields.phone}<Req /></Label>
                       <Input id="newAddress.phone" type="tel" inputMode="tel" autoComplete="tel" {...register("newAddress.phone")} />
                       <FieldError message={errors.newAddress?.phone?.message} />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <Label htmlFor="newAddress.governorate">{t.fields.governorate}</Label>
+                      <Label htmlFor="newAddress.governorate">{t.fields.governorate}<Req /></Label>
                       <GovernorateSelect id="newAddress.governorate" locale={locale} defaultValue="" {...register("newAddress.governorate")} />
                       <FieldError message={errors.newAddress?.governorate?.message} />
                     </div>
@@ -429,7 +436,7 @@ export function CheckoutForm({
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="newAddress.street">{t.fields.street}</Label>
+                    <Label htmlFor="newAddress.street">{t.fields.street}<Req /></Label>
                     <Input id="newAddress.street" autoComplete="address-line1" {...register("newAddress.street")} />
                     <FieldError message={errors.newAddress?.street?.message} />
                   </div>
@@ -455,7 +462,6 @@ export function CheckoutForm({
                     <div>
                       <Label htmlFor="guestEmail">{t.fields.email}</Label>
                       <Input id="guestEmail" type="email" autoComplete="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} />
-                      <p className="mt-1 text-xs text-on-surface-variant">{t.fields.emailHint}</p>
                     </div>
                   )}
                   {isLoggedIn && (
@@ -520,6 +526,15 @@ export function CheckoutForm({
             </div>
           )}
         </Section>
+
+        {/* Mobile: the code field lives in the page flow, not hidden inside the collapsed summary. */}
+        <section className="rounded-2xl bg-surface-container-lowest p-5 sm:p-7 lg:hidden">
+          <h2 className="mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-charcoal">
+            <Tag size={14} className="text-gold-ink" />
+            {t.discountCode}
+          </h2>
+          {discountBox}
+        </section>
 
         <button
           type="submit"

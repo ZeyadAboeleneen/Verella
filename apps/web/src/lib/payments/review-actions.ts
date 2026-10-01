@@ -6,6 +6,7 @@ import { db, payments, orders, orderStatusHistory, customers, users } from "@ver
 import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
 import { sendEmail } from "@/lib/email/mailer";
+import { triggerOrderWhatsAppInvoice } from "@/lib/whatsapp/order-invoice";
 
 export async function reviewPaymentAction(
   paymentId: number,
@@ -39,6 +40,9 @@ export async function reviewPaymentAction(
   });
 
   await logActivity({ actorUserId: Number(guard.id), action: `payment.${decision}`, entityType: "payment", entityId: paymentId });
+
+  // Wallet payment confirmed → automatic WhatsApp invoice (once; after the response).
+  if (decision === "approved") triggerOrderWhatsAppInvoice(payment.orderId);
 
   const [order] = await db.select().from(orders).where(eq(orders.id, payment.orderId)).limit(1);
   if (order) {

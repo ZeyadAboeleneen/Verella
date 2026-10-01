@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db, orders, orderStatusHistory, type OrderStatus } from "@verella/db";
 import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
+import { triggerOrderWhatsAppStatusUpdate } from "@/lib/whatsapp/order-invoice";
 
 const VALID_STATUSES: OrderStatus[] = [
   "pending",
@@ -28,6 +29,10 @@ export async function updateOrderStatusAction(orderId: number, status: OrderStat
   });
 
   await logActivity({ actorUserId: Number(guard.id), action: "order.status_changed", entityType: "order", entityId: orderId, changes: { status } });
+
+  // WhatsApp: retries the invoice if it hasn't gone out, then sends this
+  // status's update to the customer (once per status, after the response).
+  triggerOrderWhatsAppStatusUpdate(orderId, status);
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);

@@ -95,13 +95,36 @@ export function StoreBrowser({
     { value: "price-desc", label: labels.sortPriceDesc },
   ];
 
+  // Filters pill — beside the search field (inline on mobile, in the sticky bar on desktop).
+  const filterButton = (size: string) => (
+    <button
+      type="button"
+      onClick={() => setDrawer(true)}
+      className={`flex shrink-0 items-center gap-2 rounded-full text-[11px] font-medium uppercase tracking-[0.15em] transition-colors duration-300 ${size} ${
+        activeFilters > 0 ? "bg-plum text-ivory" : "bg-charcoal text-ivory hover:bg-plum"
+      }`}
+    >
+      <SlidersHorizontal size={15} strokeWidth={1.8} />
+      <span>{labels.filters}</span>
+      {activeFilters > 0 && (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-champagne px-1 text-[10px] tracking-normal text-charcoal">
+          {activeFilters}
+        </span>
+      )}
+    </button>
+  );
+
   return (
     <div>
       {/* Sticky bar: worlds + search + filters */}
       <div className="sticky top-[var(--nav-offset,64px)] z-30 -mx-5 border-y border-charcoal/10 bg-ivory/90 px-5 backdrop-blur-xl transition-[top] duration-500 md:-mx-16 md:px-16">
         <div className="mx-auto flex max-w-[1400px] items-center gap-6 py-3">
           <LayoutGroup id="store-tabs">
-            <div className="no-scrollbar flex min-w-0 flex-1 gap-6 overflow-x-auto md:gap-8" role="tablist">
+            {/* Horizontal-only scroller: overflow-y hidden + pan-x so a vertical swipe never nudges the row up/down. */}
+            <div
+              className="no-scrollbar flex min-w-0 flex-1 touch-pan-x items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain py-0.5"
+              role="tablist"
+            >
               {tabs.map((t) => {
                 const active = category === t.slug;
                 return (
@@ -110,14 +133,31 @@ export function StoreBrowser({
                     type="button"
                     role="tab"
                     aria-selected={active}
-                    onClick={() => setCategory(t.slug)}
-                    className={`relative shrink-0 py-2 text-[11px] font-medium uppercase tracking-[0.25em] transition-colors ${
-                      active ? "text-charcoal" : "text-on-surface-variant hover:text-charcoal"
+                    onClick={(e) => {
+                      setCategory(t.slug);
+                      e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                    }}
+                    className={`relative flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-[11px] font-medium uppercase tracking-[0.15em] transition-colors duration-300 ${
+                      active
+                        ? "border-transparent text-ivory"
+                        : "border-[rgba(40,30,35,0.14)] text-on-surface-variant hover:border-[rgba(40,30,35,0.4)] hover:text-charcoal"
                     }`}
                   >
-                    {t.name}
-                    <sup className="ms-1 text-[9px] tracking-normal text-gold-ink">{t.count}</sup>
-                    {active && <motion.span layoutId="store-tab" className="absolute inset-x-0 bottom-0 h-px bg-charcoal" transition={{ duration: 0.45, ease: EASE_OUT }} />}
+                    {active && (
+                      <motion.span
+                        layoutId="store-tab"
+                        className="absolute inset-0 rounded-full bg-plum"
+                        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      />
+                    )}
+                    <span className="relative">{t.name}</span>
+                    <span
+                      className={`relative flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] leading-none tracking-normal ${
+                        active ? "bg-[rgba(255,255,255,0.2)] text-ivory" : "bg-[rgba(40,30,35,0.06)] text-gold-ink"
+                      }`}
+                    >
+                      {t.count}
+                    </span>
                   </button>
                 );
               })}
@@ -133,17 +173,7 @@ export function StoreBrowser({
               className="h-9 w-56 rounded-full border border-charcoal/15 bg-transparent ps-9 pe-3 text-xs text-charcoal outline-none transition-all duration-300 placeholder:text-on-surface-variant focus:w-72 focus:border-charcoal"
             />
           </label>
-          <button
-            type="button"
-            onClick={() => setDrawer(true)}
-            className="relative flex shrink-0 items-center gap-2 text-[11px] font-medium uppercase tracking-[0.25em] text-charcoal transition-opacity hover:opacity-60"
-          >
-            <SlidersHorizontal size={15} strokeWidth={1.6} />
-            <span className="hidden sm:inline">{labels.filters}</span>
-            {activeFilters > 0 && (
-              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-champagne px-1 text-[9px] tracking-normal text-charcoal">{activeFilters}</span>
-            )}
-          </button>
+          <div className="hidden md:block">{filterButton("h-9 px-4")}</div>
         </div>
       </div>
 
@@ -162,15 +192,18 @@ export function StoreBrowser({
         )}
       </div>
 
-      <label className="relative mb-8 flex items-center md:hidden">
-        <Search size={14} className="pointer-events-none absolute start-4 text-on-surface-variant" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={labels.searchPlaceholder}
-          className="h-11 w-full rounded-full border border-charcoal/15 bg-transparent ps-10 pe-4 text-sm text-charcoal outline-none focus:border-charcoal"
-        />
-      </label>
+      <div className="mb-8 flex items-center gap-2 md:hidden">
+        <label className="relative flex min-w-0 flex-1 items-center">
+          <Search size={14} className="pointer-events-none absolute start-4 text-on-surface-variant" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={labels.searchPlaceholder}
+            className="h-11 w-full rounded-full border border-[rgba(40,30,35,0.15)] bg-transparent ps-10 pe-4 text-sm text-charcoal outline-none focus:border-charcoal"
+          />
+        </label>
+        {filterButton("h-11 px-4")}
+      </div>
 
       <motion.div layout className="mx-auto grid max-w-[1400px] grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 md:gap-x-6 md:gap-y-14 lg:grid-cols-4">
         <AnimatePresence mode="popLayout" initial={false}>

@@ -8,6 +8,7 @@ import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
 import { SETTINGS_CACHE_TAG } from "@/lib/settings/queries";
 import { SITE_THEMES, type SiteTheme } from "@/lib/settings/theme";
+import { normalizeEgyptianPhone } from "@/lib/whatsapp/phone";
 
 export interface GovernorateFee {
   name: string;
@@ -22,6 +23,8 @@ export interface SiteSettingsInput {
   deliveryFee: string;
   governorateFees: GovernorateFee[];
   notificationEmail: string;
+  /** WhatsApp number for new-order alerts; empty disables them. */
+  notificationWhatsApp: string;
   taxEnabled: boolean;
   guestCheckoutEnabled: boolean;
   pickupEnabled: boolean;
@@ -55,6 +58,12 @@ export async function updateSiteSettingsAction(input: SiteSettingsInput): Promis
     .map((g) => ({ name: g.name, fee: Number(g.fee).toFixed(2) }));
 
   const notificationEmail = input.notificationEmail.trim();
+  const notificationWhatsApp = input.notificationWhatsApp.trim();
+  const whatsAppIntl = normalizeEgyptianPhone(notificationWhatsApp);
+  if (notificationWhatsApp && !whatsAppIntl) {
+    return { error: "New-order WhatsApp number must be an Egyptian mobile number, e.g. 01012345678." };
+  }
+
   if (notificationEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notificationEmail)) {
     return { error: "Notification email is not a valid email address." };
   }
@@ -75,6 +84,8 @@ export async function updateSiteSettingsAction(input: SiteSettingsInput): Promis
     upsertSetting("checkout", "delivery_fee", Number(input.deliveryFee).toFixed(2)),
     upsertSetting("checkout", "governorate_fees", governorateFees),
     upsertSetting("notifications", "email", notificationEmail),
+    // Stored in local form (01012345678) so it reads naturally when edited again.
+    upsertSetting("notifications", "whatsapp_phone", whatsAppIntl ? `0${whatsAppIntl.slice(2)}` : ""),
     upsertSetting("checkout", "tax_enabled", input.taxEnabled),
     upsertSetting("checkout", "guest_checkout_enabled", input.guestCheckoutEnabled),
     upsertSetting("checkout", "fulfillment_types", input.pickupEnabled ? ["delivery", "pickup"] : ["delivery"]),

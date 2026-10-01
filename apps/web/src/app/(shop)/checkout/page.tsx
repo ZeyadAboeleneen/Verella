@@ -41,7 +41,7 @@ export default async function CheckoutPage() {
   let savedAddresses: Awaited<ReturnType<typeof getCustomerAddresses>> = [];
   if (user) {
     const [row] = await db.select({ fullName: users.fullName, phone: users.phone, email: users.email }).from(users).where(eq(users.id, Number(user.id))).limit(1);
-    if (row) accountContact = { name: row.fullName, phone: row.phone ?? "", email: row.email };
+    if (row) accountContact = { name: row.fullName, phone: row.phone ?? "", email: row.email ?? "" };
     savedAddresses = await getCustomerAddresses(Number(user.id));
   }
 

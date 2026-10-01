@@ -34,8 +34,18 @@ yarn-error.log*
 
 # env files (never commit real secrets — .env.example files ARE committed)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+
+# WhatsApp gateway session — these files ARE the linked WhatsApp login
+openwa/auth_info/
+openwa/logs/
+
+# font files (loaded via next/font, never vendored)
+*.ttf
+*.otf
+*.woff
+*.woff2
 
 # vercel
 .vercel

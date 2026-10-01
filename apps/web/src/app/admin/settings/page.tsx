@@ -4,6 +4,7 @@ import { PAYMENT_METHOD_CODES, type PaymentMethodCode } from "@verella/core";
 import { BRAND_CONTACT } from "@/lib/brand";
 import { withDbTimeout } from "@/lib/db-timeout";
 import { SettingsForm } from "@/components/admin/settings/settings-form";
+import { WhatsAppConnection } from "@/components/admin/settings/whatsapp-connection";
 import type { GovernorateFee } from "@/lib/settings/actions";
 import { SITE_THEMES, type SiteTheme } from "@/lib/settings/theme";
 
@@ -35,6 +36,9 @@ export default async function AdminSettingsPage() {
   return (
     <div>
       <h1 className="mb-6 font-display text-2xl font-bold text-on-surface">Settings</h1>
+      <div className="mb-6">
+        <WhatsAppConnection />
+      </div>
       <SettingsForm
         initial={{
           siteNameEn: siteName.en ?? "Verella",
@@ -46,6 +50,7 @@ export default async function AdminSettingsPage() {
           deliveryFee: (find("checkout", "delivery_fee") as string) ?? "30.00",
           governorateFees,
           notificationEmail: (find("notifications", "email") as string) ?? BRAND_CONTACT.email.address,
+          notificationWhatsApp: (find("notifications", "whatsapp_phone") as string) ?? "",
           taxEnabled: Boolean(find("checkout", "tax_enabled")),
           guestCheckoutEnabled: find("checkout", "guest_checkout_enabled") !== false,
           instapayNumber: (find("checkout", "instapay_number") as string) ?? "",

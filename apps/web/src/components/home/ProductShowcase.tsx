@@ -60,7 +60,11 @@ export function ProductShowcase({
       </div>
 
       <LayoutGroup>
-        <div className="no-scrollbar -mx-5 mb-10 flex gap-6 overflow-x-auto px-5 md:mx-0 md:gap-9 md:px-0" role="tablist">
+        {/* Horizontal-only scroller: overflow-y hidden + pan-x so a vertical swipe never nudges the row up/down. */}
+        <div
+          className="no-scrollbar -mx-5 mb-10 flex touch-pan-x items-center gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-5 py-1 md:mx-0 md:flex-wrap md:px-0"
+          role="tablist"
+        >
           {tabs.map((t) => {
             const active = t.slug === tab;
             return (
@@ -69,16 +73,31 @@ export function ProductShowcase({
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => setTab(t.slug)}
-                className={`relative shrink-0 pb-2 text-xs font-medium uppercase tracking-[0.25em] transition-colors ${
-                  active ? "text-charcoal" : "text-on-surface-variant hover:text-charcoal"
+                onClick={(e) => {
+                  setTab(t.slug);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                }}
+                className={`relative flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-medium uppercase tracking-[0.15em] transition-colors duration-300 ${
+                  active
+                    ? "border-transparent text-ivory"
+                    : "border-[rgba(40,30,35,0.14)] text-on-surface-variant hover:border-[rgba(40,30,35,0.4)] hover:text-charcoal"
                 }`}
               >
-                {t.name}
-                <sup className="ms-1 text-[9px] tracking-normal text-gold-ink">{t.count}</sup>
                 {active && (
-                  <motion.span layoutId="showcase-tab" className="absolute inset-x-0 -bottom-px h-px bg-charcoal" transition={{ duration: 0.5, ease: EASE_OUT }} />
+                  <motion.span
+                    layoutId="showcase-tab"
+                    className="absolute inset-0 rounded-full bg-plum"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  />
                 )}
+                <span className="relative">{t.name}</span>
+                <span
+                  className={`relative flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] leading-none tracking-normal ${
+                    active ? "bg-[rgba(255,255,255,0.2)] text-ivory" : "bg-[rgba(40,30,35,0.06)] text-gold-ink"
+                  }`}
+                >
+                  {t.count}
+                </span>
               </button>
             );
           })}
