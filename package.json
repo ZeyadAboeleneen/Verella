@@ -28,6 +28,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
+      "onnxruntime-node",
       "sharp",
       "unrs-resolver"
     ]

@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, "../.."),
   // nodemailer uses dynamic requires; keep it a native require so Next's
   // standalone file tracer doesn't choke on it.
-  serverExternalPackages: ["nodemailer"],
+  serverExternalPackages: ["nodemailer", "@huggingface/transformers", "onnxruntime-node", "sharp"],
   poweredByHeader: false,
   async headers() {
     const security = [

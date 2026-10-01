@@ -1,6 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CATALOG_CACHE_TAG } from "@/lib/store/queries";
+import { after } from "next/server";
+import { ensureStyledProductImage } from "@/lib/media/auto-styled";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import {
   db,
@@ -23,6 +26,7 @@ import { logActivity } from "@/lib/activity/log";
 import { getSiteCurrency } from "@/lib/settings/queries";
 
 function revalidateStore() {
+  updateTag(CATALOG_CACHE_TAG);
   revalidatePath("/admin/store");
   revalidatePath("/admin/store/products");
   revalidatePath("/store");
@@ -248,6 +252,8 @@ export async function createStoreProductAction(input: StoreProductInput): Promis
 
   await logActivity({ actorUserId: Number(guard.id), action: "store_product.created", entityType: "store_product", entityId: id });
   revalidateStore();
+  // Coloured Verella backdrop for the main photo — slow (local AI cut-out), so after the response.
+  after(() => ensureStyledProductImage(id));
   return { success: true, data: { id } };
 }
 
@@ -299,6 +305,7 @@ export async function updateStoreProductAction(id: number, input: StoreProductIn
 
   await logActivity({ actorUserId: Number(guard.id), action: "store_product.updated", entityType: "store_product", entityId: id });
   revalidateStore();
+  after(() => ensureStyledProductImage(id));
   return { success: true };
 }
 

@@ -60,3 +60,6 @@ docker/minio-data/
 
 # database dumps written by the compose "backup" service
 docker/backups/
+
+# Downloaded AI models (background removal)
+.cache/

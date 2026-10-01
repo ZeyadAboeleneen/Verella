@@ -24,7 +24,7 @@ export default async function EditStoreProductPage({ params }: { params: Promise
   const [translations, categories, productMedia, variants, brands] = await Promise.all([
     db.select().from(storeProductTranslations).where(eq(storeProductTranslations.productId, productId)),
     db
-      .select({ id: storeCategories.id, name: storeCategoryTranslations.name })
+      .select({ id: storeCategories.id, name: storeCategoryTranslations.name, isActive: storeCategories.isActive })
       .from(storeCategories)
       .leftJoin(storeCategoryTranslations, and(eq(storeCategoryTranslations.categoryId, storeCategories.id), eq(storeCategoryTranslations.locale, "en")))
       .orderBy(asc(storeCategories.sortOrder)),
@@ -56,7 +56,9 @@ export default async function EditStoreProductPage({ params }: { params: Promise
       <StoreProductForm
         productId={productId}
         brands={brands}
-        categories={categories.map((c) => ({ id: c.id, name: c.name ?? `Category #${c.id}` }))}
+        categories={[...categories]
+          .sort((a, b) => Number(b.isActive) - Number(a.isActive))
+          .map((c) => ({ id: c.id, name: `${c.name ?? `Category #${c.id}`}${c.isActive ? "" : " — hidden (products here don’t show in the store)"}` }))}
         defaultValues={{
           categoryId: product.categoryId,
           slug: product.slug,

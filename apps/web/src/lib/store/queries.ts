@@ -30,6 +30,12 @@ import { withDbTimeout } from "@/lib/db-timeout";
  * this only affects how fresh the underlying data fetch is within that window.
  */
 const CATALOG_REVALIDATE_SECONDS = 60;
+/**
+ * Busted with updateTag() by the store admin actions (the same mechanism
+ * Admin → Settings uses, which works on this Next version), so a saved
+ * product shows on the store and home page right away instead of up to 60s later.
+ */
+export const CATALOG_CACHE_TAG = "catalog";
 
 export interface StoreCategoryView {
   slug: string;
@@ -260,6 +266,7 @@ async function getStoreCategoriesImpl(locale: Locale = "en"): Promise<StoreCateg
 
 export const getStoreCategories = unstable_cache(getStoreCategoriesImpl, ["store-categories"], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
+  tags: [CATALOG_CACHE_TAG],
 });
 
 export interface StoreProductFilter {
@@ -372,6 +379,7 @@ async function getStoreProductsImpl(locale: Locale = "en", filter: string | Stor
 
 export const getStoreProducts = unstable_cache(getStoreProductsImpl, ["store-products"], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
+  tags: [CATALOG_CACHE_TAG],
 });
 
 export interface StoreProductDetailView extends StoreProductView {
@@ -444,6 +452,7 @@ async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): P
 
 export const getStoreProductBySlug = unstable_cache(getStoreProductBySlugImpl, ["store-product-by-slug"], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
+  tags: [CATALOG_CACHE_TAG],
 });
 
 // Previously this called getStoreProductsImpl directly — bypassing the 60s
@@ -455,6 +464,7 @@ async function getBestSellerProductsImpl(locale: Locale = "en", limit = 8): Prom
 }
 export const getBestSellerProducts = unstable_cache(getBestSellerProductsImpl, ["best-seller-products"], {
   revalidate: CATALOG_REVALIDATE_SECONDS,
+  tags: [CATALOG_CACHE_TAG],
 });
 
 export interface BrandView {

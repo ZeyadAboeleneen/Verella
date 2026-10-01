@@ -6,7 +6,7 @@ import { getCatalogBrands } from "@/lib/store/admin-queries";
 export default async function NewStoreProductPage() {
   const [categories, brands] = await Promise.all([
     db
-      .select({ id: storeCategories.id, name: storeCategoryTranslations.name })
+      .select({ id: storeCategories.id, name: storeCategoryTranslations.name, isActive: storeCategories.isActive })
       .from(storeCategories)
       .leftJoin(storeCategoryTranslations, and(eq(storeCategoryTranslations.categoryId, storeCategories.id), eq(storeCategoryTranslations.locale, "en")))
       .orderBy(asc(storeCategories.sortOrder)),
@@ -16,7 +16,9 @@ export default async function NewStoreProductPage() {
   return (
     <div>
       <h1 className="mb-6 font-display text-2xl font-bold text-on-surface">New product</h1>
-      <StoreProductForm brands={brands} categories={categories.map((c) => ({ id: c.id, name: c.name ?? `Category #${c.id}` }))} />
+      <StoreProductForm brands={brands} categories={[...categories]
+          .sort((a, b) => Number(b.isActive) - Number(a.isActive))
+          .map((c) => ({ id: c.id, name: `${c.name ?? `Category #${c.id}`}${c.isActive ? "" : " — hidden (products here don’t show in the store)"}` }))} />
     </div>
   );
 }

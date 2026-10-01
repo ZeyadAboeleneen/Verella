@@ -42,8 +42,7 @@ export async function loginAction(_prev: ActionResult | null, formData: FormData
   // Only same-site paths — never "//evil.com" or an absolute URL.
   const requested = typeof raw.callbackUrl === "string" ? raw.callbackUrl : "";
   if (requested.startsWith("/") && !requested.startsWith("//") && requested !== "/") redirect(requested);
-  const session = await auth();
-  redirect(session?.user?.permissions?.length ? "/admin" : "/account");
+  redirect("/login/continue");
 }
 
 export async function registerAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
