@@ -3,7 +3,7 @@ import { privateMetadata } from "@/lib/seo";
 import Link from "@/components/LocaleLink";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { PackageSearch, MapPin, ChevronRight, LogOut } from "lucide-react";
+import { PackageSearch, MapPin, ChevronRight, LogOut, KeyRound } from "lucide-react";
 import { formatMoney, toCents } from "@verella/core";
 import { db, users, type OrderStatus } from "@verella/db";
 import { getSessionUser } from "@/lib/auth/rbac";
@@ -76,7 +76,7 @@ export default async function AccountPage() {
       </div>
 
       <div className="mx-auto max-w-3xl px-5 py-8 md:py-10">
-        {!dbUser?.emailVerifiedAt && (
+        {user.email && !dbUser?.emailVerifiedAt && (
           <div className="mb-6">
             <VerifyEmailBanner />
           </div>
@@ -112,6 +112,19 @@ export default async function AccountPage() {
             </div>
             <ChevronRight size={18} className="text-beige transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </Link>
+          <Link
+            href="/account/password"
+            className="group flex items-center gap-4 rounded-2xl border border-beige/60 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-beige hover:shadow-[0_10px_24px_-12px_rgba(39,25,8,0.25)]"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold/10 text-gold">
+              <KeyRound size={20} aria-hidden="true" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-charcoal">Change Password</p>
+              <p className="text-sm text-on-surface-variant">Update your login password</p>
+            </div>
+            <ChevronRight size={18} className="text-beige transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          </Link>
         </div>
 
         {/* ── Recent orders ── */}
@@ -142,11 +155,15 @@ export default async function AccountPage() {
                   <Link
                     key={o.id}
                     href={`/order/${o.orderNumber}`}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-beige/60 bg-white p-4 transition-colors hover:border-beige"
+                    className="group flex items-center justify-between gap-3 rounded-2xl border border-beige/60 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-beige hover:shadow-[0_10px_24px_-12px_rgba(39,25,8,0.25)]"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-mono text-sm font-semibold text-charcoal">{o.orderNumber}</p>
                       <p className="text-xs text-on-surface-variant">{new Date(o.placedAt).toLocaleDateString()}</p>
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-gold-ink">
+                        View details
+                        <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+                      </span>
                     </div>
                     <div className="shrink-0 text-end">
                       <p className="text-sm font-bold text-charcoal">{formatMoney(toCents(o.grandTotal), o.currency, locale)}</p>
