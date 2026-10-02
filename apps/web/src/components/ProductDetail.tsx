@@ -607,6 +607,7 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
         name: product.name,
         image: product.image,
         meta: [variant?.label, price].filter(Boolean).join(" · "),
+        compareAt,
       });
     });
   }

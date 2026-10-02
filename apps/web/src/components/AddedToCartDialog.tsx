@@ -10,6 +10,7 @@ export function AddedToCartDialog({
   productName,
   productImage,
   productMeta,
+  productCompareAt,
   labels,
   locale,
 }: {
@@ -18,6 +19,7 @@ export function AddedToCartDialog({
   productName?: string;
   productImage?: string | null;
   productMeta?: string;
+  productCompareAt?: string | null;
   labels: { title: string; continueShopping: string; goToCart: string };
   locale?: string;
 }) {
@@ -58,7 +60,12 @@ export function AddedToCartDialog({
           )}
           <div className="min-w-0 flex-1">
             {productName && <p className="truncate text-xs font-bold text-gold-ink sm:text-sm">{productName}</p>}
-            {productMeta && <p className="truncate text-[11px] text-on-surface-variant font-medium sm:text-xs mt-0.5">{productMeta}</p>}
+            {productMeta && (
+              <p className="mt-0.5 flex min-w-0 items-baseline gap-1.5 text-[11px] font-medium text-on-surface-variant sm:text-xs">
+                <span className="truncate">{productMeta}</span>
+                {productCompareAt && <span className="shrink-0 line-through opacity-70">{productCompareAt}</span>}
+              </p>
+            )}
           </div>
         </div>
       )}

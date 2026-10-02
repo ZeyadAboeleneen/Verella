@@ -51,7 +51,12 @@ export default function ProductCard({
       setTrayOpen(false);
       setAdded(true);
       setTimeout(() => setAdded(false), 1600);
-      notifyAddedToCart({ name, image, meta: [variant?.label, variant?.price ?? price].filter(Boolean).join(" · ") });
+      notifyAddedToCart({
+        name,
+        image,
+        meta: [variant?.label, variant?.price ?? price].filter(Boolean).join(" · "),
+        compareAt: variant ? variant.compareAtPrice : compareAtPrice,
+      });
     });
   }
 
@@ -94,17 +99,20 @@ export default function ProductCard({
               {soldOutLabel ?? labels.soldOut}
             </span>
           )}
-          {!soldOut && off && (
-            <span className="rounded-full bg-champagne px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.2em] text-charcoal">
-              −{off}%
-            </span>
-          )}
           {!soldOut && badge && (
             <span className="rounded-full bg-plum px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.2em] text-ivory">
               {badge}
             </span>
           )}
         </div>
+
+        {/* Discount on the opposite corner, so it never stacks under the badge. */}
+        {!soldOut && off && (
+          <span className="pointer-events-none absolute end-3 top-3 rounded-full bg-champagne px-2.5 py-1 text-[10px] font-semibold tracking-[0.05em] text-charcoal">
+            {/* dir only on the text: on the pill itself it would flip "end" to the badge's corner in Arabic. */}
+            <span dir="ltr">−{off}%</span>
+          </span>
+        )}
 
         {/* Quick add: slides up on hover (desktop) or opens from the + (touch). */}
         {!soldOut && (

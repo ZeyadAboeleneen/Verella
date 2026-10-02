@@ -6,6 +6,7 @@ import { db, orders, orderStatusHistory, type OrderStatus } from "@verella/db";
 import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
 import { triggerOrderWhatsAppStatusUpdate } from "@/lib/whatsapp/order-invoice";
+import { syncStockForStatusChange } from "./stock";
 
 const VALID_STATUSES: OrderStatus[] = [
   "pending",
@@ -23,10 +24,16 @@ export async function updateOrderStatusAction(orderId: number, status: OrderStat
 
   if (!VALID_STATUSES.includes(status)) return { error: "Invalid status." };
 
-  await db.transaction(async (tx) => {
+  const changed = await db.transaction(async (tx) => {
+    const [current] = await tx.select({ status: orders.status }).from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (!current) return false;
     await tx.update(orders).set({ status }).where(eq(orders.id, orderId));
     await tx.insert(orderStatusHistory).values({ orderId, status, note: note || null, changedBy: Number(guard.id) });
+    // Cancelling puts the items back in stock; re-opening a cancelled order takes them again.
+    await syncStockForStatusChange(tx, orderId, current.status, status);
+    return true;
   });
+  if (!changed) return { error: "Order not found." };
 
   await logActivity({ actorUserId: Number(guard.id), action: "order.status_changed", entityType: "order", entityId: orderId, changes: { status } });
 

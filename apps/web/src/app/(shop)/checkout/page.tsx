@@ -10,6 +10,8 @@ import { getFulfillmentTypes, getWalletDetails, isGuestCheckoutEnabled } from "@
 import { PAYMENT_METHOD_CODES, type PaymentMethodCode } from "@verella/core";
 import { getCustomerAddresses } from "@/lib/addresses/queries";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { cookies } from "next/headers";
+import { CART_CODE_COOKIE } from "@/lib/cart/discount-code-cookie";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getDict();
@@ -49,6 +51,7 @@ export default async function CheckoutPage() {
     <div className="mx-auto max-w-6xl px-5 py-12 md:px-16 md:py-16">
       <h1 className="mb-8 font-display text-3xl font-medium text-charcoal md:text-4xl">{dict.checkout.title}</h1>
       <CheckoutForm
+        initialDiscountCode={(await cookies()).get(CART_CODE_COOKIE)?.value}
         isLoggedIn={!!user}
         accountContact={accountContact}
         savedAddresses={savedAddresses}

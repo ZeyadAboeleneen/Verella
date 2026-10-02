@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
-import { db, payments, orders, orderStatusHistory, customers, users } from "@verella/db";
+import { db, payments, orders, orderStatusHistory } from "@verella/db";
 import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
-import { sendEmail } from "@/lib/email/mailer";
-import { triggerOrderWhatsAppInvoice } from "@/lib/whatsapp/order-invoice";
+import { triggerOrderWhatsAppInvoice, triggerOrderWhatsAppStatusUpdate } from "@/lib/whatsapp/order-invoice";
+import { syncStockForStatusChange } from "@/lib/orders/stock";
 
 export async function reviewPaymentAction(
   paymentId: number,
@@ -25,62 +25,34 @@ export async function reviewPaymentAction(
       .set({ status: decision, reviewedBy: Number(guard.id), reviewedAt: new Date(), notes: notes || null })
       .where(eq(payments.id, paymentId));
 
-    if (decision === "approved") {
-      const [order] = await tx.select().from(orders).where(eq(orders.id, payment.orderId)).limit(1);
-      if (order && order.status === "pending") {
-        await tx.update(orders).set({ status: "confirmed" }).where(eq(orders.id, order.id));
-        await tx.insert(orderStatusHistory).values({
-          orderId: order.id,
-          status: "confirmed",
-          note: "Payment approved.",
-          changedBy: Number(guard.id),
-        });
-      }
+    // The order follows the payment decision: approved → confirmed,
+    // rejected → cancelled. Only while it's still pending, so an order an
+    // admin already moved along by hand is never overwritten.
+    const [order] = await tx.select().from(orders).where(eq(orders.id, payment.orderId)).limit(1);
+    if (order && order.status === "pending") {
+      const status = decision === "approved" ? "confirmed" : "cancelled";
+      await tx.update(orders).set({ status }).where(eq(orders.id, order.id));
+      await tx.insert(orderStatusHistory).values({
+        orderId: order.id,
+        status,
+        note: decision === "approved" ? "Payment approved." : `Payment rejected.${notes ? ` ${notes}` : ""}`,
+        changedBy: Number(guard.id),
+      });
+      // A rejected payment's items go back on the shelf.
+      await syncStockForStatusChange(tx, order.id, order.status, status);
     }
   });
 
   await logActivity({ actorUserId: Number(guard.id), action: `payment.${decision}`, entityType: "payment", entityId: paymentId });
 
-  // Wallet payment confirmed → automatic WhatsApp invoice (once; after the response).
+  // Customer messages (WhatsApp + email, once each, after the response):
+  //  approved → the order confirmation (invoice);
+  //  rejected → the cancellation message (the order was just cancelled).
   if (decision === "approved") triggerOrderWhatsAppInvoice(payment.orderId);
-
-  const [order] = await db.select().from(orders).where(eq(orders.id, payment.orderId)).limit(1);
-  if (order) {
-    let recipientEmail: string | null = null;
-    let recipientName = "there";
-    if (order.customerId) {
-      const [row] = await db
-        .select({ email: users.email, fullName: users.fullName })
-        .from(customers)
-        .innerJoin(users, eq(users.id, customers.userId))
-        .where(eq(customers.id, order.customerId))
-        .limit(1);
-      if (row) {
-        recipientEmail = row.email;
-        recipientName = row.fullName;
-      }
-    } else if (order.guestContact && typeof order.guestContact === "object") {
-      const contact = order.guestContact as { name?: string; email?: string };
-      recipientEmail = contact.email ?? null;
-      recipientName = contact.name ?? recipientName;
-    }
-
-    if (recipientEmail) {
-      const approved = decision === "approved";
-      const subject = approved ? `Payment confirmed — ${order.orderNumber}` : `Payment issue — ${order.orderNumber}`;
-      const message = approved
-        ? `Great news — we've confirmed your InstaPay payment for order ${order.orderNumber}. Your order is now being prepared.`
-        : `We were unable to confirm your InstaPay payment for order ${order.orderNumber}.${notes ? ` Note: ${notes}` : ""} Please contact us so we can help sort this out.`;
-      await sendEmail({
-        to: recipientEmail,
-        subject,
-        text: `Hello ${recipientName},\n\n${message}`,
-        html: `<p>Hello ${recipientName},</p><p>${message}</p>`,
-      });
-    }
-  }
+  else triggerOrderWhatsAppStatusUpdate(payment.orderId, "cancelled");
 
   revalidatePath("/admin/payments");
+  revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${payment.orderId}`);
   return { success: true };
 }

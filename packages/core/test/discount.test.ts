@@ -126,4 +126,29 @@ describe("applyDiscountsToCart", () => {
   it("handles an empty cart", () => {
     expect(applyDiscountsToCart([], [discount()], null, NOW)).toMatchObject({ subtotalCents: 0, discountTotalCents: 0 });
   });
+
+  it("applies a code to the price after automatic discounts, not the original", () => {
+    const one: CartLineLike[] = [{ productId: 1, categoryId: 1, unitPriceCents: 100000, quantity: 1 }];
+    const auto = discount({ id: 1, value: "20.00" });
+    const code = discount({ id: 2, value: "10.00", code: "TEN" });
+    const r = applyDiscountsToCart(one, [auto], { discount: code }, NOW);
+    // 1000 → 800 after 20% auto; 10% code = 80 (not 100 off the original 1000).
+    expect(r.appliedDiscounts).toEqual([
+      { discountId: 1, amountCents: 20000, isCode: false },
+      { discountId: 2, amountCents: 8000, isCode: true },
+    ]);
+    expect(r.discountTotalCents).toBe(28000);
+  });
+
+  it("only reduces the lines an automatic discount matched before applying a code", () => {
+    const two: CartLineLike[] = [
+      { productId: 1, categoryId: 1, unitPriceCents: 100000, quantity: 1 },
+      { productId: 2, categoryId: 2, unitPriceCents: 50000, quantity: 2 },
+    ];
+    const auto = discount({ id: 1, value: "20.00", scope: "product", productIds: [1] });
+    const code = discount({ id: 2, value: "10.00", code: "TEN" });
+    const r = applyDiscountsToCart(two, [auto], { discount: code }, NOW);
+    // (800 + 1000) × 10% = 180.
+    expect(r.appliedDiscounts.find((a) => a.isCode)?.amountCents).toBe(18000);
+  });
 });

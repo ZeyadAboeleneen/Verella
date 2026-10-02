@@ -4,6 +4,8 @@ export interface AddedToCartPayload {
   name?: string;
   image?: string | null;
   meta?: string;
+  /** Pre-discount price, shown crossed out when the item was added at a discount. */
+  compareAt?: string | null;
 }
 
 type Listener = (payload: AddedToCartPayload) => void;

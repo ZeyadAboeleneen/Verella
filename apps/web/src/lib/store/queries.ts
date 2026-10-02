@@ -99,7 +99,7 @@ function pickTranslation<T extends { locale: string }>(rows: T[], locale: Locale
  * this is display only, so there's no need for the cart's proportional-split
  * stacking logic.
  */
-function applyAutoDiscount(priceCents: number, categoryIds: number[], productId: number, autoDiscounts: DiscountLike[], now = new Date()): number {
+export function applyAutoDiscount(priceCents: number, categoryIds: number[], productId: number, autoDiscounts: DiscountLike[], now = new Date()): number {
   let bestDiscountCents = 0;
   for (const d of autoDiscounts) {
     if (!isDiscountWindowOpen(d, now)) continue;

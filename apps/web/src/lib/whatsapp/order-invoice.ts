@@ -261,10 +261,12 @@ export async function sendOrderWhatsAppStatusUpdate(orderId: number, status: Ord
     // A quick follow-up change (e.g. preparing → out for delivery) wins; don't send a stale update.
     if (ctx.order.status !== status) return { status: "skipped", reason: "status_changed" };
     const invoice = ctx.invoice.whatsapp;
-    if (invoice?.status !== "sent" || !invoice.recipient) return { status: "skipped", reason: "invoice_not_sent" };
-
-    // Same recipient the invoice went to — updates always reach the same chat.
-    const to = invoice.recipient;
+    // Updates go to the same chat as the invoice. A cancellation is the one
+    // update that also goes out when there never was an invoice (e.g. a rejected
+    // InstaPay / Vodafone Cash transfer) — straight to the order's number.
+    const sentTo = invoice?.status === "sent" ? invoice.recipient : null;
+    const to = sentTo ?? (status === "cancelled" ? toWhatsAppId(ctx.phone) : null);
+    if (!to) return { status: "skipped", reason: status === "cancelled" ? "invalid_phone" : "invoice_not_sent" };
     return deliverOnce(orderId, "whatsapp", kind, to, state, async () => sendText(to, buildOrderStatusMessage(await statusData(ctx, status))!));
   });
 }
@@ -325,9 +327,10 @@ export async function sendOrderEmailStatusUpdate(orderId: number, status: OrderS
     if (!ctx) return { status: "skipped", reason: "order_not_found" };
     if (ctx.order.status !== status) return { status: "skipped", reason: "status_changed" };
     const invoice = ctx.invoice.email;
-    if (invoice?.status !== "sent" || !invoice.recipient) return { status: "skipped", reason: "invoice_not_sent" };
-
-    const to = invoice.recipient;
+    // Same exception as WhatsApp: a cancellation goes out even without a confirmation email.
+    const sentTo = invoice?.status === "sent" ? invoice.recipient : null;
+    const to = sentTo ?? (status === "cancelled" ? ctx.email : null);
+    if (!to) return { status: "skipped", reason: status === "cancelled" ? "no_email" : "invoice_not_sent" };
     return deliverOnce(orderId, "email", kind, to, state, async () => {
       const data = await statusData(ctx, status);
       return emailMessage(to, renderOrderStatusEmail(data)!, buildOrderStatusMessage(data)!);

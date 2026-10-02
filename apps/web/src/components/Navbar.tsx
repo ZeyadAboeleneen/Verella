@@ -140,6 +140,7 @@ export default function Navbar({
       productName={addedToCart?.name}
       productImage={addedToCart?.image}
       productMeta={addedToCart?.meta}
+      productCompareAt={addedToCart?.compareAt}
       locale={locale}
       labels={{ title: dict.product.addedToCartTitle, continueShopping: dict.product.continueShopping, goToCart: dict.product.goToCart }}
     />

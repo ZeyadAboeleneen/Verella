@@ -4,8 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "@/components/LocaleLink";
 import Image from "next/image";
-import { ArrowRight, Minus, Plus, X } from "lucide-react";
+import { ArrowRight, Loader2, Minus, Plus, Tag, X } from "lucide-react";
 import { updateCartItemQuantityAction, removeCartItemAction } from "@/lib/cart/actions";
+import { applyCartDiscountCodeAction, removeCartDiscountCodeAction } from "@/lib/cart/discount-code";
 import { formatMoney } from "@verella/core";
 import type { CartLineView } from "@/lib/cart/queries";
 import type { Dictionary, Locale } from "@/lib/i18n";
@@ -14,11 +15,24 @@ import { VMark } from "@/components/brand/Logo";
 export function CartView({
   lines,
   subtotalCents,
+  discountedUnits = {},
+  discountTotalCents = 0,
+  appliedCode = null,
+  codeDiscountCents = 0,
+  codeError,
   dict,
   locale,
 }: {
   lines: CartLineView[];
   subtotalCents: number;
+  /** line id → unit price after automatic discounts. */
+  discountedUnits?: Record<number, number>;
+  /** Total automatic discount, as checkout computes it. */
+  discountTotalCents?: number;
+  /** Code applied in the cart (remembered for checkout), its extra saving, or why it doesn't apply. */
+  appliedCode?: string | null;
+  codeDiscountCents?: number;
+  codeError?: string;
   dict: Dictionary;
   locale: Locale;
 }) {
@@ -27,6 +41,26 @@ export function CartView({
   const [busyLine, setBusyLine] = useState<number | null>(null);
   const [error, setError] = useState<{ lineId: number; message: string } | null>(null);
   const money = (cents: number) => formatMoney(cents, "EGP", locale);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeBusy, startCode] = useTransition();
+  const [codeMsg, setCodeMsg] = useState<string | null>(null);
+  const totalAfter = subtotalCents - discountTotalCents - codeDiscountCents;
+
+  function applyCode() {
+    setCodeMsg(null);
+    startCode(async () => {
+      const res = await applyCartDiscountCodeAction(codeInput);
+      if ("error" in res) setCodeMsg(res.error);
+      else setCodeInput("");
+      router.refresh();
+    });
+  }
+  function removeCode() {
+    startCode(async () => {
+      await removeCartDiscountCodeAction();
+      router.refresh();
+    });
+  }
 
   function run(lineId: number, action: () => Promise<{ error: string } | { success: true }>) {
     setError(null);
@@ -85,7 +119,17 @@ export function CartView({
                     {line.variantLabel && (
                       <p className="mt-1 text-xs uppercase tracking-[0.15em] text-on-surface-variant">{line.variantLabel}</p>
                     )}
-                    <p className="mt-1 text-sm text-on-surface-variant">{money(line.unitPriceCents)}</p>
+                    {(() => {
+                      const unit = discountedUnits[line.id] ?? line.unitPriceCents;
+                      return unit < line.unitPriceCents ? (
+                        <p className="mt-1 flex items-baseline gap-2 text-sm">
+                          <span className="font-medium text-charcoal">{money(unit)}</span>
+                          <span className="text-xs text-on-surface-variant line-through">{money(line.unitPriceCents)}</span>
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm text-on-surface-variant">{money(line.unitPriceCents)}</p>
+                      );
+                    })()}
                   </div>
                   <button
                     type="button"
@@ -120,7 +164,7 @@ export function CartView({
                       <Plus size={13} />
                     </button>
                   </div>
-                  <p className="whitespace-nowrap font-medium text-charcoal">{money(line.lineTotalCents)}</p>
+                  <p className="whitespace-nowrap font-medium text-charcoal">{money((discountedUnits[line.id] ?? line.unitPriceCents) * line.quantity)}</p>
                 </div>
                 {error?.lineId === line.id && <p className="mt-2 text-xs text-error">{error.message}</p>}
               </div>
@@ -134,6 +178,67 @@ export function CartView({
         <div className="flex items-center justify-between text-sm">
           <span className="text-on-surface-variant">{dict.cart.subtotal}</span>
           <span className="font-medium text-charcoal">{money(subtotalCents)}</span>
+        </div>
+        {discountTotalCents > 0 && (
+          <div className="mt-2 flex items-center justify-between text-sm">
+            <span className="text-on-surface-variant">{dict.checkout.discount}</span>
+            <span className="font-medium text-gold-ink">−{money(discountTotalCents)}</span>
+          </div>
+        )}
+        {appliedCode && codeDiscountCents > 0 && (
+          <div className="mt-2 flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-on-surface-variant">
+              <Tag size={12} className="text-gold-ink" aria-hidden="true" />
+              <span dir="ltr" className="font-semibold tracking-wide text-charcoal">{appliedCode}</span>
+            </span>
+            <span className="font-medium text-gold-ink">−{money(codeDiscountCents)}</span>
+          </div>
+        )}
+        {(discountTotalCents > 0 || codeDiscountCents > 0) && (
+          <div className="mt-3 flex items-center justify-between border-t border-[rgba(20,20,20,0.1)] pt-3 text-sm">
+            <span className="font-medium text-charcoal">{dict.checkout.total}</span>
+            <span className="text-base font-semibold text-charcoal">{money(totalAfter)}</span>
+          </div>
+        )}
+
+        {/* Discount code — applied here, carried over to checkout. */}
+        <div className="mt-5 border-t border-[rgba(20,20,20,0.1)] pt-4">
+          {appliedCode ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-lowest px-3 py-2.5 text-xs">
+              <span className="flex min-w-0 items-center gap-2">
+                <Tag size={13} className="shrink-0 text-gold-ink" aria-hidden="true" />
+                <span dir="ltr" className="truncate font-semibold tracking-wide text-charcoal">{appliedCode}</span>
+              </span>
+              <button type="button" onClick={removeCode} disabled={codeBusy} aria-label={dict.cart.remove} className="text-on-surface-variant hover:text-charcoal disabled:opacity-40">
+                {codeBusy ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+              </button>
+            </div>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                applyCode();
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                placeholder={dict.checkout.codePlaceholder}
+                aria-label={dict.checkout.discountCode}
+                dir="ltr"
+                className="h-10 min-w-0 flex-1 rounded-xl border border-outline-variant bg-surface-container-lowest px-3 text-sm uppercase text-charcoal outline-none focus:border-charcoal"
+              />
+              <button
+                type="submit"
+                disabled={codeBusy || !codeInput.trim()}
+                className="flex h-10 items-center rounded-xl border border-charcoal px-4 text-xs font-medium uppercase tracking-[0.15em] text-charcoal transition-colors hover:bg-plum hover:text-ivory disabled:opacity-40"
+              >
+                {codeBusy ? <Loader2 size={14} className="animate-spin" /> : dict.checkout.apply}
+              </button>
+            </form>
+          )}
+          {(codeMsg || codeError) && <p className="mt-2 text-xs text-error">{codeMsg ?? codeError}</p>}
         </div>
         <p className="mt-3 text-xs leading-relaxed text-on-surface-variant">{dict.cart.shippingNote}</p>
         <Link

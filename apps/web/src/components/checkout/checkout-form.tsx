@@ -64,6 +64,7 @@ export function CheckoutForm({
   locale,
   cartLines,
   initialSubtotalCents,
+  initialDiscountCode,
 }: {
   isLoggedIn: boolean;
   /** Logged-in account's contact details, to prefill the pickup contact without a re-type. */
@@ -77,6 +78,8 @@ export function CheckoutForm({
   locale: Locale;
   cartLines: CartLineView[];
   initialSubtotalCents: number;
+  /** Code already applied in the cart. */
+  initialDiscountCode?: string;
 }) {
   const t = dict.checkout;
   const money = (cents: number) => formatMoney(cents, "EGP", locale);
@@ -92,8 +95,8 @@ export function CheckoutForm({
   const [previewPending, setPreviewPending] = useState(false);
   const [applyingDiscount, setApplyingDiscount] = useState(false);
   // Only an explicit Apply commits a code to pricing — not every keystroke.
-  const [appliedCode, setAppliedCode] = useState<string | undefined>(undefined);
-  const [codeInput, setCodeInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<string | undefined>(initialDiscountCode || undefined);
+  const [codeInput, setCodeInput] = useState(initialDiscountCode ?? "");
   // Guests on delivery give name/phone once, on the address; email is extra.
   const [guestEmail, setGuestEmail] = useState("");
   const defaultSavedAddress = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];

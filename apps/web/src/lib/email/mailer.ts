@@ -67,7 +67,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailParams): P
   // Antivirus "mail shields" (e.g. Avast) re-sign SMTP traffic with their own
   // root certificate. SMTP_EXTRA_CA_FILE lets a dev machine trust that root on
   // top of the normal ones — verification stays on. Unset on servers.
-  const extraCa = process.env.SMTP_EXTRA_CA_FILE?.trim();
+  const extraCa = process.env.EXTRA_CA_FILE?.trim() || process.env.SMTP_EXTRA_CA_FILE?.trim();
   const tls = extraCa
     ? { ca: [...(await import("node:tls")).rootCertificates, (await import("node:fs")).readFileSync(extraCa, "utf8")] }
     : undefined;

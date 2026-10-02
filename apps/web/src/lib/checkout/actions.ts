@@ -48,6 +48,8 @@ import { governorateLabel } from "@verella/core";
 import { siteUrl } from "@/lib/seo";
 import { renderAdminNewOrderEmail } from "@/lib/email/order-templates";
 import { getLocale } from "@/lib/i18n";
+import { cookies } from "next/headers";
+import { CART_CODE_COOKIE } from "@/lib/cart/discount-code-cookie";
 
 /** "Amber Oud — 100ml" when the line is a variant, otherwise just the product name. */
 const lineTitle = (l: { name: string; variantLabel: string | null }) => (l.variantLabel ? `${l.name} — ${l.variantLabel}` : l.name);
@@ -461,6 +463,8 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
   }
 
   if (!userId) await clearGuestCartCookie();
+  // The code applied in the cart has been used for this order — don't carry it to the next one.
+  (await cookies()).delete(CART_CODE_COOKIE);
 
   // After the response, once each: the customer's confirmation on WhatsApp
   // and email (cash on delivery now; InstaPay / Vodafone Cash after payment

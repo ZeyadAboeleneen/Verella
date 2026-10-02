@@ -113,6 +113,25 @@ export interface ApplyDiscountsResult {
 }
 
 /**
+ * Cart lines with the given (automatic) discounts taken off: each discount's
+ * amount is spread over the lines it matches, in proportion to their totals.
+ * Unit prices may become fractional cents — fine for computing a further
+ * percentage/fixed discount, which is clamped to whole cents afterwards.
+ */
+function linesAfterDiscounts(lines: CartLineLike[], applied: AppliedDiscount[], discounts: DiscountLike[]): CartLineLike[] {
+  const totals = lines.map((l) => l.unitPriceCents * l.quantity);
+  for (const a of applied) {
+    const d = discounts.find((x) => x.id === a.discountId);
+    if (!d) continue;
+    const idx = lines.map((l, i) => (lineMatchesDiscount(d, l) ? i : -1)).filter((i) => i >= 0);
+    const base = idx.reduce((s, i) => s + totals[i], 0);
+    if (base <= 0) continue;
+    for (const i of idx) totals[i] = Math.max(0, totals[i] - (a.amountCents * totals[i]) / base);
+  }
+  return lines.map((l, i) => ({ ...l, unitPriceCents: l.quantity > 0 ? totals[i] / l.quantity : 0 }));
+}
+
+/**
  * Automatic (codeless) discounts always apply if their window is open and they
  * match at least one line. A single customer-entered code, if present, is
  * validated and stacked on top. Phase 1 keeps this simple by design — no
@@ -137,14 +156,19 @@ export function applyDiscountsToCart(
 
   let codeError: string | undefined;
   if (codeDiscount) {
+    // A code applies to what the customer actually pays for each item — the
+    // price after automatic discounts — not the original price. (A product's
+    // compare-at price never matters here: its real price is already the lower one.)
+    const afterAuto = linesAfterDiscounts(lines, applied, autoDiscounts);
+    const afterAutoSubtotal = addCents(...afterAuto.map((l) => l.unitPriceCents * l.quantity));
     const validation = validateDiscount(codeDiscount.discount, {
       now,
-      orderSubtotalCents: subtotalCents,
+      orderSubtotalCents: afterAutoSubtotal,
       userRedemptionCount: codeDiscount.userRedemptionCount,
-      lines,
+      lines: afterAuto,
     });
     if (validation.valid) {
-      const amount = computeDiscountAmountCents(codeDiscount.discount, lines);
+      const amount = computeDiscountAmountCents(codeDiscount.discount, afterAuto);
       if (amount > 0) applied.push({ discountId: codeDiscount.discount.id, amountCents: amount, isCode: true });
     } else {
       codeError = validation.reason;
