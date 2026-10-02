@@ -81,9 +81,10 @@ the root `.env` to seed different credentials.
 
 ### Environment files
 
-- `.env` (repo root) — used by `packages/db` (migrate/seed).
-- `apps/web/.env.local` — used by Next.js at runtime. **Next only reads env files from
-  `apps/web/`, not the repo root.**
+- `.env` (repo root) — the only env file. Used by `packages/db` (migrate/seed), the
+  WhatsApp gateway, and the website: `apps/web/next.config.ts` loads it at startup
+  (Next itself only looks in `apps/web/`). `apps/web/.env.local` is no longer used — don’t
+  recreate it, or its values (even empty ones) would take priority.
 
 Both now point at the local MySQL. Cloudinary keys are intentionally empty (see §6).
 

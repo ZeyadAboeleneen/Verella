@@ -59,7 +59,7 @@ export default async function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdHtml(organizationJsonLd())} />
       <HeroShowcase
-        slides={categories.map((c) => ({ slug: c.slug, name: c.name, line: lines[c.slug] ?? c.name, image: c.image }))}
+        slides={categories.filter((c) => c.showInHero).map((c) => ({ slug: c.slug, name: c.name, line: lines[c.slug] ?? c.name, image: c.image }))}
         labels={{ kicker: h.hero.kicker, shopNow: h.hero.shopNow, scroll: h.hero.scroll }}
       />
 

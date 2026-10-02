@@ -1,0 +1,1 @@
+ALTER TABLE `store_categories` ADD `show_in_hero` boolean DEFAULT true NOT NULL;

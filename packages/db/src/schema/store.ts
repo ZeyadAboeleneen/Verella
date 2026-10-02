@@ -19,6 +19,8 @@ export const storeCategories = mysqlTable("store_categories", {
   imageMediaId: fk("image_media_id").references(() => media.id),
   sortOrder: int("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
+  /** Appears as a slide in the home-page hero (still listed everywhere else when off). */
+  showInHero: boolean("show_in_hero").notNull().default(true),
   ...timestamps,
 });
 

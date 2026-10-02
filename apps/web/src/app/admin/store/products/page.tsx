@@ -1,5 +1,5 @@
 import Link from "@/components/LocaleLink";
-import { and, asc, eq, count, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, count, inArray, isNull, like, or } from "drizzle-orm";
 import { Plus, Pencil } from "lucide-react";
 import { db, storeProducts, storeProductTranslations, storeProductVariants, storeCategories } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";
@@ -9,13 +9,32 @@ import { SectionTabs } from "@/components/admin/section-tabs";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { Pagination, PAGE_SIZE } from "@/components/admin/pagination";
 import { deleteStoreProductAction } from "@/lib/store/actions";
+import { AdminSearch } from "@/components/admin/admin-search";
 
 export default async function AdminStoreProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, q: rawQ } = await searchParams;
+  const q = rawQ?.trim().slice(0, 100) ?? "";
+  // Name (English or Arabic), brand, slug or SKU.
+  // Escape LIKE wildcards so "50%" searches for the text, not "anything".
+  const pattern = `%${q.replace(/[%_\\]/g, (ch) => `\\${ch}`)}%`;
+  const where = q
+    ? and(
+        isNull(storeProducts.deletedAt),
+        or(
+          like(storeProducts.brand, pattern),
+          like(storeProducts.slug, pattern),
+          like(storeProducts.sku, pattern),
+          inArray(
+            storeProducts.id,
+            db.select({ id: storeProductTranslations.productId }).from(storeProductTranslations).where(like(storeProductTranslations.name, pattern)),
+          ),
+        ),
+      )
+    : isNull(storeProducts.deletedAt);
   const page = Math.max(1, Number(pageParam) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -36,11 +55,11 @@ export default async function AdminStoreProductsPage({
       .from(storeProducts)
       .leftJoin(storeProductTranslations, and(eq(storeProductTranslations.productId, storeProducts.id), eq(storeProductTranslations.locale, "en")))
       .leftJoin(storeCategories, eq(storeCategories.id, storeProducts.categoryId))
-      .where(isNull(storeProducts.deletedAt))
+      .where(where)
       .orderBy(asc(storeProducts.categoryId), asc(storeProducts.sortOrder))
       .limit(PAGE_SIZE)
       .offset(offset),
-    db.select({ total: count() }).from(storeProducts).where(isNull(storeProducts.deletedAt)),
+    db.select({ total: count() }).from(storeProducts).where(where),
   ]);
 
   const variantRows = rows.length
@@ -73,6 +92,14 @@ export default async function AdminStoreProductsPage({
         ]}
       />
 
+      <div className="mb-4 mt-6">
+        <AdminSearch placeholder="Search products by name, brand, slug or SKU…" />
+        {q && (
+          <p className="mt-2 text-xs text-on-surface-variant">
+            {total} {total === 1 ? "product matches" : "products match"} “{q}”
+          </p>
+        )}
+      </div>
       <Table>
         <Thead>
           <tr>
@@ -127,10 +154,10 @@ export default async function AdminStoreProductsPage({
             </Tr>
             );
           })}
-          {rows.length === 0 && <EmptyRow colSpan={8}>No products yet.</EmptyRow>}
+          {rows.length === 0 && <EmptyRow colSpan={8}>{q ? `No products match “${q}”.` : "No products yet."}</EmptyRow>}
         </tbody>
       </Table>
-      <Pagination basePath="/admin/store/products" page={page} total={total} />
+      <Pagination basePath="/admin/store/products" params={{ q: q || undefined }} page={page} total={total} />
     </div>
   );
 }

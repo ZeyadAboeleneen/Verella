@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
+import { existsSync } from "node:fs";
 import path from "node:path";
+
+// One env file for the whole monorepo: the root .env (also used by the DB
+// scripts and the WhatsApp gateway). Next.js only looks inside apps/web, so
+// load it here, before anything reads process.env. Values already set in the
+// real environment (e.g. on the server) win — loadEnvFile never overrides them.
+const rootEnv = path.join(__dirname, "../../.env");
+if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 const nextConfig: NextConfig = {
   output: "standalone",

@@ -10,6 +10,22 @@ export const slugSchema = z
   .max(150)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Lowercase letters, numbers and hyphens only");
 
+/** Optional slug: empty means "make one from the English name" (create) or "keep the current one" (edit). */
+export const optionalSlugSchema = z.union([z.literal(""), slugSchema]).optional().default("");
+
+/** "Amber Oud 100ml" → "amber-oud-100ml" (ASCII only; empty if nothing usable). */
+export function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 140);
+}
+
 /** Form-friendly: accepts a number or numeric string, always outputs a 2dp decimal string for the DB. */
 export const decimalString = z.coerce.number().min(0).transform((n) => n.toFixed(2));
 

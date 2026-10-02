@@ -42,6 +42,8 @@ export interface StoreCategoryView {
   name: string;
   description: string | null;
   image: string | null;
+  /** Appears as a slide in the home-page hero. */
+  showInHero: boolean;
 }
 
 export interface StoreVariantView {
@@ -260,6 +262,7 @@ async function getStoreCategoriesImpl(locale: Locale = "en"): Promise<StoreCateg
       name: t?.name ?? cat.slug,
       description: t?.description ?? null,
       image: images.find((m) => m.id === cat.imageMediaId)?.url ?? null,
+      showInHero: cat.showInHero,
     };
   });
 }

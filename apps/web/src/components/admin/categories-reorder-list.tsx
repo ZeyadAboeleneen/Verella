@@ -2,9 +2,9 @@
 
 import Link from "@/components/LocaleLink";
 import NextImage from "next/image";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Pencil } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Search, X } from "lucide-react";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { toast } from "@/components/ui/toast";
 import type { ActionResult } from "@/lib/auth/rbac";
@@ -14,6 +14,8 @@ export interface CategoryListItem {
   name: string;
   imageUrl: string | null;
   isActive: boolean;
+  /** Extra text the search box matches (Arabic name, slug…). */
+  searchText?: string;
 }
 
 /** Numbered, reorderable category list — mirrors the hero-images/banners manager UX. */
@@ -32,6 +34,10 @@ export function CategoriesReorderList({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  // While searching, reordering is off — moving within a filtered list would scramble the real order.
+  const shown = q ? items.filter((c) => `${c.name} ${c.searchText ?? ""}`.toLowerCase().includes(q)) : items;
 
   function move(index: number, delta: -1 | 1) {
     const target = index + delta;
@@ -63,12 +69,34 @@ export function CategoriesReorderList({
 
   return (
     <div className="space-y-3">
-      {items.map((item, i) => (
+      <div className="relative">
+        <Search size={15} className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search categories by name or slug…"
+          aria-label="Search categories"
+          className="h-11 w-full rounded-xl border border-outline-variant bg-surface-container-lowest pe-10 ps-10 text-sm text-on-surface outline-none focus:border-on-surface"
+        />
+        {query && (
+          <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className="absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface">
+            <X size={15} />
+          </button>
+        )}
+      </div>
+      {q && (
+        <p className="text-xs text-on-surface-variant">
+          {shown.length} of {items.length} categories · clear the search to reorder
+        </p>
+      )}
+      {shown.length === 0 && <p className="rounded-xl border border-dashed border-outline-variant p-6 text-center text-sm text-on-surface-variant">No categories match “{query}”.</p>}
+      {shown.map((item, i) => (
         <div
           key={item.id}
           className="flex items-center gap-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-3"
         >
-          <span className="w-6 shrink-0 text-center text-sm font-semibold text-on-surface-variant">{i + 1}</span>
+          <span className="w-6 shrink-0 text-center text-sm font-semibold text-on-surface-variant">{items.indexOf(item) + 1}</span>
           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-container-high">
             {item.imageUrl && <NextImage src={item.imageUrl} alt="" fill className="object-cover" />}
           </div>
@@ -77,6 +105,7 @@ export function CategoriesReorderList({
             <p className="text-xs text-on-surface-variant">{item.isActive ? "Visible" : "Hidden"}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
+            {!q && (<>
             <button
               type="button"
               onClick={() => move(i, -1)}
@@ -95,6 +124,7 @@ export function CategoriesReorderList({
             >
               <ArrowDown size={14} />
             </button>
+            </>)}
             <label className="ms-1 flex items-center gap-1 text-xs">
               <input
                 type="checkbox"

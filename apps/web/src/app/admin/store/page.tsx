@@ -20,6 +20,12 @@ export default async function AdminStoreCategoriesPage() {
     .leftJoin(storeCategoryTranslations, and(eq(storeCategoryTranslations.categoryId, storeCategories.id), eq(storeCategoryTranslations.locale, "en")))
     .leftJoin(media, eq(media.id, storeCategories.imageMediaId))
     .orderBy(asc(storeCategories.sortOrder));
+  // Arabic names, so the search box finds categories by either language.
+  const arNames = await db
+    .select({ id: storeCategoryTranslations.categoryId, name: storeCategoryTranslations.name })
+    .from(storeCategoryTranslations)
+    .where(eq(storeCategoryTranslations.locale, "ar"));
+  const arById = new Map(arNames.map((r) => [r.id, r.name]));
 
   return (
     <div>
@@ -41,7 +47,7 @@ export default async function AdminStoreCategoriesPage() {
 
       <div className="mt-6">
         <CategoriesReorderList
-          items={rows.map((c) => ({ id: c.id, name: c.name ?? c.slug, imageUrl: c.imageUrl, isActive: c.isActive }))}
+          items={rows.map((c) => ({ id: c.id, name: c.name ?? c.slug, imageUrl: c.imageUrl, isActive: c.isActive, searchText: `${arById.get(c.id) ?? ""} ${c.slug}` }))}
           reorderAction={reorderStoreCategoriesAction}
           toggleActiveAction={toggleStoreCategoryActiveAction}
           deleteAction={deleteStoreCategoryAction}

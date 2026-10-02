@@ -50,6 +50,13 @@
       "when": 1790873492334,
       "tag": "0006_offers",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1790905691251,
+      "tag": "0007_category_show_in_hero",
+      "breakpoints": true
     }
   ]
 }

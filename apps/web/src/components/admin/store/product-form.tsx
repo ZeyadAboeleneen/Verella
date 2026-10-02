@@ -173,9 +173,13 @@ export function StoreProductForm({
             </select>
           </div>
           <div>
-            <Label htmlFor="slug">URL slug</Label>
-            <Input id="slug" placeholder="amber-oud" {...register("slug", { onChange: () => setSlugTouched(true) })} />
-            {errors.slug && <p className="mt-1 text-xs text-error">{errors.slug.message}</p>}
+            <Label htmlFor="slug">URL slug (optional)</Label>
+            <Input id="slug" placeholder="made from the English name" {...register("slug", { onChange: () => setSlugTouched(true) })} />
+            {errors.slug ? (
+              <p className="mt-1 text-xs text-error">{errors.slug.message}</p>
+            ) : (
+              <p className="mt-1 text-xs text-on-surface-variant">Leave empty to make it from the English name.</p>
+            )}
           </div>
         </div>
 

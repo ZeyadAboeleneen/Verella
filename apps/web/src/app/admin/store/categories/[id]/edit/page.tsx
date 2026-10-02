@@ -29,6 +29,7 @@ export default async function EditStoreCategoryPage({ params }: { params: Promis
           slug: category.slug,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
+          showInHero: category.showInHero,
           name: { en: en?.name ?? "", ar: ar?.name ?? "" },
           description: { en: en?.description ?? "", ar: ar?.description ?? "" },
           image,

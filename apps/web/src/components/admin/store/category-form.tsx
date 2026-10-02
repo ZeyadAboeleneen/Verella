@@ -34,6 +34,7 @@ export function StoreCategoryForm({
       slug: defaultValues?.slug ?? "",
       sortOrder: defaultValues?.sortOrder ?? 0,
       isActive: defaultValues?.isActive ?? true,
+      showInHero: defaultValues?.showInHero ?? true,
       name: defaultValues?.name ?? { en: "", ar: "" },
       description: defaultValues?.description ?? { en: "", ar: "" },
     },
@@ -89,9 +90,13 @@ export function StoreCategoryForm({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="slug">Slug</Label>
-              <Input id="slug" placeholder="beans" {...register("slug")} />
-              {errors.slug && <p className="mt-1 text-xs text-error">{errors.slug.message}</p>}
+              <Label htmlFor="slug">Slug (optional)</Label>
+              <Input id="slug" placeholder="made from the English name" {...register("slug")} />
+              {errors.slug ? (
+                <p className="mt-1 text-xs text-error">{errors.slug.message}</p>
+              ) : (
+                <p className="mt-1 text-xs text-on-surface-variant">Leave empty to make it from the English name.</p>
+              )}
             </div>
             <div>
               <Label htmlFor="sortOrder">Display order</Label>
@@ -102,6 +107,16 @@ export function StoreCategoryForm({
           <label className="flex items-center gap-2 text-sm text-on-surface">
             <input type="checkbox" {...register("isActive")} className="h-4 w-4 rounded border-outline-variant" />
             Active (visible on the public store)
+          </label>
+
+          <label className="flex items-start gap-2 text-sm text-on-surface">
+            <input type="checkbox" {...register("showInHero")} className="mt-0.5 h-4 w-4 rounded border-outline-variant" />
+            <span>
+              Show in the home page hero
+              <span className="block text-xs text-on-surface-variant">
+                Turn off to keep it out of the big slides at the top of the home page. It still shows in the store, menu and category list.
+              </span>
+            </span>
           </label>
 
           <div className="flex gap-3">

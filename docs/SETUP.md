@@ -11,9 +11,8 @@ Requirements: Node 20+, pnpm 10, MySQL 8.
 
 ```bash
 pnpm install
-cp .env.example .env                  # used by pnpm db:* scripts
-cp .env.example apps/web/.env.local   # used by Next.js (it only reads its own folder)
-# In both: DATABASE_URL=mysql://root@127.0.0.1:3306/verella
+cp .env.example .env   # the one env file: website (next.config.ts loads it), DB scripts, WhatsApp gateway
+# Set: DATABASE_URL=mysql://root@127.0.0.1:3306/verella
 #          AUTH_URL=http://localhost:3000 and a fresh AUTH_SECRET.
 
 pnpm db:migrate

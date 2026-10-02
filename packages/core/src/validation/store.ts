@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { slugSchema, decimalString, nullableDecimalString, requiredLocalizedText, optionalLocalizedText } from "./shared";
+import { optionalSlugSchema, decimalString, nullableDecimalString, requiredLocalizedText, optionalLocalizedText } from "./shared";
 
 export const storeCategorySchema = z.object({
-  slug: slugSchema,
+  slug: optionalSlugSchema,
   imageMediaId: z.number().int().positive().nullable().optional(),
   sortOrder: z.coerce.number().int().default(0),
   isActive: z.boolean().default(true),
+  showInHero: z.boolean().default(true),
   name: requiredLocalizedText(191),
   description: optionalLocalizedText(500),
 });
@@ -26,7 +27,7 @@ export type StoreVariantInput = z.infer<typeof storeVariantSchema>;
 
 export const storeProductSchema = z.object({
   categoryId: z.number().int().positive(),
-  slug: slugSchema,
+  slug: optionalSlugSchema,
   sku: z.string().max(64).optional(),
   brand: z.string().trim().max(120).optional(),
   variantAxis: z.enum(["volume", "size", "color"]).default("volume"),

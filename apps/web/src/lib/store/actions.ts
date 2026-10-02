@@ -16,6 +16,7 @@ import {
   storeProductVariantTranslations,
 } from "@verella/db";
 import {
+  slugify,
   storeCategorySchema,
   storeProductSchema,
   type StoreCategoryInput,
@@ -24,6 +25,19 @@ import {
 import { guardPermission, type ActionResult } from "@/lib/auth/rbac";
 import { logActivity } from "@/lib/activity/log";
 import { getSiteCurrency } from "@/lib/settings/queries";
+
+/**
+ * A free slug made from the English name ("Amber Oud" → "amber-oud"), with
+ * "-2", "-3"… appended if taken. Used when the admin leaves the slug empty.
+ */
+async function uniqueSlug(table: typeof storeCategories | typeof storeProducts, name: string, fallback: string): Promise<string> {
+  const base = slugify(name) || fallback;
+  for (let n = 1; ; n++) {
+    const candidate = n === 1 ? base : `${base}-${n}`;
+    const [taken] = await db.select({ id: table.id }).from(table).where(eq(table.slug, candidate)).limit(1);
+    if (!taken) return candidate;
+  }
+}
 
 function revalidateStore() {
   updateTag(CATALOG_CACHE_TAG);
@@ -45,13 +59,16 @@ export async function createStoreCategoryAction(input: StoreCategoryInput): Prom
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
 
-  const [existing] = await db.select({ id: storeCategories.id }).from(storeCategories).where(eq(storeCategories.slug, data.slug)).limit(1);
-  if (existing) return { error: "A category with this slug already exists." };
+  if (data.slug) {
+    const [existing] = await db.select({ id: storeCategories.id }).from(storeCategories).where(eq(storeCategories.slug, data.slug)).limit(1);
+    if (existing) return { error: "A category with this slug already exists." };
+  }
+  const slug = data.slug || (await uniqueSlug(storeCategories, data.name.en, "category"));
 
   const id = await db.transaction(async (tx) => {
     const [row] = await tx
       .insert(storeCategories)
-      .values({ slug: data.slug, imageMediaId: data.imageMediaId ?? null, sortOrder: data.sortOrder, isActive: data.isActive })
+      .values({ slug, imageMediaId: data.imageMediaId ?? null, sortOrder: data.sortOrder, isActive: data.isActive, showInHero: data.showInHero })
       .$returningId();
     await tx.insert(storeCategoryTranslations).values([
       { categoryId: row.id, locale: "en", name: data.name.en, description: data.description?.en || null },
@@ -76,7 +93,7 @@ export async function updateStoreCategoryAction(id: number, input: StoreCategory
   await db.transaction(async (tx) => {
     await tx
       .update(storeCategories)
-      .set({ slug: data.slug, imageMediaId: data.imageMediaId ?? null, sortOrder: data.sortOrder, isActive: data.isActive })
+      .set({ ...(data.slug && { slug: data.slug }), imageMediaId: data.imageMediaId ?? null, sortOrder: data.sortOrder, isActive: data.isActive, showInHero: data.showInHero })
       .where(eq(storeCategories.id, id));
 
     await tx.delete(storeCategoryTranslations).where(eq(storeCategoryTranslations.categoryId, id));
@@ -212,8 +229,11 @@ export async function createStoreProductAction(input: StoreProductInput): Promis
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
 
-  const [existing] = await db.select({ id: storeProducts.id }).from(storeProducts).where(eq(storeProducts.slug, data.slug)).limit(1);
-  if (existing) return { error: "A product with this slug already exists." };
+  if (data.slug) {
+    const [existing] = await db.select({ id: storeProducts.id }).from(storeProducts).where(eq(storeProducts.slug, data.slug)).limit(1);
+    if (existing) return { error: "A product with this slug already exists." };
+  }
+  const slug = data.slug || (await uniqueSlug(storeProducts, data.name.en, "product"));
   const skuError = await findSkuClash(data);
   if (skuError) return { error: skuError };
 
@@ -224,7 +244,7 @@ export async function createStoreProductAction(input: StoreProductInput): Promis
       .insert(storeProducts)
       .values({
         categoryId: data.categoryId,
-        slug: data.slug,
+        slug,
         sku: data.sku || null,
         brand: data.brand || null,
         ...productPricing(data),
@@ -265,8 +285,10 @@ export async function updateStoreProductAction(id: number, input: StoreProductIn
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
 
-  const [slugOwner] = await db.select({ id: storeProducts.id }).from(storeProducts).where(eq(storeProducts.slug, data.slug)).limit(1);
-  if (slugOwner && slugOwner.id !== id) return { error: "A product with this slug already exists." };
+  if (data.slug) {
+    const [slugOwner] = await db.select({ id: storeProducts.id }).from(storeProducts).where(eq(storeProducts.slug, data.slug)).limit(1);
+    if (slugOwner && slugOwner.id !== id) return { error: "A product with this slug already exists." };
+  }
   const skuError = await findSkuClash(data, id);
   if (skuError) return { error: skuError };
 
@@ -275,7 +297,7 @@ export async function updateStoreProductAction(id: number, input: StoreProductIn
       .update(storeProducts)
       .set({
         categoryId: data.categoryId,
-        slug: data.slug,
+        ...(data.slug && { slug: data.slug }),
         sku: data.sku || null,
         brand: data.brand || null,
         ...productPricing(data),
