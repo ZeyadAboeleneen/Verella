@@ -11,3 +11,9 @@ source-files
 **/.env
 **/.env.*
 !.env.example
+
+# WhatsApp session (a login secret), gateway logs, and the local AI model cache
+# never go into an image — the session and model live in compose volumes.
+openwa/auth_info
+openwa/logs
+**/.cache

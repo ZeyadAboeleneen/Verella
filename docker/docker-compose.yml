@@ -1,6 +1,6 @@
 name: verella
 
-# Production stack: MySQL + the Next.js app + Caddy (automatic HTTPS).
+# Production stack: MySQL + the Next.js app + the WhatsApp gateway + Caddy (automatic HTTPS).
 # Usage (from this folder, with ../.env filled in — see docs/SETUP.md):
 #   docker compose up -d --build
 #   docker compose run --rm migrator      # first deploy, and after schema changes
@@ -36,8 +36,33 @@ services:
         condition: service_healthy
     env_file:
       - ../.env
+    environment:
+      # Inside Docker the gateway is the "whatsapp" service, not localhost.
+      BAILEYS_SEND_URL: http://whatsapp:3001/send
+    volumes:
+      - model-cache:/models # AI model for automatic product backgrounds (downloaded once)
     expose:
       - "3000" # reachable by Caddy on the compose network only
+
+  # Self-hosted WhatsApp gateway (openwa/index.js). Link it once from the live
+  # dashboard → Settings (scan the QR code); the session is kept in the
+  # whatsapp-session volume across restarts and updates.
+  whatsapp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: whatsapp
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      OPENWA_HOST: 0.0.0.0 # inside the container; not published — only "web" can reach it
+      OPENWA_PORT: "3001"
+      WEBHOOK_URL: http://web:3000/api/whatsapp/webhook
+    volumes:
+      - whatsapp-session:/repo/openwa/auth_info
+    expose:
+      - "3001" # compose network only — never exposed to the internet
 
   migrator:
     build:
@@ -94,5 +119,7 @@ services:
 
 volumes:
   mysql-data:
+  whatsapp-session: # the linked WhatsApp login — keep this volume
+  model-cache:
   caddy-data: # certificates — keep this volume
   caddy-config:

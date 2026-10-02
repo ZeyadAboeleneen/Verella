@@ -76,12 +76,14 @@ A 2 GB RAM VPS is enough to start (the build itself needs ~2 GB; add swap on a 1
 
 5. Open `https://<domain>` — Caddy fetches the certificate on the first request (a few seconds). Log in at `/login` with the seeded admin, then **change the password** in the dashboard (Admin → Account) and remove `SEED_ADMIN_PASSWORD` from `.env`.
 
+6. **Link WhatsApp (once).** The `whatsapp` service (order confirmations, status updates, new-order alerts) starts with the stack. Open Admin → Settings → WhatsApp, scan the QR code with the store’s phone (WhatsApp → Linked devices). The session is kept in the `whatsapp-session` volume, so updates and restarts don’t need a new scan. Don’t delete that volume.
+
 ### 2.2 Updating
 
 ```bash
 cd verella && git pull
 cd docker
-docker compose --env-file ../.env up -d --build web
+docker compose --env-file ../.env up -d --build web whatsapp
 docker compose --env-file ../.env run --rm migrator   # only if the release has new migrations
 ```
 
@@ -105,6 +107,7 @@ Product photos and payment screenshots live on Cloudinary, not on the server.
 ```bash
 docker compose --env-file ../.env logs -f web      # app errors, emails when SMTP is off
 docker compose --env-file ../.env logs -f caddy    # certificate / TLS problems
+docker compose --env-file ../.env logs -f whatsapp # WhatsApp link / sending problems
 ```
 
 ---

@@ -115,7 +115,8 @@ export function WhatsAppConnection() {
           <div className="rounded-xl border border-outline-variant p-4 text-sm text-on-surface">
             <p className="font-medium">The WhatsApp service isn&apos;t running.</p>
             <p className="mt-1 text-xs text-on-surface-variant">
-              Start it on the server with <code dir="ltr">cd openwa; node index.js</code> — this page updates by itself.
+              On the live server it runs in Docker: <code dir="ltr">docker compose --env-file ../.env up -d whatsapp</code> (from the{" "}
+              <code dir="ltr">docker</code> folder). On a dev PC: <code dir="ltr">cd openwa; node index.js</code>. This page updates by itself.
             </p>
           </div>
         )}
