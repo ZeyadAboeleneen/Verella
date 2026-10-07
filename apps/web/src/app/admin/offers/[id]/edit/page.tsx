@@ -4,6 +4,7 @@ import { db, media, offers } from "@verella/db";
 import ar from "@/lib/i18n/dictionaries/ar.json";
 import en from "@/lib/i18n/dictionaries/en.json";
 import { OfferForm } from "@/components/admin/offers/offer-form";
+import { getOfferLinkTargets } from "@/lib/offers/link-targets";
 
 /** "YYYY-MM-DDTHH:mm" in the server's local time, for a datetime-local input. */
 function toDatetimeLocal(d: Date | null): string {
@@ -22,6 +23,7 @@ export default async function EditOfferPage({ params }: { params: Promise<{ id: 
     .limit(1);
   if (!row) notFound();
   const o = row.offer;
+  const linkTargets = await getOfferLinkTargets();
 
   return (
     <div>
@@ -29,6 +31,7 @@ export default async function EditOfferPage({ params }: { params: Promise<{ id: 
       <OfferForm
         offerId={o.id}
         labels={{ ar: ar.offers, en: en.offers }}
+        linkTargets={linkTargets}
         initial={{
           titleAr: o.titleAr,
           titleEn: o.titleEn,

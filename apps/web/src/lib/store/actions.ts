@@ -4,9 +4,10 @@ import { revalidatePath, updateTag } from "next/cache";
 import { CATALOG_CACHE_TAG } from "@/lib/store/queries";
 import { after } from "next/server";
 import { ensureStyledProductImage } from "@/lib/media/auto-styled";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, notInArray } from "drizzle-orm";
 import {
   db,
+  cartItems,
   storeCategories,
   storeCategoryTranslations,
   storeProducts,
@@ -112,10 +113,28 @@ export async function deleteStoreCategoryAction(id: number): Promise<ActionResul
   const guard = await guardPermission("store.manage");
   if ("error" in guard) return guard;
 
-  const [productInCategory] = await db.select({ id: storeProducts.id }).from(storeProducts).where(eq(storeProducts.categoryId, id)).limit(1);
+  // Only live products block deletion — already-deleted (soft-deleted) ones don't count.
+  const [productInCategory] = await db
+    .select({ id: storeProducts.id })
+    .from(storeProducts)
+    .where(and(eq(storeProducts.categoryId, id), isNull(storeProducts.deletedAt)))
+    .limit(1);
   if (productInCategory) return { error: "Move or delete this category's products before deleting it." };
 
-  await db.delete(storeCategories).where(eq(storeCategories.id, id));
+  await db.transaction(async (tx) => {
+    // Soft-deleted products still point at this category, so remove them for
+    // good first. Past orders keep their item snapshots (FK is "set null").
+    const deleted = await tx
+      .select({ id: storeProducts.id })
+      .from(storeProducts)
+      .where(and(eq(storeProducts.categoryId, id), isNotNull(storeProducts.deletedAt)));
+    const ids = deleted.map((p) => p.id);
+    if (ids.length) {
+      await tx.delete(cartItems).where(inArray(cartItems.storeProductId, ids));
+      await tx.delete(storeProducts).where(inArray(storeProducts.id, ids));
+    }
+    await tx.delete(storeCategories).where(eq(storeCategories.id, id));
+  });
   await logActivity({ actorUserId: Number(guard.id), action: "store_category.deleted", entityType: "store_category", entityId: id });
   revalidateStore();
   return { success: true };

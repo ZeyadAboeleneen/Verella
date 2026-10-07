@@ -88,16 +88,37 @@ function PlacementTile({
   );
 }
 
+/** A place on the site an offer can link to, grouped in the dropdown. */
+export interface LinkTarget {
+  group: "Pages" | "Categories" | "Products";
+  label: string;
+  href: string;
+}
+
+type LinkKind = "none" | "page" | "category" | "product" | "custom";
+const KIND_GROUP = { page: "Pages", category: "Categories", product: "Products" } as const;
+const selectClass = "flex h-11 w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 text-sm text-on-surface";
+
 export function OfferForm({
   offerId,
   initial,
   labels,
+  linkTargets = [],
 }: {
   offerId?: number;
   initial: OfferFormValues;
   labels: { ar: OfferLabels; en: OfferLabels };
+  linkTargets?: LinkTarget[];
 }) {
   const router = useRouter();
+  // Free-text link only for "Custom link…" — or an existing offer whose link isn't in the list.
+  // Step 1 = what kind of place; step 2 = which one. Worked out from an existing offer's link.
+  const [linkKind, setLinkKind] = useState<LinkKind>(() => {
+    if (!initial.linkUrl) return "none";
+    const t = linkTargets.find((x) => x.href === initial.linkUrl);
+    if (!t) return "custom";
+    return t.group === "Pages" ? "page" : t.group === "Categories" ? "category" : "product";
+  });
   const [v, setV] = useState<OfferFormValues>(initial);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +126,12 @@ export function OfferForm({
   const set = <K extends keyof OfferFormValues>(key: K, value: OfferFormValues[K]) => setV((prev) => ({ ...prev, [key]: value }));
 
   async function save() {
+    if ((linkKind === "category" || linkKind === "product" || linkKind === "custom") && !v.linkUrl.trim()) {
+      const msg = linkKind === "category" ? "Choose the category the button links to." : linkKind === "product" ? "Choose the product the button links to." : "Enter the custom link.";
+      setError(msg);
+      toast(msg, "error");
+      return;
+    }
     setPending(true);
     setError(null);
     const input: OfferInput = {
@@ -222,9 +249,63 @@ export function OfferForm({
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <Label htmlFor="linkUrl">Link</Label>
-              <Input id="linkUrl" dir="ltr" value={v.linkUrl} onChange={(e) => set("linkUrl", e.target.value)} placeholder="/store?category=musk" />
-              <p className="mt-1 text-xs text-on-surface-variant">A page on the site (starts with /) or a full https:// link. Empty = no button.</p>
+              <Label htmlFor="linkKind">Button links to</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <select
+                  id="linkKind"
+                  value={linkKind}
+                  onChange={(e) => {
+                    const kind = e.target.value as LinkKind;
+                    setLinkKind(kind);
+                    // Choosing a new kind starts fresh — pick the exact page/category/product next.
+                    set("linkUrl", kind === "page" ? "/store" : "");
+                  }}
+                  className={selectClass}
+                >
+                  <option value="none">No button</option>
+                  <option value="page">A page</option>
+                  <option value="category">A category</option>
+                  <option value="product">A product</option>
+                  <option value="custom">Custom link</option>
+                </select>
+
+                {(linkKind === "page" || linkKind === "category" || linkKind === "product") && (
+                  <select
+                    id="linkUrl"
+                    aria-label={linkKind === "page" ? "Page" : linkKind === "category" ? "Category" : "Product"}
+                    value={v.linkUrl}
+                    onChange={(e) => set("linkUrl", e.target.value)}
+                    className={selectClass}
+                  >
+                    {linkKind !== "page" && <option value="">{linkKind === "category" ? "Choose a category…" : "Choose a product…"}</option>}
+                    {linkTargets
+                      .filter((t) => t.group === KIND_GROUP[linkKind])
+                      .map((t) => (
+                        <option key={t.href} value={t.href}>
+                          {t.label}
+                        </option>
+                      ))}
+                  </select>
+                )}
+
+                {linkKind === "custom" && (
+                  <Input
+                    id="linkUrl"
+                    dir="ltr"
+                    value={v.linkUrl}
+                    onChange={(e) => set("linkUrl", e.target.value)}
+                    placeholder="https://… or /some-page"
+                    aria-label="Custom link"
+                  />
+                )}
+              </div>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                {linkKind === "none"
+                  ? "The offer shows without a button."
+                  : linkKind === "custom"
+                    ? "Any page on the site (starting with /) or a full https:// link."
+                    : "Where customers go when they tap the offer’s button."}
+              </p>
             </div>
             <div>
               <Label htmlFor="ctaLabelAr">Button text (Arabic)</Label>

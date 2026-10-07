@@ -1,6 +1,8 @@
 import Link from "@/components/LocaleLink";
 import NextImage from "next/image";
-import { desc, eq, count, inArray } from "drizzle-orm";
+import { and, desc, eq, count, gte, inArray, lt } from "drizzle-orm";
+import { AdminDateFilter } from "@/components/admin/admin-date-filter";
+import { periodRange } from "@/lib/admin/date-range";
 import { db, payments, orders, paymentMethods, media } from "@verella/db";
 import { formatMoney, toCents, WALLET_PAYMENT_METHODS } from "@verella/core";
 import { authenticatedDeliveryUrl } from "@/lib/media/cloudinary";
@@ -11,14 +13,20 @@ import { Pagination, PAGE_SIZE } from "@/components/admin/pagination";
 export default async function AdminPaymentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; period?: string; from?: string; to?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, period: rawPeriod, from: rawFrom, to: rawTo } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const offset = (page - 1) * PAGE_SIZE;
+  const range = periodRange(rawPeriod, rawFrom, rawTo);
+  const period = range?.period;
   // This page reviews wallet-transfer screenshots (InstaPay / Vodafone Cash) —
   // cash on delivery has no proof to approve, so it doesn't belong here.
-  const whereClause = inArray(paymentMethods.code, [...WALLET_PAYMENT_METHODS]);
+  const whereClause = and(
+    inArray(paymentMethods.code, [...WALLET_PAYMENT_METHODS]),
+    range?.from ? gte(payments.createdAt, range.from) : undefined,
+    range?.to ? lt(payments.createdAt, range.to) : undefined,
+  );
 
   const [rows, [{ total }]] = await Promise.all([
     db
@@ -50,8 +58,20 @@ export default async function AdminPaymentsPage({
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-on-surface">Payments</h1>
-      <p className="mt-1 text-sm text-on-surface-variant">Review InstaPay payment screenshots and approve or reject them.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-on-surface">Payments</h1>
+          <p className="mt-1 text-sm text-on-surface-variant">Review InstaPay payment screenshots and approve or reject them.</p>
+        </div>
+        <div>
+          <AdminDateFilter />
+        </div>
+      </div>
+      {period && (
+        <p className="mt-2 text-xs text-on-surface-variant">
+          {range?.label}: {total} {total === 1 ? "payment" : "payments"}
+        </p>
+      )}
 
       <div className="mt-6">
         <Table>
@@ -97,7 +117,7 @@ export default async function AdminPaymentsPage({
             {rowsWithProof.length === 0 && <EmptyRow colSpan={6}>No payments yet.</EmptyRow>}
           </tbody>
         </Table>
-        <Pagination basePath="/admin/payments" page={page} total={total} />
+        <Pagination basePath="/admin/payments" params={{ period, from: rawFrom, to: rawTo }} page={page} total={total} />
       </div>
     </div>
   );

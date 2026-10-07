@@ -17,6 +17,67 @@ import { toast } from "@/components/ui/toast";
 
 const AXIS_LABELS = { volume: "Volume (e.g. 50ml, 100ml)", size: "Size (e.g. S, M, L)", color: "Colour" } as const;
 
+const NOTE_TIERS = [
+  { key: "top", en: "Top notes", ar: "المقدمة" },
+  { key: "heart", en: "Heart notes", ar: "القلب" },
+  { key: "base", en: "Base notes", ar: "القاعدة" },
+] as const;
+
+/**
+ * Fragrance notes as three tiers per language. Stored as "top | heart | base"
+ * — the format the product page shows as the Top / Heart / Base pyramid.
+ * All empty = no notes (non-fragrance products).
+ */
+function NotesFields({
+  initial,
+  onChange,
+}: {
+  initial?: { en?: string | null; ar?: string | null } | null;
+  onChange: (lang: "en" | "ar", value: string) => void;
+}) {
+  const split = (v?: string | null) => {
+    const parts = (v ?? "").split("|").map((p) => p.trim());
+    return [parts[0] ?? "", parts[1] ?? "", parts[2] ?? ""];
+  };
+  const [tiers, setTiers] = useState({ en: split(initial?.en), ar: split(initial?.ar) });
+
+  function update(lang: "en" | "ar", i: number, value: string) {
+    const next = { ...tiers, [lang]: tiers[lang].map((t, j) => (j === i ? value : t)) };
+    setTiers(next);
+    const parts = next[lang].map((t) => t.trim());
+    onChange(lang, parts.some(Boolean) ? parts.join(" | ") : "");
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-outline-variant/60 p-4">
+      <p className="text-sm font-semibold text-on-surface">Fragrance notes (optional)</p>
+      <p className="mt-0.5 text-xs text-on-surface-variant">
+        Separate notes with commas, e.g. “Peony, orange blossom, mandarin”. Leave empty for products that aren’t fragrances.
+      </p>
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {(["en", "ar"] as const).map((lang) => (
+          <div key={lang} className="space-y-3">
+            {NOTE_TIERS.map((tier, i) => (
+              <div key={tier.key}>
+                <Label htmlFor={`notes-${lang}-${tier.key}`}>
+                  {lang === "en" ? `${tier.en} (English)` : `${tier.ar} (Arabic)`}
+                </Label>
+                <Input
+                  id={`notes-${lang}-${tier.key}`}
+                  dir={lang === "ar" ? "rtl" : "ltr"}
+                  value={tiers[lang][i]}
+                  maxLength={80}
+                  onChange={(e) => update(lang, i, e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -193,6 +254,11 @@ export function StoreProductForm({
             <Textarea id="description.ar" dir="rtl" rows={4} {...register("description.ar")} />
           </div>
         </div>
+
+        <NotesFields
+          initial={defaultValues?.notes}
+          onChange={(lang, value) => setValue(`notes.${lang}`, value, { shouldDirty: true })}
+        />
       </Section>
 
       <Section

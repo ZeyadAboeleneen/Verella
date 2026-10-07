@@ -1,7 +1,15 @@
 import Link from "@/components/LocaleLink";
 import { and, asc, eq, count, inArray, isNull, like, or } from "drizzle-orm";
 import { Plus, Pencil } from "lucide-react";
-import { db, storeProducts, storeProductTranslations, storeProductVariants, storeCategories } from "@verella/db";
+import {
+  db,
+  storeProducts,
+  storeProductTranslations,
+  storeProductVariants,
+  storeProductCategories,
+  storeCategories,
+  storeCategoryTranslations,
+} from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";
 import { Button } from "@/components/ui/button";
 import { Table, Thead, Th, Tr, Td, EmptyRow } from "@/components/admin/table";
@@ -10,21 +18,29 @@ import { DeleteButton } from "@/components/admin/delete-button";
 import { Pagination, PAGE_SIZE } from "@/components/admin/pagination";
 import { deleteStoreProductAction } from "@/lib/store/actions";
 import { AdminSearch } from "@/components/admin/admin-search";
+import { AdminSelectFilter } from "@/components/admin/admin-select-filter";
 
 export default async function AdminStoreProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; category?: string }>;
 }) {
-  const { page: pageParam, q: rawQ } = await searchParams;
+  const { page: pageParam, q: rawQ, category: rawCategory } = await searchParams;
   const q = rawQ?.trim().slice(0, 100) ?? "";
   // Name (English or Arabic), brand, slug or SKU.
   // Escape LIKE wildcards so "50%" searches for the text, not "anything".
   const pattern = `%${q.replace(/[%_\\]/g, (ch) => `\\${ch}`)}%`;
-  const where = q
-    ? and(
-        isNull(storeProducts.deletedAt),
-        or(
+  const categoryId = Number(rawCategory) || 0;
+  const categories = await db
+    .select({ id: storeCategories.id, slug: storeCategories.slug, name: storeCategoryTranslations.name })
+    .from(storeCategories)
+    .leftJoin(storeCategoryTranslations, and(eq(storeCategoryTranslations.categoryId, storeCategories.id), eq(storeCategoryTranslations.locale, "en")))
+    .orderBy(asc(storeCategories.sortOrder));
+  const activeCategory = categories.find((c) => c.id === categoryId);
+  const where = and(
+    isNull(storeProducts.deletedAt),
+    q
+      ? or(
           like(storeProducts.brand, pattern),
           like(storeProducts.slug, pattern),
           like(storeProducts.sku, pattern),
@@ -32,9 +48,19 @@ export default async function AdminStoreProductsPage({
             storeProducts.id,
             db.select({ id: storeProductTranslations.productId }).from(storeProductTranslations).where(like(storeProductTranslations.name, pattern)),
           ),
-        ),
-      )
-    : isNull(storeProducts.deletedAt);
+        )
+      : undefined,
+    // Main category, or any extra category the product is also listed in.
+    activeCategory
+      ? or(
+          eq(storeProducts.categoryId, activeCategory.id),
+          inArray(
+            storeProducts.id,
+            db.select({ id: storeProductCategories.productId }).from(storeProductCategories).where(eq(storeProductCategories.categoryId, activeCategory.id)),
+          ),
+        )
+      : undefined,
+  );
   const page = Math.max(1, Number(pageParam) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -93,10 +119,24 @@ export default async function AdminStoreProductsPage({
       />
 
       <div className="mb-4 mt-6">
-        <AdminSearch placeholder="Search products by name, brand, slug or SKU…" />
-        {q && (
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex-1">
+            <AdminSearch placeholder="Search products by name, brand, slug or SKU…" />
+          </div>
+          <div className="sm:w-64">
+            <AdminSelectFilter
+              param="category"
+              label="Filter by category"
+              allLabel="All categories"
+              options={categories.map((c) => ({ value: String(c.id), label: c.name ?? c.slug }))}
+            />
+          </div>
+        </div>
+        {(q || activeCategory) && (
           <p className="mt-2 text-xs text-on-surface-variant">
-            {total} {total === 1 ? "product matches" : "products match"} “{q}”
+            {total} {total === 1 ? "product" : "products"}
+            {activeCategory && <> in “{activeCategory.name ?? activeCategory.slug}”</>}
+            {q && <> matching “{q}”</>}
           </p>
         )}
       </div>
@@ -157,7 +197,7 @@ export default async function AdminStoreProductsPage({
           {rows.length === 0 && <EmptyRow colSpan={8}>{q ? `No products match “${q}”.` : "No products yet."}</EmptyRow>}
         </tbody>
       </Table>
-      <Pagination basePath="/admin/store/products" params={{ q: q || undefined }} page={page} total={total} />
+      <Pagination basePath="/admin/store/products" params={{ q: q || undefined, category: activeCategory ? String(activeCategory.id) : undefined }} page={page} total={total} />
     </div>
   );
 }

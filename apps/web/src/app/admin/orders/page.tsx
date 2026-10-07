@@ -1,5 +1,7 @@
 import Link from "@/components/LocaleLink";
-import { desc, eq, count } from "drizzle-orm";
+import { and, desc, eq, count, gte, lt, sql } from "drizzle-orm";
+import { AdminDateFilter } from "@/components/admin/admin-date-filter";
+import { periodRange } from "@/lib/admin/date-range";
 import { db, orders, type OrderStatus } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";
 import { Table, Thead, Th, Tr, Td, EmptyRow } from "@/components/admin/table";
@@ -18,29 +20,55 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; period?: string; from?: string; to?: string }>;
 }) {
-  const { status, page: pageParam } = await searchParams;
+  const { status, page: pageParam, period: rawPeriod, from: rawFrom, to: rawTo } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const offset = (page - 1) * PAGE_SIZE;
-  const whereClause = status ? eq(orders.status, status as OrderStatus) : undefined;
+  const range = periodRange(rawPeriod, rawFrom, rawTo);
+  const period = range?.period;
+  const whereClause = and(
+    status ? eq(orders.status, status as OrderStatus) : undefined,
+    range?.from ? gte(orders.placedAt, range.from) : undefined,
+    range?.to ? lt(orders.placedAt, range.to) : undefined,
+  );
 
-  const [rows, [{ total }]] = await Promise.all([
-    whereClause
-      ? db.select().from(orders).where(whereClause).orderBy(desc(orders.createdAt)).limit(PAGE_SIZE).offset(offset)
-      : db.select().from(orders).orderBy(desc(orders.createdAt)).limit(PAGE_SIZE).offset(offset),
-    whereClause
-      ? db.select({ total: count() }).from(orders).where(whereClause)
-      : db.select({ total: count() }).from(orders),
+  const [rows, [{ total, revenue }]] = await Promise.all([
+    db.select().from(orders).where(whereClause).orderBy(desc(orders.createdAt)).limit(PAGE_SIZE).offset(offset),
+    db
+      .select({ total: count(), revenue: sql<string>`coalesce(sum(case when ${orders.status} <> 'cancelled' then ${orders.grandTotal} else 0 end), 0)` })
+      .from(orders)
+      .where(whereClause),
   ]);
+  const statusHref = (key?: string) => {
+    const p = new URLSearchParams();
+    if (key) p.set("status", key);
+    if (period) p.set("period", period);
+    if (period === "custom" && rawFrom) p.set("from", rawFrom);
+    if (period === "custom" && rawTo) p.set("to", rawTo);
+    if (rawFrom) p.set("from", rawFrom);
+    if (rawTo) p.set("to", rawTo);
+    const qs = p.toString();
+    return qs ? `/admin/orders?${qs}` : "/admin/orders";
+  };
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-on-surface">Orders</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-2xl font-bold text-on-surface">Orders</h1>
+        <div>
+          <AdminDateFilter />
+        </div>
+      </div>
+      {period && (
+        <p className="mt-2 text-xs text-on-surface-variant">
+          {range?.label}: {total} {total === 1 ? "order" : "orders"} · {formatMoney(toCents(revenue))} (excluding cancelled)
+        </p>
+      )}
 
       <div className="my-4 flex flex-wrap gap-2">
         <Link
-          href="/admin/orders"
+          href={statusHref()}
           className={`rounded-full px-3 py-1 text-xs font-semibold ${!status ? "bg-primary text-on-primary" : "bg-surface-container text-on-surface-variant"}`}
         >
           All
@@ -48,7 +76,7 @@ export default async function AdminOrdersPage({
         {Object.entries(STATUS_LABEL).map(([key, label]) => (
           <Link
             key={key}
-            href={`/admin/orders?status=${key}`}
+            href={statusHref(key)}
             className={`rounded-full px-3 py-1 text-xs font-semibold ${status === key ? "bg-primary text-on-primary" : "bg-surface-container text-on-surface-variant"}`}
           >
             {label}
@@ -89,7 +117,7 @@ export default async function AdminOrdersPage({
           {rows.length === 0 && <EmptyRow colSpan={6}>No orders yet.</EmptyRow>}
         </tbody>
       </Table>
-      <Pagination basePath="/admin/orders" params={{ status }} page={page} total={total} />
+      <Pagination basePath="/admin/orders" params={{ status, period, from: rawFrom, to: rawTo }} page={page} total={total} />
     </div>
   );
 }
