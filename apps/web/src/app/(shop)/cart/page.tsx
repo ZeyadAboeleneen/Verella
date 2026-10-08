@@ -9,6 +9,7 @@ import { applyAutoDiscount } from "@/lib/store/queries";
 import { cookies } from "next/headers";
 import { previewOrderTotalsAction } from "@/lib/checkout/actions";
 import { CART_CODE_COOKIE } from "@/lib/cart/discount-code-cookie";
+import { getFreeShippingThresholdCents } from "@/lib/checkout/free-shipping";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = await getDict();
@@ -17,7 +18,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CartPage() {
   const locale = await getLocale();
-  const [cart, dict, autoDiscounts] = await Promise.all([getCart(locale), getDict(), getAutoDiscounts().catch(() => [])]);
+  const [cart, dict, autoDiscounts, freeShippingFromCents] = await Promise.all([
+    getCart(locale),
+    getDict(),
+    getAutoDiscounts().catch(() => []),
+    getFreeShippingThresholdCents().catch(() => 0),
+  ]);
 
   // Automatic discounts (no code). The cart keeps the regular price and the
   // order applies the discount at checkout — show it here too, using the
@@ -54,6 +60,7 @@ export default async function CartPage() {
         appliedCode={code}
         codeDiscountCents={codeDiscountCents}
         codeError={codeError}
+        freeShippingFromCents={freeShippingFromCents}
         dict={dict}
         locale={locale}
       />

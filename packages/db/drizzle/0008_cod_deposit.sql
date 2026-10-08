@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `deposit_amount` decimal(12,2) DEFAULT '0.00' NOT NULL;

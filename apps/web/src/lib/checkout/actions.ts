@@ -1,5 +1,8 @@
 "use server";
 
+import { getFreeShippingThresholdCents } from "@/lib/checkout/free-shipping";
+import { codDepositCents, getCodDepositSetting } from "@/lib/checkout/cod-deposit";
+
 import { eq, and, gte, count, inArray, isNull, sql } from "drizzle-orm";
 import {
   db,
@@ -113,7 +116,12 @@ async function computeCheckoutPricing(
     codeDiscount ? { discount: codeDiscount, userRedemptionCount } : null,
   );
 
-  const deliveryFeeCents = fulfillmentType === "delivery" ? await getDeliveryFeeCents(governorate) : 0;
+  let deliveryFeeCents = fulfillmentType === "delivery" ? await getDeliveryFeeCents(governorate) : 0;
+  // Free delivery once the order (after discounts) reaches the admin's threshold.
+  const freeFromCents = await getFreeShippingThresholdCents();
+  if (deliveryFeeCents > 0 && freeFromCents > 0 && discountResult.subtotalCents - discountResult.discountTotalCents >= freeFromCents) {
+    deliveryFeeCents = 0;
+  }
   const totals = computeOrderTotals({
     subtotalCents: discountResult.subtotalCents,
     discountTotalCents: discountResult.discountTotalCents,
@@ -306,6 +314,9 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
     return { error: "Online payment isn't available yet. Please choose another payment method." };
   }
   const isWallet = WALLET_PAYMENT_METHODS.includes(data.paymentMethodCode);
+  // Cash on delivery may need a deposit up front (Admin → Settings); fixed at order time.
+  const depositCents =
+    data.paymentMethodCode === "cash_on_delivery" ? codDepositCents(await getCodDepositSetting(), toCents(totals.grandTotal), toCents(totals.deliveryFee)) : 0;
 
   let customerId: number | null = null;
   if (userId) {
@@ -372,6 +383,7 @@ export async function placeOrderAction(input: CheckoutInput): Promise<ActionResu
         taxTotal: totals.taxTotal,
         deliveryFee: totals.deliveryFee,
         grandTotal: totals.grandTotal,
+        depositAmount: fromCents(depositCents),
       })
       .$returningId();
 

@@ -81,6 +81,9 @@
     "continueShopping": "Continue shopping",
     "addToCart": "Add to cart",
     "shippingNote": "Delivery is calculated at checkout based on your governorate.",
+    "freeShippingRemaining": "Add {amount} more to get free delivery",
+    "freeDelivery": "Free",
+    "freeShippingUnlocked": "You’ve unlocked free delivery!",
     "emptyHint": "Discover original fragrances, musk and fashion from the brands worth knowing."
   },
   "checkout": {
@@ -124,6 +127,8 @@
       "apartment": "Apartment",
       "landmark": "Landmark (optional)"
     },
+    "codDepositTitle": "Deposit required: {amount}",
+    "codDepositBody": "Right after you order, we will send you InstaPay / Vodafone Cash details on WhatsApp. Your order is confirmed once the deposit is paid, and the rest ({rest}) is paid on delivery.",
     "methods": {
       "cash_on_delivery": {
         "label": "Cash on delivery",
@@ -391,6 +396,10 @@
     "language": "Language"
   },
   "order": {
+    "depositPaid": "Deposit",
+    "depositDue": "Due on delivery",
+    "depositPendingTitle": "Deposit required: {amount}",
+    "depositPendingBody": "We sent the InstaPay / Vodafone Cash details to your WhatsApp. Send a screenshot of the transfer in that chat — your order is confirmed once the deposit is received.",
     "thanks": "Thank you — your order is in.",
     "number": "Order {number}",
     "payment": "Payment",

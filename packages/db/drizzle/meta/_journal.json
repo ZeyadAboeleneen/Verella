@@ -57,6 +57,27 @@
       "when": 1790905691251,
       "tag": "0007_category_show_in_hero",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1791422508520,
+      "tag": "0008_cod_deposit",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1791423560443,
+      "tag": "0009_order_deposit_kept",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1791424065698,
+      "tag": "0010_discount_buy_x_get_y",
+      "breakpoints": true
     }
   ]
 }

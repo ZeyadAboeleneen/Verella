@@ -7,7 +7,7 @@ export type NotificationChannel = "whatsapp" | "email";
  * "invoice" once per order, one "status_<status>" message per status reached,
  * and one "admin_new_order" alert to the store's own number.
  */
-export type NotificationKind = "invoice" | `status_${OrderStatus}` | "admin_new_order";
+export type NotificationKind = "invoice" | `status_${OrderStatus}` | "admin_new_order" | "deposit_request" | "deposit_refund";
 /**
  * sending — claimed by one worker, send in flight
  * sent    — delivered to the gateway; never sent again

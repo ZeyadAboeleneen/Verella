@@ -9,7 +9,7 @@ const inputClass =
   "h-11 rounded-xl border border-outline-variant bg-surface-container-lowest px-3 text-sm text-on-surface outline-none focus:border-on-surface";
 
 /** Period dropdown (?period=…) with a "Custom range" option that shows from/to date inputs. */
-export function AdminDateFilter() {
+export function AdminDateFilter({ emptyLabel = "All time" }: { emptyLabel?: string } = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -40,7 +40,7 @@ export function AdminDateFilter() {
         }}
         className={`${inputClass} ${period ? "font-medium" : "text-on-surface-variant"}`}
       >
-        <option value="">All time</option>
+        <option value="">{emptyLabel}</option>
         {PERIOD_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

@@ -14,6 +14,7 @@ export type InvoiceIneligibleReason =
   | "already_sent"
   | "order_cancelled"
   | "payment_not_confirmed"
+  | "deposit_pending"
   | "unsupported_payment_method"
   | "invalid_phone";
 
@@ -24,6 +25,8 @@ export interface InvoiceEligibilityInput {
   paymentMethodCode: string | null;
   paymentStatus: PaymentStatus | null;
   phone: string | null;
+  /** Cash on delivery with a deposit asked: wait until an admin confirms the order. */
+  depositRequired?: boolean;
   /** Status of this order's existing WhatsApp invoice notification, if any. */
   invoiceStatus: NotificationStatus | null;
 }
@@ -41,7 +44,8 @@ export function checkInvoiceEligibility(input: InvoiceEligibilityInput): Invoice
 
   const method = input.paymentMethodCode;
   if (method === "cash_on_delivery") {
-    // eligible — COD has no payment confirmation step
+    // No deposit: right away. With a deposit: once an admin has confirmed the order.
+    if (input.depositRequired && input.orderStatus === "pending") return { eligible: false, reason: "deposit_pending" };
   } else if (method && WALLET_PAYMENT_METHODS.includes(method as PaymentMethodCode)) {
     if (input.paymentStatus !== "approved" || input.orderStatus === "pending") {
       return { eligible: false, reason: "payment_not_confirmed" };
@@ -63,6 +67,8 @@ export interface InvoiceData {
   discountTotal: string;
   deliveryFee: string;
   grandTotal: string;
+  /** Cash-on-delivery deposit already paid; taken off the amount due. */
+  depositAmount?: string;
   paymentMethodCode: string;
   address?: {
     street: string;
@@ -159,6 +165,7 @@ export interface StatusMessageData {
   status: OrderStatus;
   fulfillmentType: "delivery" | "pickup";
   paymentMethodCode: string;
+  /** Cash still to collect on delivery (order total minus any deposit). */
   grandTotal: string;
   customerName?: string | null;
   trackingUrl?: string | null;
@@ -200,7 +207,7 @@ export function buildOrderStatusMessage(d: StatusMessageData): string | null {
         };
 
   const lines = [T.greeting + T[d.status]];
-  if (d.trackingUrl && d.status !== "cancelled") lines.push("", `${T.track}: ${d.trackingUrl}`);
+  if (d.trackingUrl && d.status !== "cancelled" && d.status !== "completed") lines.push("", `${T.track}: ${d.trackingUrl}`);
   lines.push("", `${store} ❤️`);
   return lines.join("\n");
 }
@@ -221,9 +228,11 @@ export function buildOrderInvoiceMessage(d: InvoiceData): string {
           subtotal: "المجموع الفرعي",
           discount: "الخصم",
           delivery: "التوصيل",
+          free: "مجاناً",
           total: "الإجمالي",
           payment: "طريقة الدفع",
           due: "المطلوب عند الاستلام",
+          deposit: "العربون المدفوع",
           paid: "تم استلام الدفع ✅",
           address: "العنوان:",
           pickup: "الاستلام: من الفرع",
@@ -242,9 +251,11 @@ export function buildOrderInvoiceMessage(d: InvoiceData): string {
           subtotal: "Subtotal",
           discount: "Discount",
           delivery: "Delivery",
+          free: "Free",
           total: "Total",
           payment: "Payment method",
           due: "Amount due on delivery",
+          deposit: "Deposit paid",
           paid: "Payment received ✅",
           address: "Address:",
           pickup: "Pickup: from the store",
@@ -266,11 +277,13 @@ export function buildOrderInvoiceMessage(d: InvoiceData): string {
 
   lines.push("", `${T.subtotal}: ${m(d.subtotal)}`);
   if (Number(d.discountTotal) > 0) lines.push(`${T.discount}: −${m(d.discountTotal)}`);
-  if (d.fulfillmentType === "delivery") lines.push(`${T.delivery}: ${m(d.deliveryFee)}`);
+  if (d.fulfillmentType === "delivery") lines.push(`${T.delivery}: ${Number(d.deliveryFee) === 0 ? T.free : m(d.deliveryFee)}`);
   lines.push(`${T.total}: ${m(d.grandTotal)}`);
 
   lines.push("", `${T.payment}: ${paymentMethodLabel(d.paymentMethodCode, locale)}`);
-  lines.push(isCod ? `${T.due}: ${m(d.grandTotal)}` : T.paid);
+  const deposit = isCod ? Number(d.depositAmount ?? 0) : 0;
+  if (deposit > 0) lines.push(`${T.deposit}: ${m(d.depositAmount!)}`);
+  lines.push(isCod ? `${T.due}: ${m((Number(d.grandTotal) - deposit).toFixed(2))}` : T.paid);
 
   if (d.fulfillmentType === "delivery" && d.address) {
     lines.push("", T.address, formatAddress(d.address, locale));
@@ -286,4 +299,100 @@ export function buildOrderInvoiceMessage(d: InvoiceData): string {
   }
   lines.push("", T.thanks);
   return lines.join("\n");
+}
+
+export interface DepositRequestData {
+  orderNumber: string;
+  customerName?: string | null;
+  grandTotal: string;
+  depositAmount: string;
+  wallets: { instapay: { number: string; name: string }; vodafoneCash: { number: string; name: string } };
+  storeName?: string;
+  locale?: MessageLocale;
+}
+
+/** Cash on delivery with a deposit: ask for it before the order is confirmed. */
+export function buildDepositRequestMessage(d: DepositRequestData): string {
+  const locale = d.locale ?? "ar";
+  const store = d.storeName ?? defaultStore(locale);
+  const m = (v: string) => money(v, locale);
+  const rest = (Number(d.grandTotal) - Number(d.depositAmount)).toFixed(2);
+  const T =
+    locale === "ar"
+      ? {
+          title: "استلمنا طلبك 🛍️ — مستني دفع العربون",
+          hello: (x: string) => `أهلاً ${x}،`,
+          orderNo: "رقم الطلب",
+          total: "إجمالي الطلب",
+          deposit: "العربون المطلوب",
+          rest: "الباقي عند الاستلام",
+          how: "علشان نأكد طلبك، حوّل العربون على:",
+          instapay: "إنستاباي",
+          vodafone: "ڤودافون كاش",
+          screenshot: "📸 بعد التحويل ابعت سكرين شوت من التحويل هنا في الشات ده، وهنأكدلك الطلب على طول.",
+          note: "الطلب مش هيتأكد غير بعد استلام العربون.",
+          thanks: `شكراً لطلبك من ${store} ❤️`,
+        }
+      : {
+          title: "We received your order 🛍️ — deposit required",
+          hello: (x: string) => `Hi ${x},`,
+          orderNo: "Order number",
+          total: "Order total",
+          deposit: "Deposit required",
+          rest: "Remaining on delivery",
+          how: "To confirm your order, please transfer the deposit to:",
+          instapay: "InstaPay",
+          vodafone: "Vodafone Cash",
+          screenshot: "📸 After paying, send a screenshot of the transfer here in this chat and we will confirm your order right away.",
+          note: "Your order will be confirmed once the deposit is received.",
+          thanks: `Thank you for ordering from ${store} ❤️`,
+        };
+
+  const lines: string[] = [T.title];
+  if (d.customerName?.trim()) lines.push(T.hello(d.customerName.trim()));
+  lines.push("", `${T.orderNo}: #${d.orderNumber}`, `${T.total}: ${m(d.grandTotal)}`, `${T.deposit}: *${m(d.depositAmount)}*`, `${T.rest}: ${m(rest)}`);
+  const accounts: string[] = [];
+  const acc = (label: string, a: { number: string; name: string }) => {
+    if (a.number) accounts.push(`• ${label}: ${a.number}${a.name ? ` (${a.name})` : ""}`);
+  };
+  acc(T.instapay, d.wallets.instapay);
+  acc(T.vodafone, d.wallets.vodafoneCash);
+  if (accounts.length) lines.push("", T.how, ...accounts);
+  lines.push("", T.screenshot, T.note, "", T.thanks);
+  return lines.join("\n");
+}
+
+export interface DepositRefundData {
+  orderNumber: string;
+  customerName?: string | null;
+  depositAmount: string;
+  storeName?: string;
+  locale?: MessageLocale;
+}
+
+/** Cancelled cash-on-delivery order: the deposit is being refunded. */
+export function buildDepositRefundMessage(d: DepositRefundData): string {
+  const locale = d.locale ?? "ar";
+  const store = d.storeName ?? defaultStore(locale);
+  const amount = money(d.depositAmount, locale);
+  const name = d.customerName?.trim();
+  const lines =
+    locale === "ar"
+      ? [
+          name ? `أهلاً ${name}،` : "",
+          `بخصوص طلبك الملغي #${d.orderNumber}:`,
+          `هيتم رد العربون بقيمة *${amount}* على نفس الحساب اللي حوّلت منه 💸`,
+          "لو عندك أي استفسار، كلّمنا على الرقم ده.",
+          "",
+          `${store} ❤️`,
+        ]
+      : [
+          name ? `Hi ${name},` : "",
+          `About your cancelled order #${d.orderNumber}:`,
+          `Your deposit of *${amount}* will be refunded to the same account you paid from 💸`,
+          "If you have any questions, just reply to this number.",
+          "",
+          `${store} ❤️`,
+        ];
+  return lines.filter((l, i) => i > 0 || l).join("\n");
 }

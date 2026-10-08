@@ -62,6 +62,8 @@ export function DiscountForm({
   });
 
   const scope = watch("scope");
+  const type = watch("type");
+  const isBxgy = type?.startsWith("bxgy");
   // Automatic = no code: the discount just applies and shows on the product
   // itself (price + strikethrough), rather than requiring the shopper to type
   // a code at checkout.
@@ -117,15 +119,23 @@ export function DiscountForm({
                 {...register("type")}
                 className="flex h-11 w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 text-sm text-on-surface"
               >
-                <option value="percent">Percentage</option>
-                <option value="fixed">Fixed amount</option>
+                <option value="percent">Percentage off</option>
+                <option value="fixed">Fixed amount off</option>
+                <option value="bxgy_free">Buy X, get Y free</option>
+                <option value="bxgy_percent">Buy X, get Y at % off</option>
+                <option value="bxgy_fixed">Buy X, get Y at fixed amount off</option>
               </select>
             </div>
-            <div>
-              <Label htmlFor="value">Value</Label>
-              <Input id="value" type="number" step="0.01" {...register("value")} />
-              {errors.value && <p className="mt-1 text-xs text-error">{errors.value.message}</p>}
-            </div>
+            {type !== "bxgy_free" && (
+              <div>
+                <Label htmlFor="value">
+                  {type === "percent" || type === "bxgy_percent" ? "Percentage (%)" : "Amount (EGP)"}
+                  {isBxgy ? " off each Y item" : ""}
+                </Label>
+                <Input id="value" type="number" step="0.01" {...register("value")} />
+                {errors.value && <p className="mt-1 text-xs text-error">{errors.value.message}</p>}
+              </div>
+            )}
             {!isAutomatic && (
               <div>
                 <Label htmlFor="code">Code</Label>
@@ -163,6 +173,26 @@ export function DiscountForm({
               </span>
             </span>
           </label>
+
+          {isBxgy && (
+            <div className="rounded-xl border border-outline-variant/60 bg-surface-container-low p-4">
+              <div className="grid grid-cols-2 gap-4 sm:w-96">
+                <div>
+                  <Label htmlFor="buyQty">Buy (X)</Label>
+                  <Input id="buyQty" type="number" min="1" step="1" placeholder="2" {...register("buyQty")} />
+                </div>
+                <div>
+                  <Label htmlFor="getQty">Get (Y)</Label>
+                  <Input id="getQty" type="number" min="1" step="1" placeholder="1" {...register("getQty")} />
+                </div>
+              </div>
+              {errors.buyQty && <p className="mt-1 text-xs text-error">{errors.buyQty.message}</p>}
+              <p className="mt-2 text-xs text-on-surface-variant">
+                Counts items from the products / categories below. For every X bought, the next Y get the reward — always the cheapest
+                ones. Example: buy 2 get 1 free, 3 items in the cart → the cheapest is free.
+              </p>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="scope">Applies to</Label>

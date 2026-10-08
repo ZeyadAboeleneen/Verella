@@ -10,6 +10,8 @@ import { getFulfillmentTypes, getWalletDetails, isGuestCheckoutEnabled } from "@
 import { PAYMENT_METHOD_CODES, type PaymentMethodCode } from "@verella/core";
 import { getCustomerAddresses } from "@/lib/addresses/queries";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
+import { getFreeShippingThresholdCents } from "@/lib/checkout/free-shipping";
+import { getCodDepositSetting } from "@/lib/checkout/cod-deposit";
 import { cookies } from "next/headers";
 import { CART_CODE_COOKIE } from "@/lib/cart/discount-code-cookie";
 
@@ -62,6 +64,8 @@ export default async function CheckoutPage() {
         locale={locale}
         cartLines={cart.lines}
         initialSubtotalCents={cart.subtotalCents}
+        codDeposit={await getCodDepositSetting().catch(() => ({ type: "off" as const, value: "" }))}
+        freeShippingFromCents={await getFreeShippingThresholdCents().catch(() => 0)}
       />
     </div>
   );

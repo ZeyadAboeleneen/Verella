@@ -103,7 +103,15 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           <h1 className="font-display text-2xl font-bold text-on-surface">Order {order.orderNumber}</h1>
           <p className="text-sm text-on-surface-variant">Placed {new Date(order.placedAt).toLocaleString()}</p>
         </div>
-        <StatusUpdater orderId={order.id} currentStatus={order.status} />
+        <StatusUpdater
+          orderId={order.id}
+          currentStatus={order.status}
+          paidDepositFormatted={
+            Number(order.depositAmount) > 0 && order.status !== "pending" && order.status !== "cancelled"
+              ? formatMoney(toCents(order.depositAmount))
+              : null
+          }
+        />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -144,6 +152,29 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                 <span>Total</span>
                 <span>{formatMoney(toCents(order.grandTotal))}</span>
               </div>
+              {Number(order.depositAmount) > 0 && (
+                <>
+                  <div className="flex justify-between text-on-surface-variant">
+                    <span>Deposit (InstaPay / Vodafone Cash)</span>
+                    <span>{formatMoney(toCents(order.depositAmount))}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-on-surface">
+                    <span>Cash to collect on delivery</span>
+                    <span>{formatMoney(toCents(order.grandTotal) - toCents(order.depositAmount))}</span>
+                  </div>
+                  {order.status === "cancelled" && (
+                    <p className="rounded-lg bg-surface-container px-3 py-2 text-xs text-on-surface-variant">
+                      {order.depositKept ? "Cancelled — deposit kept (counted as revenue)." : "Cancelled — deposit refunded or never paid."}
+                    </p>
+                  )}
+                  {order.status === "pending" && (
+                    <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      Waiting for the deposit. Check the customer&apos;s screenshot on WhatsApp, then set the order to Confirmed — the full
+                      confirmation is sent to them then.
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -143,6 +143,7 @@ export function OrderConfirmation({
   discountFormatted,
   deliveryFeeFormatted,
   totalFormatted,
+  deposit,
   paymentMethodLabel,
   deliverToValue,
   showWalletUpload,
@@ -158,6 +159,8 @@ export function OrderConfirmation({
   discountFormatted: string | null;
   deliveryFeeFormatted: string | null;
   totalFormatted: string;
+  /** Cash-on-delivery deposit; `awaiting` while the order waits for it. */
+  deposit?: { amountFormatted: string; dueFormatted: string; awaiting: boolean } | null;
   paymentMethodLabel: string | null;
   deliverToValue: string | null;
   showWalletUpload: boolean;
@@ -259,7 +262,26 @@ export function OrderConfirmation({
               <dt className="font-medium text-charcoal">{dict.checkout.total}</dt>
               <dd className="text-xl font-medium text-charcoal">{totalFormatted}</dd>
             </div>
+            {deposit && (
+              <>
+                <div className="flex justify-between">
+                  <dt className="text-on-surface-variant">{t.depositPaid}</dt>
+                  <dd className="text-gold-ink">−{deposit.amountFormatted}</dd>
+                </div>
+                <div className="flex justify-between font-medium">
+                  <dt className="text-charcoal">{t.depositDue}</dt>
+                  <dd className="text-charcoal">{deposit.dueFormatted}</dd>
+                </div>
+              </>
+            )}
           </dl>
+
+          {deposit?.awaiting && (
+            <div className="mt-5 rounded-xl border border-gold/40 bg-gold/10 p-4">
+              <p className="text-sm font-semibold text-gold-ink">{t.depositPendingTitle.replace("{amount}", deposit.amountFormatted)}</p>
+              <p className="mt-1 text-xs leading-relaxed text-charcoal">{t.depositPendingBody}</p>
+            </div>
+          )}
 
           {(paymentMethodLabel || deliverToValue) && (
             <div className="mt-6 grid gap-4 border-t border-beige pt-5 text-sm sm:grid-cols-2">

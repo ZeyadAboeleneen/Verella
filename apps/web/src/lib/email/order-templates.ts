@@ -108,6 +108,7 @@ export function renderOrderConfirmationEmail(d: InvoiceData): { subject: string;
           subtotal: "المجموع الفرعي",
           discount: "الخصم",
           delivery: "التوصيل",
+          free: "مجاناً",
           total: "الإجمالي",
           payment: "طريقة الدفع",
           due: "المطلوب عند الاستلام",
@@ -127,6 +128,7 @@ export function renderOrderConfirmationEmail(d: InvoiceData): { subject: string;
           subtotal: "Subtotal",
           discount: "Discount",
           delivery: "Delivery",
+          free: "Free",
           total: "Total",
           payment: "Payment",
           due: "Due on delivery",
@@ -176,7 +178,7 @@ ${label(T.items)}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
   ${row(T.subtotal, m(d.subtotal))}
   ${Number(d.discountTotal) > 0 ? row(T.discount, `−${m(d.discountTotal)}`) : ""}
-  ${d.fulfillmentType === "delivery" ? row(T.delivery, m(d.deliveryFee)) : ""}
+  ${d.fulfillmentType === "delivery" ? row(T.delivery, Number(d.deliveryFee) === 0 ? T.free : m(d.deliveryFee)) : ""}
   <tr><td colspan="2" style="padding-top:6px;border-top:1px solid ${C.line};"></td></tr>
   ${row(T.total, m(d.grandTotal), true)}
 </table>
@@ -255,7 +257,7 @@ ${label("Items")}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
   ${row("Subtotal", m(d.subtotal))}
   ${Number(d.discountTotal) > 0 ? row("Discount", `−${m(d.discountTotal)}`) : ""}
-  ${d.fulfillmentType === "delivery" ? row("Delivery", m(d.deliveryFee)) : ""}
+  ${d.fulfillmentType === "delivery" ? row("Delivery", Number(d.deliveryFee) === 0 ? "Free" : m(d.deliveryFee)) : ""}
   <tr><td colspan="2" style="padding-top:6px;border-top:1px solid ${C.line};"></td></tr>
   ${row("Total", m(d.grandTotal), true)}
 </table>
@@ -322,7 +324,7 @@ ${heading(s.title)}
 ${d.customerName?.trim() ? para(esc(S.hello(d.customerName.trim())), `color:${C.muted};margin-bottom:4px;`) : ""}
 ${para(esc(s.body), `color:${C.muted};`)}
 <div style="display:inline-block;margin:4px 0 6px;padding:7px 14px;border-radius:999px;background:${C.soft};border:1px solid ${C.line};font-size:13px;">${esc(S.orderNo)}: <strong dir="ltr">#${esc(d.orderNumber)}</strong></div>
-${d.trackingUrl && d.status !== "cancelled" ? `<div style="margin-top:22px;">${button(d.trackingUrl, S.track)}</div>` : ""}
+${d.trackingUrl && d.status !== "cancelled" && d.status !== "completed" ? `<div style="margin-top:22px;">${button(d.trackingUrl, S.track)}</div>` : ""}
 ${para(`${esc(store)} ❤️`, "margin:24px 0 0;")}
 `;
   return { subject: S.subject, html: frame(locale, store, s.title, inner) };

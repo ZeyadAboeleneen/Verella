@@ -662,6 +662,11 @@ export function ProductDetail({ product, dict }: { product: StoreProductDetailVi
               <span className="text-2xl font-medium text-charcoal">{price}</span>
               {compareAt && <span className="text-base text-on-surface-variant line-through">{compareAt}</span>}
             </div>
+            {product.offer && !soldOutEverywhere && (
+              <span className="mt-3 inline-flex items-center rounded-full bg-charcoal px-3 py-1.5 text-xs font-semibold tracking-[0.03em] text-champagne">
+                {product.offer}
+              </span>
+            )}
           </Reveal>
 
           {product.notes && (

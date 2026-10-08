@@ -11,10 +11,12 @@ import { formatMoney } from "@verella/core";
 import type { CartLineView } from "@/lib/cart/queries";
 import type { Dictionary, Locale } from "@/lib/i18n";
 import { VMark } from "@/components/brand/Logo";
+import { FreeShippingProgress } from "@/components/cart/free-shipping-progress";
 
 export function CartView({
   lines,
   subtotalCents,
+  freeShippingFromCents = 0,
   discountedUnits = {},
   discountTotalCents = 0,
   appliedCode = null,
@@ -25,6 +27,8 @@ export function CartView({
 }: {
   lines: CartLineView[];
   subtotalCents: number;
+  /** Free-delivery threshold from settings; 0 = off. */
+  freeShippingFromCents?: number;
   /** line id → unit price after automatic discounts. */
   discountedUnits?: Record<number, number>;
   /** Total automatic discount, as checkout computes it. */
@@ -239,6 +243,15 @@ export function CartView({
             </form>
           )}
           {(codeMsg || codeError) && <p className="mt-2 text-xs text-error">{codeMsg ?? codeError}</p>}
+        </div>
+        <div className="mt-4">
+          <FreeShippingProgress
+            thresholdCents={freeShippingFromCents}
+            amountCents={totalAfter}
+            remainingLabel={dict.cart.freeShippingRemaining}
+            unlockedLabel={dict.cart.freeShippingUnlocked}
+            money={money}
+          />
         </div>
         <p className="mt-3 text-xs leading-relaxed text-on-surface-variant">{dict.cart.shippingNote}</p>
         <Link

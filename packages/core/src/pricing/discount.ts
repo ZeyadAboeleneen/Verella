@@ -1,6 +1,13 @@
 import { toCents, addCents, clampCents } from "../money";
 
-export type DiscountType = "percent" | "fixed";
+/**
+ * percent / fixed — off the matching items.
+ * bxgy_* — "buy X get Y": for every `buyQty` matching items bought, the next
+ * `getQty` (the cheapest ones) are free, `value`% off, or `value` EGP off each.
+ */
+export type DiscountType = "percent" | "fixed" | "bxgy_free" | "bxgy_percent" | "bxgy_fixed";
+
+export const isBuyXGetY = (type: DiscountType) => type === "bxgy_free" || type === "bxgy_percent" || type === "bxgy_fixed";
 export type DiscountScope = "all" | "category" | "product";
 
 /**
@@ -21,6 +28,9 @@ export interface DiscountLike {
   startsAt: Date;
   endsAt: Date;
   isActive: boolean;
+  /** Buy X get Y: how many to buy, and how many get the reward. */
+  buyQty?: number | null;
+  getQty?: number | null;
   productIds?: number[];
   categoryIds?: number[];
 }
@@ -55,12 +65,41 @@ function matchingSubtotalCents(discount: DiscountLike, lines: CartLineLike[]): n
 
 /** Amount this discount removes, capped to what it actually applies to. Does not mutate usedCount. */
 export function computeDiscountAmountCents(discount: DiscountLike, lines: CartLineLike[]): number {
+  if (isBuyXGetY(discount.type)) return buyXGetYAmountCents(discount, lines);
   const base = matchingSubtotalCents(discount, lines);
   if (base <= 0) return 0;
   if (discount.type === "percent") {
     return clampCents((base * toCents(discount.value)) / 100 / 100, 0);
   }
   return clampCents(Math.min(toCents(discount.value), base), 0);
+}
+
+/**
+ * Buy X get Y. Matching items are lined up from most to least expensive and
+ * taken in groups of X + Y; in each full group the last Y (the cheapest)
+ * get the reward. So the customer always pays for the pricier items.
+ */
+function buyXGetYAmountCents(discount: DiscountLike, lines: CartLineLike[]): number {
+  const buy = Math.floor(discount.buyQty ?? 0);
+  const get = Math.floor(discount.getQty ?? 0);
+  if (buy < 1 || get < 1) return 0;
+  const units: number[] = [];
+  for (const l of lines) {
+    if (!lineMatchesDiscount(discount, l)) continue;
+    for (let q = 0; q < l.quantity; q++) units.push(l.unitPriceCents);
+  }
+  units.sort((a, b) => b - a);
+  const group = buy + get;
+  let total = 0;
+  for (let start = 0; start + group <= units.length; start += group) {
+    for (let k = start + buy; k < start + group; k++) {
+      const price = units[k];
+      if (discount.type === "bxgy_free") total += price;
+      else if (discount.type === "bxgy_percent") total += (price * Math.min(100, toCents(discount.value) / 100)) / 100;
+      else total += Math.min(toCents(discount.value), price);
+    }
+  }
+  return clampCents(total, 0);
 }
 
 export interface DiscountValidationContext {

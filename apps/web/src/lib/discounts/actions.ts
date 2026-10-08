@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CATALOG_CACHE_TAG } from "@/lib/store/queries";
 import { eq } from "drizzle-orm";
 import { db, discounts, discountProducts, discountCategories } from "@verella/db";
 import { discountSchema, type DiscountInput } from "@verella/core";
@@ -10,6 +11,8 @@ import { logActivity } from "@/lib/activity/log";
 function revalidateDiscounts() {
   revalidatePath("/admin/discounts");
   revalidatePath("/store");
+  // Product cards show discounted prices and offer badges from the cached catalog.
+  updateTag(CATALOG_CACHE_TAG);
 }
 
 export async function createDiscountAction(input: DiscountInput): Promise<ActionResult<{ id: number }>> {
@@ -31,7 +34,9 @@ export async function createDiscountAction(input: DiscountInput): Promise<Action
       .values({
         name: data.name,
         type: data.type,
-        value: data.value,
+        value: data.type === "bxgy_free" ? "0.00" : data.value,
+        buyQty: data.type.startsWith("bxgy") ? (data.buyQty ?? null) : null,
+        getQty: data.type.startsWith("bxgy") ? (data.getQty ?? null) : null,
         scope: data.scope,
         code: data.code || null,
         minOrderTotal: data.minOrderTotal ?? null,
@@ -76,7 +81,9 @@ export async function updateDiscountAction(id: number, input: DiscountInput): Pr
       .set({
         name: data.name,
         type: data.type,
-        value: data.value,
+        value: data.type === "bxgy_free" ? "0.00" : data.value,
+        buyQty: data.type.startsWith("bxgy") ? (data.buyQty ?? null) : null,
+        getQty: data.type.startsWith("bxgy") ? (data.getQty ?? null) : null,
         scope: data.scope,
         code: data.code || null,
         minOrderTotal: data.minOrderTotal ?? null,

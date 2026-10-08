@@ -17,10 +17,12 @@ import {
   type OrderStatus,
 } from "@verella/db";
 import { localizedPath, siteUrl } from "@/lib/seo";
-import { getAdminWhatsAppPhone, getSiteName } from "@/lib/settings/queries";
+import { getAdminWhatsAppPhone, getSiteName, getWalletDetails } from "@/lib/settings/queries";
 import { isEmailConfigured, sendEmail } from "@/lib/email/mailer";
 import {
   buildAdminNewOrderMessage,
+  buildDepositRefundMessage,
+  buildDepositRequestMessage,
   buildOrderInvoiceMessage,
   buildOrderStatusMessage,
   checkInvoiceEligibility,
@@ -82,6 +84,7 @@ export function triggerOrderWhatsAppInvoice(orderId: number): void {
  */
 export function triggerNewOrderWhatsApp(orderId: number): void {
   after(async () => {
+    logResult(orderId, "whatsapp deposit request", await sendOrderWhatsAppDepositRequest(orderId));
     logResult(orderId, "whatsapp invoice", await sendOrderWhatsAppInvoice(orderId));
     logResult(orderId, "email invoice", await sendOrderEmailInvoice(orderId));
     logResult(orderId, "new-order alert", await sendAdminNewOrderAlert(orderId));
@@ -92,13 +95,43 @@ export function triggerNewOrderWhatsApp(orderId: number): void {
  * For an admin status change: (re)try the confirmation if it hasn't gone out
  * yet, then send this status's update — once per status and channel, ever.
  */
-export function triggerOrderWhatsAppStatusUpdate(orderId: number, status: OrderStatus): void {
+export function triggerOrderWhatsAppStatusUpdate(orderId: number, status: OrderStatus, opts: { depositRefunded?: boolean } = {}): void {
   after(async () => {
     logResult(orderId, "whatsapp invoice", await sendOrderWhatsAppInvoice(orderId));
     logResult(orderId, "email invoice", await sendOrderEmailInvoice(orderId));
     if (!isNotifiedStatus(status)) return;
     logResult(orderId, `whatsapp "${status}" update`, await sendOrderWhatsAppStatusUpdate(orderId, status));
     logResult(orderId, `email "${status}" update`, await sendOrderEmailStatusUpdate(orderId, status));
+    // After the cancellation message, so the customer reads them in order.
+    if (status === "cancelled" && opts.depositRefunded) {
+      logResult(orderId, "whatsapp deposit refund", await sendOrderWhatsAppDepositRefund(orderId));
+    }
+  });
+}
+
+/** Cancelled order whose deposit the store is refunding — tell the customer. Once only. */
+export async function sendOrderWhatsAppDepositRefund(orderId: number): Promise<NotificationResult> {
+  return guard(orderId, "whatsapp", "deposit_refund", async (state) => {
+    const ctx = await loadOrder(orderId);
+    if (!ctx) return { status: "skipped", reason: "order_not_found" };
+    if (ctx.order.status !== "cancelled" || ctx.order.depositKept || !(Number(ctx.order.depositAmount) > 0)) {
+      return { status: "skipped", reason: "status_changed" };
+    }
+    const jid = toWhatsAppId(ctx.phone);
+    if (!jid) return { status: "skipped", reason: "invalid_phone" };
+    const store = await storeName(ctx.locale);
+    return deliverOnce(orderId, "whatsapp", "deposit_refund", jid, state, async () =>
+      sendText(
+        jid,
+        buildDepositRefundMessage({
+          orderNumber: ctx.order.orderNumber,
+          customerName: ctx.customerName,
+          depositAmount: ctx.order.depositAmount,
+          storeName: store,
+          locale: ctx.locale,
+        }),
+      ),
+    );
   });
 }
 
@@ -186,6 +219,7 @@ async function invoiceData(ctx: OrderContext, invite: { userId: number; login: s
     discountTotal: order.discountTotal,
     deliveryFee: order.deliveryFee,
     grandTotal: order.grandTotal,
+    depositAmount: order.depositAmount,
     paymentMethodCode: ctx.payment!.methodCode,
     address: ctx.address ?? null,
     trackingUrl: ctx.trackingUrl,
@@ -201,7 +235,8 @@ async function statusData(ctx: OrderContext, status: OrderStatus): Promise<Statu
     status,
     fulfillmentType: order.fulfillmentType,
     paymentMethodCode: ctx.payment?.methodCode ?? "",
-    grandTotal: order.grandTotal,
+    // The cash still to collect: total minus any deposit already paid.
+    grandTotal: (Number(order.grandTotal) - Number(order.depositAmount ?? 0)).toFixed(2),
     customerName: ctx.customerName,
     trackingUrl: ctx.trackingUrl,
     storeName: await storeName(ctx.locale),
@@ -228,6 +263,7 @@ export async function sendOrderWhatsAppInvoice(orderId: number): Promise<Notific
       paymentMethodCode: ctx.payment?.methodCode ?? null,
       paymentStatus: ctx.payment?.status ?? null,
       phone: ctx.phone,
+      depositRequired: Number(ctx.order.depositAmount) > 0,
       invoiceStatus: (ctx.invoice.whatsapp?.status as NotificationStatus | undefined) ?? null,
     });
     if (!eligibility.eligible) return { status: "skipped", reason: eligibility.reason };
@@ -243,6 +279,39 @@ export async function sendOrderWhatsAppInvoice(orderId: number): Promise<Notific
         ? { userId: account.userId, login: account.email ?? jidToLocalPhone(jid) ?? ctx.phone! }
         : null;
     return deliverOnce(orderId, "whatsapp", "invoice", jid, state, async () => sendText(jid, buildOrderInvoiceMessage(await invoiceData(ctx, invite))));
+  });
+}
+
+/**
+ * Cash on delivery with a deposit: right after the order is placed, ask for the
+ * deposit (wallet details + "send the screenshot here"). Once only. The full
+ * confirmation follows when an admin confirms the order.
+ */
+export async function sendOrderWhatsAppDepositRequest(orderId: number): Promise<NotificationResult> {
+  return guard(orderId, "whatsapp", "deposit_request", async (state) => {
+    const ctx = await loadOrder(orderId);
+    if (!ctx) return { status: "skipped", reason: "order_not_found" };
+    if (ctx.payment?.methodCode !== "cash_on_delivery" || !(Number(ctx.order.depositAmount) > 0)) {
+      return { status: "skipped", reason: "not_notified" };
+    }
+    if (ctx.order.status !== "pending") return { status: "skipped", reason: "status_changed" };
+    const jid = toWhatsAppId(ctx.phone);
+    if (!jid) return { status: "skipped", reason: "invalid_phone" };
+    const [wallets, store] = await Promise.all([getWalletDetails(), storeName(ctx.locale)]);
+    return deliverOnce(orderId, "whatsapp", "deposit_request", jid, state, async () =>
+      sendText(
+        jid,
+        buildDepositRequestMessage({
+          orderNumber: ctx.order.orderNumber,
+          customerName: ctx.customerName,
+          grandTotal: ctx.order.grandTotal,
+          depositAmount: ctx.order.depositAmount,
+          wallets,
+          storeName: store,
+          locale: ctx.locale,
+        }),
+      ),
+    );
   });
 }
 

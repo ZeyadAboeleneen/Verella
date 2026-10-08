@@ -53,6 +53,10 @@ function FieldError({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs text-error">{message}</p> : null;
 }
 
+import { FreeShippingProgress } from "@/components/cart/free-shipping-progress";
+
+import { codDepositCents, type CodDepositSetting } from "@/lib/checkout/cod-deposit-calc";
+
 export function CheckoutForm({
   isLoggedIn,
   accountContact,
@@ -65,6 +69,8 @@ export function CheckoutForm({
   cartLines,
   initialSubtotalCents,
   initialDiscountCode,
+  freeShippingFromCents = 0,
+  codDeposit = { type: "off", value: "" },
 }: {
   isLoggedIn: boolean;
   /** Logged-in account's contact details, to prefill the pickup contact without a re-type. */
@@ -80,6 +86,10 @@ export function CheckoutForm({
   initialSubtotalCents: number;
   /** Code already applied in the cart. */
   initialDiscountCode?: string;
+  /** Free-delivery threshold from settings; 0 = off. */
+  freeShippingFromCents?: number;
+  /** Cash-on-delivery deposit setting (Admin → Settings). */
+  codDeposit?: CodDepositSetting;
 }) {
   const t = dict.checkout;
   const money = (cents: number) => formatMoney(cents, "EGP", locale);
@@ -93,6 +103,8 @@ export function CheckoutForm({
     grandTotalCents: initialSubtotalCents,
   });
   const [previewPending, setPreviewPending] = useState(false);
+  // Same maths as the order itself (percentage excludes delivery).
+  const depositCents = codDepositCents(codDeposit, preview.grandTotalCents, preview.deliveryFeeCents);
   const [applyingDiscount, setApplyingDiscount] = useState(false);
   // Only an explicit Apply commits a code to pricing — not every keystroke.
   const [appliedCode, setAppliedCode] = useState<string | undefined>(initialDiscountCode || undefined);
@@ -231,7 +243,24 @@ export function CheckoutForm({
       {fulfillmentType === "delivery" && (
         <div className="flex justify-between">
           <dt className="text-on-surface-variant">{t.deliveryFee}</dt>
-          <dd className="text-charcoal">{needsGovernorate ? <span className="text-xs text-on-surface-variant">{t.deliveryPending}</span> : money(preview.deliveryFeeCents)}</dd>
+          <dd className="text-charcoal">{needsGovernorate ? <span className="text-xs text-on-surface-variant">{t.deliveryPending}</span> : preview.deliveryFeeCents === 0 &&
+            freeShippingFromCents > 0 &&
+            preview.subtotalCents - preview.discountTotalCents >= freeShippingFromCents ? (
+            <span className="font-medium text-gold-ink">{dict.cart.freeDelivery}</span>
+          ) : (
+            money(preview.deliveryFeeCents)
+          )}</dd>
+        </div>
+      )}
+      {fulfillmentType === "delivery" && freeShippingFromCents > 0 && (
+        <div>
+          <FreeShippingProgress
+            thresholdCents={freeShippingFromCents}
+            amountCents={preview.subtotalCents - preview.discountTotalCents}
+            remainingLabel={dict.cart.freeShippingRemaining}
+            unlockedLabel={dict.cart.freeShippingUnlocked}
+            money={money}
+          />
         </div>
       )}
       <div className="flex items-baseline justify-between border-t border-beige pt-3">
@@ -496,6 +525,16 @@ export function CheckoutForm({
                   <span>
                     <span className="block text-sm text-charcoal">{m.label}</span>
                     <span className="mt-0.5 block text-xs text-on-surface-variant">{m.hint}</span>
+                    {code === "cash_on_delivery" && depositCents > 0 && (
+                      <span className="mt-2 block rounded-lg border border-gold/40 bg-gold/10 px-3 py-2">
+                        <span className="block text-sm font-semibold text-gold-ink">
+                          {t.codDepositTitle.replace("{amount}", money(depositCents))}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-charcoal">
+                          {t.codDepositBody.replace("{rest}", money(preview.grandTotalCents - depositCents))}
+                        </span>
+                      </span>
+                    )}
                   </span>
                 </label>
               );

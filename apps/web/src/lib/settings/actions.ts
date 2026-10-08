@@ -21,6 +21,11 @@ export interface SiteSettingsInput {
   theme: SiteTheme;
   currency: string;
   deliveryFee: string;
+  /** Orders at or above this amount (after discounts) ship free; empty = off. */
+  freeShippingThreshold: string;
+  /** Cash-on-delivery deposit: off, a % of the order total, or a fixed amount. */
+  codDepositType: "off" | "percent" | "fixed";
+  codDepositValue: string;
   governorateFees: GovernorateFee[];
   notificationEmail: string;
   /** WhatsApp number for new-order alerts; empty disables them. */
@@ -49,6 +54,10 @@ export async function updateSiteSettingsAction(input: SiteSettingsInput): Promis
   if ("error" in guard) return guard;
 
   if (!isFee(input.deliveryFee.trim())) return { error: "Default delivery fee must be a number of 0 or more." };
+  const freeShippingThreshold = input.freeShippingThreshold.trim();
+  if (freeShippingThreshold && !(isFee(freeShippingThreshold) && Number(freeShippingThreshold) > 0)) {
+    return { error: "Free delivery amount must be a number above 0 (or leave it empty to turn it off)." };
+  }
 
   // Only the 27 governorates are valid keys; a blank fee means "use the default".
   const known = new Set<string>(GOVERNORATE_NAMES);
@@ -56,6 +65,14 @@ export async function updateSiteSettingsAction(input: SiteSettingsInput): Promis
     .map((g) => ({ name: g.name.trim(), fee: g.fee.trim() }))
     .filter((g) => known.has(g.name) && isFee(g.fee))
     .map((g) => ({ name: g.name, fee: Number(g.fee).toFixed(2) }));
+
+  const codDepositType = input.codDepositType === "percent" || input.codDepositType === "fixed" ? input.codDepositType : "off";
+  const codDepositValue = input.codDepositValue.trim();
+  if (codDepositType !== "off") {
+    const n = Number(codDepositValue);
+    if (!codDepositValue || !Number.isFinite(n) || n <= 0) return { error: "Cash on delivery deposit must be a number above 0." };
+    if (codDepositType === "percent" && n > 100) return { error: "Deposit percentage can't be more than 100." };
+  }
 
   const notificationEmail = input.notificationEmail.trim();
   const notificationWhatsApp = input.notificationWhatsApp.trim();
@@ -83,6 +100,8 @@ export async function updateSiteSettingsAction(input: SiteSettingsInput): Promis
     upsertSetting("site", "currency", input.currency),
     upsertSetting("checkout", "delivery_fee", Number(input.deliveryFee).toFixed(2)),
     upsertSetting("checkout", "governorate_fees", governorateFees),
+    upsertSetting("checkout", "cod_deposit", { type: codDepositType, value: codDepositType === "off" ? "" : String(Number(codDepositValue)) }),
+    upsertSetting("checkout", "free_shipping_threshold", freeShippingThreshold ? Number(freeShippingThreshold).toFixed(2) : ""),
     upsertSetting("notifications", "email", notificationEmail),
     // Stored in local form (01012345678) so it reads naturally when edited again.
     upsertSetting("notifications", "whatsapp_phone", whatsAppIntl ? `0${whatsAppIntl.slice(2)}` : ""),

@@ -14,7 +14,7 @@ import {
   media,
   type VariantAxis,
 } from "@verella/db";
-import { formatMoney, toCents, computeDiscountAmountCents, isDiscountWindowOpen, type Locale, type DiscountLike } from "@verella/core";
+import { formatMoney, toCents, computeDiscountAmountCents, isDiscountWindowOpen, isBuyXGetY, lineMatchesDiscount, type Locale, type DiscountLike } from "@verella/core";
 import { getAutoDiscounts } from "@/lib/discounts/resolve";
 import { withDbTimeout } from "@/lib/db-timeout";
 
@@ -73,6 +73,8 @@ export interface StoreProductView {
   rating: number | null;
   tag: string;
   badge?: string;
+  /** Automatic "Buy 2 get 1 free"-style offer this product is part of, ready to show. */
+  offer?: string;
   image: string;
   /** Second photo, revealed on hover in listings; null when there's only one. */
   hoverImage: string | null;
@@ -112,6 +114,26 @@ export function applyAutoDiscount(priceCents: number, categoryIds: number[], pro
     if (amount > bestDiscountCents) bestDiscountCents = amount;
   }
   return Math.max(0, priceCents - bestDiscountCents);
+}
+
+/** "Buy 2 get 1 free" (or % / amount off) for the first open automatic buy-X-get-Y offer covering this product. */
+function buyXGetYOfferLabel(productId: number, categoryIds: number[], autoDiscounts: DiscountLike[], locale: Locale, now = new Date()): string | undefined {
+  const d = autoDiscounts.find(
+    (x) =>
+      isBuyXGetY(x.type) &&
+      (x.buyQty ?? 0) > 0 &&
+      (x.getQty ?? 0) > 0 &&
+      isDiscountWindowOpen(x, now) &&
+      lineMatchesDiscount(x, { productId, categoryId: categoryIds[0], categoryIds, unitPriceCents: 0, quantity: 1 }),
+  );
+  if (!d) return undefined;
+  const reward =
+    d.type === "bxgy_free"
+      ? locale === "ar" ? "مجاناً" : "free"
+      : d.type === "bxgy_percent"
+        ? locale === "ar" ? `بخصم ${Number(d.value)}%` : `${Number(d.value)}% off`
+        : locale === "ar" ? `بخصم ${formatMoney(toCents(d.value), "EGP", locale)}` : `${formatMoney(toCents(d.value), "EGP", locale)} off`;
+  return locale === "ar" ? `اشترِ ${d.buyQty} واحصل على ${d.getQty} ${reward}` : `Buy ${d.buyQty} get ${d.getQty} ${reward}`;
 }
 
 /** productId → extra category ids (beyond the primary store_products.category_id). */
@@ -368,6 +390,7 @@ async function getStoreProductsImpl(locale: Locale = "en", filter: string | Stor
       rating: p.rating ? Number(p.rating) : null,
       tag: category?.slug ?? "",
       badge: p.isBestSeller ? "Bestseller" : undefined,
+      offer: buyXGetYOfferLabel(p.id, p.categoryIds, autoDiscounts, locale),
       image: primaryMedia?.url ?? "",
       hoverImage: hoverMedia?.url ?? null,
       alt: t?.name ?? p.slug,
@@ -439,6 +462,7 @@ async function getStoreProductBySlugImpl(slug: string, locale: Locale = "en"): P
     rating: product.rating ? Number(product.rating) : null,
     tag: category?.slug ?? "",
     badge: product.isBestSeller ? "Bestseller" : undefined,
+    offer: buyXGetYOfferLabel(product.id, product.categoryIds, autoDiscounts, locale),
     image: primaryMedia?.url ?? "",
     hoverImage: mediaRows.find((m) => m !== primaryMedia)?.url ?? null,
     alt: t?.name ?? product.slug,

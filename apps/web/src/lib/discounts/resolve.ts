@@ -23,6 +23,8 @@ async function toDiscountLike(rows: (typeof discounts.$inferSelect)[]): Promise<
     startsAt: r.startsAt,
     endsAt: r.endsAt,
     isActive: r.isActive,
+    buyQty: r.buyQty,
+    getQty: r.getQty,
     productIds: prodLinks.filter((l) => l.discountId === r.id).map((l) => l.storeProductId),
     categoryIds: catLinks.filter((l) => l.discountId === r.id).map((l) => l.storeCategoryId),
   }));

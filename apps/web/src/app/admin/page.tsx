@@ -1,17 +1,37 @@
-import { count, sum, eq, inArray, lt, and, isNull, desc, gte, sql } from "drizzle-orm";
+import { count, eq, inArray, lt, and, isNull, desc, gte, sql } from "drizzle-orm";
 import { db, orders, payments, storeProducts, orderItems, customers } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";
 import Link from "@/components/LocaleLink";
 import { VMark } from "@/components/brand/Logo";
 import { RevenueBarChart, OrderStatusDonut } from "@/components/admin/dashboard-charts";
 import type { OrderStatus } from "@verella/db";
+import { AdminDateFilter } from "@/components/admin/admin-date-filter";
+import { periodRange } from "@/lib/admin/date-range";
 
 // ─── Data queries ──────────────────────────────────────────────────────────
+
+/**
+ * Revenue an order has earned so far (products only, no delivery fee):
+ *  - completed → the full amount;
+ *  - confirmed / in progress with a cash-on-delivery deposit → the deposit
+ *    (the rest is counted once it's delivered);
+ *  - cancelled with the deposit kept (not refunded) → the deposit;
+ *  - pending / other cancelled → nothing.
+ */
+const earnedRevenue = sql<string>`CASE
+  WHEN ${orders.status} = 'completed' THEN ${orders.grandTotal} - ${orders.deliveryFee}
+  WHEN ${orders.status} IN ('confirmed', 'preparing', 'out_for_delivery', 'ready_for_pickup')
+    THEN LEAST(${orders.depositAmount}, ${orders.grandTotal} - ${orders.deliveryFee})
+  WHEN ${orders.status} = 'cancelled' AND ${orders.depositKept}
+    THEN LEAST(${orders.depositAmount}, ${orders.grandTotal} - ${orders.deliveryFee})
+  ELSE 0 END`;
+// "cancelled" only adds a deposit the store kept (see earnedRevenue).
+const earningStatuses: OrderStatus[] = ["confirmed", "preparing", "out_for_delivery", "ready_for_pickup", "completed", "cancelled"];
 
 async function getKpis() {
   const [[orderCount], [revenue], [pendingPayments], [lowStock], [customerCount]] = await Promise.all([
     db.select({ value: count() }).from(orders),
-    db.select({ value: sum(orders.grandTotal) }).from(orders).where(eq(orders.status, "completed")),
+    db.select({ value: sql<string>`SUM(${earnedRevenue})` }).from(orders).where(inArray(orders.status, earningStatuses)),
     db.select({ value: count() }).from(payments).where(inArray(payments.status, ["pending", "submitted"])),
     db.select({ value: count() }).from(storeProducts).where(and(eq(storeProducts.isActive, true), lt(storeProducts.stockQty, 10), isNull(storeProducts.deletedAt))),
     db.select({ value: count() }).from(customers),
@@ -34,25 +54,57 @@ async function getOrdersByStatus() {
   return all.map((s) => ({ name: s, value: rows.find((r) => r.status === s)?.count ?? 0 }));
 }
 
-async function getLast7DaysRevenue() {
-  const days: { day: string; revenue: number }[] = [];
+/**
+ * Completed revenue for a range, one bar per day (≤ 62 days) or per month.
+ * No range picked → last 7 days.
+ */
+async function getRevenueSeries(range: ReturnType<typeof periodRange>) {
   const now = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    d.setHours(0, 0, 0, 0);
-    const next = new Date(d);
-    next.setDate(next.getDate() + 1);
-    const [row] = await db
-      .select({ total: sum(orders.grandTotal) })
-      .from(orders)
-      .where(and(eq(orders.status, "completed"), gte(orders.placedAt, d), lt(orders.placedAt, next)));
-    days.push({
-      day: d.toLocaleDateString("en-US", { weekday: "short" }),
-      revenue: toCents(row?.total ?? "0"),
-    });
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+  let from = range?.from ?? new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+  const to = range?.to ?? tomorrow; // exclusive
+  if (!range?.from) {
+    // "Until <date>" with no start: begin at the first order.
+    if (range) {
+      const [first] = await db.select({ at: sql<Date>`MIN(${orders.placedAt})` }).from(orders);
+      if (first?.at) {
+        const f = new Date(first.at);
+        from = new Date(f.getFullYear(), f.getMonth(), f.getDate());
+      }
+    }
   }
-  return days;
+
+  const rows = await db
+    .select({ placedAt: orders.placedAt, total: earnedRevenue })
+    .from(orders)
+    .where(and(inArray(orders.status, earningStatuses), gte(orders.placedAt, from), lt(orders.placedAt, to)));
+
+  const spanDays = Math.round((to.getTime() - from.getTime()) / 86_400_000);
+  const byMonth = spanDays > 62;
+  const keyOf = (d: Date) => (byMonth ? `${d.getFullYear()}-${d.getMonth()}` : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+
+  const totals = new Map<string, number>();
+  for (const r of rows) {
+    const k = keyOf(new Date(r.placedAt));
+    totals.set(k, (totals.get(k) ?? 0) + toCents(r.total));
+  }
+
+  const series: { day: string; revenue: number }[] = [];
+  const cursor = byMonth ? new Date(from.getFullYear(), from.getMonth(), 1) : new Date(from);
+  while (cursor < to) {
+    const label = byMonth
+      ? cursor.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
+      : spanDays <= 7
+        ? cursor.toLocaleDateString("en-US", { weekday: "short" })
+        : cursor.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    series.push({ day: label, revenue: totals.get(keyOf(cursor)) ?? 0 });
+    if (byMonth) cursor.setMonth(cursor.getMonth() + 1);
+    else cursor.setDate(cursor.getDate() + 1);
+  }
+  const totalCents = series.reduce((s, p) => s + p.revenue, 0);
+  return { series, totalCents, label: range?.label ?? "Last 7 days" };
 }
 
 async function getRecentOrders(limit = 8) {
@@ -107,11 +159,17 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
 };
 
 // ─── Page ──────────────────────────────────────────────────────────────────
-export default async function AdminOverviewPage() {
-  const [kpis, statusData, revenueData, recentOrders, topProducts] = await Promise.all([
+export default async function AdminOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
+}) {
+  const sp = await searchParams;
+  const range = periodRange(sp.period, sp.from, sp.to);
+  const [kpis, statusData, revenue, recentOrders, topProducts] = await Promise.all([
     getKpis(),
     getOrdersByStatus(),
-    getLast7DaysRevenue(),
+    getRevenueSeries(range),
     getRecentOrders(),
     getTopProducts(),
   ]);
@@ -125,7 +183,7 @@ export default async function AdminOverviewPage() {
       border: "border-blue-100",
     },
     {
-      label: "Completed Revenue",
+      label: "Revenue",
       value: formatMoney(kpis.revenueCents),
       icon: "payments",
       color: "bg-emerald-50 text-emerald-600",
@@ -189,14 +247,16 @@ export default async function AdminOverviewPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Revenue Bar Chart — takes 2 cols */}
         <div className="lg:col-span-2 rounded-2xl border border-outline-variant/60 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="font-display text-base font-semibold text-on-surface">Revenue — Last 7 Days</h2>
-              <p className="text-xs text-on-surface-variant">Completed orders only (EGP)</p>
+              <h2 className="font-display text-base font-semibold text-on-surface">Revenue — {revenue.label}</h2>
+              <p className="text-xs text-on-surface-variant">
+                Completed orders + paid deposits, excluding delivery fees · Total <span className="font-semibold text-on-surface">{formatMoney(revenue.totalCents)}</span>
+              </p>
             </div>
-            <span className="material-symbols-outlined text-gold text-2xl select-none">bar_chart</span>
+            <AdminDateFilter emptyLabel="Last 7 days" />
           </div>
-          <RevenueBarChart data={revenueData} />
+          <RevenueBarChart data={revenue.series} />
         </div>
 
         {/* Order Status Donut */}

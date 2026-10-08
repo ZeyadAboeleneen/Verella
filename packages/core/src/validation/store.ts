@@ -50,7 +50,7 @@ export type StoreProductInput = z.infer<typeof storeProductSchema>;
 export const discountSchema = z
   .object({
     name: z.string().min(1, "Name is required").max(191),
-    type: z.enum(["percent", "fixed"]),
+    type: z.enum(["percent", "fixed", "bxgy_free", "bxgy_percent", "bxgy_fixed"]),
     value: decimalString,
     scope: z.enum(["all", "category", "product"]),
     code: z
@@ -65,8 +65,19 @@ export const discountSchema = z
     startsAt: z.coerce.date(),
     endsAt: z.coerce.date(),
     isActive: z.boolean().default(true),
+    /** Buy X get Y only. */
+    buyQty: z.coerce.number().int().positive().nullable().optional(),
+    getQty: z.coerce.number().int().positive().nullable().optional(),
     productIds: z.array(z.coerce.number().int().positive()).default([]),
     categoryIds: z.array(z.coerce.number().int().positive()).default([]),
+  })
+  .refine((d) => !d.type.startsWith("bxgy") || ((d.buyQty ?? 0) >= 1 && (d.getQty ?? 0) >= 1), {
+    message: "Enter how many to buy and how many they get",
+    path: ["buyQty"],
+  })
+  .refine((d) => d.type !== "bxgy_percent" || (Number(d.value) > 0 && Number(d.value) <= 100), {
+    message: "Percentage must be between 1 and 100",
+    path: ["value"],
   })
   .refine((d) => d.endsAt > d.startsAt, { message: "End date must be after start date", path: ["endsAt"] })
   .refine((d) => d.scope !== "product" || d.productIds.length > 0, {

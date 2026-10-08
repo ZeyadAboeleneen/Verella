@@ -54,6 +54,8 @@ export default async function EditDiscountPage({ params }: { params: Promise<{ i
           startsAt: discount.startsAt,
           endsAt: discount.endsAt,
           isActive: discount.isActive,
+          buyQty: discount.buyQty,
+          getQty: discount.getQty,
           productIds: linkedProducts.map((p) => p.id),
           categoryIds: linkedCategories.map((c) => c.id),
         }}

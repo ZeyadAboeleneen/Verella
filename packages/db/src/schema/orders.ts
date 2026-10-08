@@ -1,4 +1,4 @@
-import { char, decimal, index, int, json, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, char, decimal, index, int, json, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
 import { fk, id, softDelete, timestamps, uuid } from "./_helpers";
 import { branches } from "./branches";
 import { users } from "./auth";
@@ -36,6 +36,10 @@ export const orders = mysqlTable(
     taxTotal: decimal("tax_total", { precision: 12, scale: 2 }).notNull().default("0.00"),
     deliveryFee: decimal("delivery_fee", { precision: 12, scale: 2 }).notNull().default("0.00"),
     grandTotal: decimal("grand_total", { precision: 12, scale: 2 }).notNull(),
+    /** Cash-on-delivery deposit asked up front (InstaPay / Vodafone Cash); 0 = none. Deducted from cash due on delivery. */
+    depositAmount: decimal("deposit_amount", { precision: 12, scale: 2 }).notNull().default("0.00"),
+    /** Cancelled after the deposit was paid and the store kept it (not refunded) — still counts as revenue. */
+    depositKept: boolean("deposit_kept").notNull().default(false),
     currency: char("currency", { length: 3 }).notNull().default("EGP"),
     /** Site language the order was placed in — customer messages use it. */
     locale: varchar("locale", { length: 5 }).notNull().default("ar").$type<"ar" | "en">(),

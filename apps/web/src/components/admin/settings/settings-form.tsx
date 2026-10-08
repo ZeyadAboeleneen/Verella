@@ -28,6 +28,7 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
   );
   const [methods, setMethods] = useState(initial.paymentMethods);
   const [theme, setTheme] = useState<SiteTheme>(initial.theme);
+  const [depositType, setDepositType] = useState(initial.codDepositType);
 
   async function onSubmit(formData: FormData) {
     setPending(true);
@@ -38,6 +39,9 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
       theme,
       currency: String(formData.get("currency")),
       deliveryFee: String(formData.get("deliveryFee")),
+      freeShippingThreshold: String(formData.get("freeShippingThreshold") ?? ""),
+      codDepositType: depositType,
+      codDepositValue: String(formData.get("codDepositValue") ?? ""),
       governorateFees: Object.entries(fees).map(([name, fee]) => ({ name, fee })),
       notificationEmail: String(formData.get("notificationEmail")),
       notificationWhatsApp: String(formData.get("notificationWhatsApp") ?? ""),
@@ -124,6 +128,48 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Cash on delivery deposit</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-on-surface-variant">
+            When on, cash on delivery orders stay pending and the customer gets a WhatsApp message asking for this deposit by InstaPay or
+            Vodafone Cash (with the account details below) and a screenshot in the chat. Confirm the order yourself once it&apos;s paid — the
+            full confirmation is sent then. The deposit is taken off the cash due on delivery.
+          </p>
+          <div className="flex flex-wrap items-end gap-4">
+            <div>
+              <Label htmlFor="codDepositType">Deposit</Label>
+              <select
+                id="codDepositType"
+                value={depositType}
+                onChange={(e) => setDepositType(e.target.value as typeof depositType)}
+                className="h-11 rounded-xl border border-outline-variant bg-surface-container-lowest px-3 text-sm text-on-surface outline-none focus:border-on-surface"
+              >
+                <option value="off">Off — no deposit</option>
+                <option value="percent">Percentage of the order (without delivery)</option>
+                <option value="fixed">Fixed amount</option>
+              </select>
+            </div>
+            {depositType !== "off" && (
+              <div className="w-40">
+                <Label htmlFor="codDepositValue">{depositType === "percent" ? "Percentage (%)" : "Amount (EGP)"}</Label>
+                <Input
+                  id="codDepositValue"
+                  name="codDepositValue"
+                  type="number"
+                  step={depositType === "percent" ? "1" : "0.01"}
+                  min="0"
+                  max={depositType === "percent" ? "100" : undefined}
+                  defaultValue={initial.codDepositValue}
+                />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Wallet transfer details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -160,6 +206,24 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
               <Input id="deliveryFee" name="deliveryFee" type="number" step="0.01" min="0" defaultValue={initial.deliveryFee} />
             </div>
             <p className="pb-3 text-xs text-on-surface-variant">Used for any governorate left blank below.</p>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-4 rounded-xl border border-outline-variant/60 bg-surface-container-low p-4">
+            <div className="w-44">
+              <Label htmlFor="freeShippingThreshold">Free delivery from (EGP)</Label>
+              <Input
+                id="freeShippingThreshold"
+                name="freeShippingThreshold"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Off"
+                defaultValue={initial.freeShippingThreshold}
+              />
+            </div>
+            <p className="pb-3 text-xs text-on-surface-variant">
+              Orders of this amount or more (after discounts) get free delivery to any governorate. Leave empty to turn it off.
+            </p>
           </div>
 
           <div>

@@ -35,8 +35,19 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
       }))}
       subtotalFormatted={money(order.subtotal)}
       discountFormatted={Number(order.discountTotal) > 0 ? money(order.discountTotal) : null}
-      deliveryFeeFormatted={order.fulfillmentType === "delivery" ? money(order.deliveryFee) : null}
+      deliveryFeeFormatted={
+        order.fulfillmentType === "delivery" ? (Number(order.deliveryFee) === 0 ? dict.cart.freeDelivery : money(order.deliveryFee)) : null
+      }
       totalFormatted={money(order.grandTotal)}
+      deposit={
+        methodCode === "cash_on_delivery" && Number(order.depositAmount) > 0
+          ? {
+              amountFormatted: money(order.depositAmount),
+              dueFormatted: money((Number(order.grandTotal) - Number(order.depositAmount)).toFixed(2)),
+              awaiting: order.status === "pending",
+            }
+          : null
+      }
       paymentMethodLabel={methodCode ? (dict.checkout.methods[methodCode]?.label ?? payment?.methodName ?? null) : null}
       deliverToValue={
         address ? [address.area, governorateLabel(address.governorate, locale)].filter(Boolean).join(locale === "ar" ? "، " : ", ") : null

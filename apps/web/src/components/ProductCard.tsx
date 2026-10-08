@@ -27,7 +27,7 @@ export default function ProductCard({
   labels: Dictionary["product"];
   soldOutLabel?: string;
 }) {
-  const { id, slug, name, brand, price, compareAtPrice, priceFrom, badge, image, hoverImage, alt, hasVariants, variants, stockQty } = product;
+  const { id, slug, name, brand, price, compareAtPrice, priceFrom, badge, offer, image, hoverImage, alt, hasVariants, variants, stockQty } = product;
   const [imgError, setImgError] = useState(false);
   const [pending, startTransition] = useTransition();
   const [added, setAdded] = useState(false);
@@ -103,6 +103,9 @@ export default function ProductCard({
             <span className="rounded-full bg-plum px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.2em] text-ivory">
               {badge}
             </span>
+          )}
+          {!soldOut && offer && (
+            <span className="rounded-full bg-charcoal px-2.5 py-1 text-[10px] font-semibold tracking-[0.03em] text-champagne">{offer}</span>
           )}
         </div>
 

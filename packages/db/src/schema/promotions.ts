@@ -3,7 +3,7 @@ import { fk, id, timestamps, uuid } from "./_helpers";
 import { branches } from "./branches";
 import { storeCategories, storeProducts } from "./store";
 
-export type DiscountType = "percent" | "fixed";
+export type DiscountType = "percent" | "fixed" | "bxgy_free" | "bxgy_percent" | "bxgy_fixed";
 export type DiscountScope = "all" | "category" | "product";
 
 export const discounts = mysqlTable("discounts", {
@@ -21,6 +21,9 @@ export const discounts = mysqlTable("discounts", {
   startsAt: timestamp("starts_at").notNull(),
   endsAt: timestamp("ends_at").notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  /** Buy X get Y: quantity to buy / quantity rewarded. Null for percent / fixed. */
+  buyQty: int("buy_qty"),
+  getQty: int("get_qty"),
   branchId: fk("branch_id").references(() => branches.id),
   ...timestamps,
 });

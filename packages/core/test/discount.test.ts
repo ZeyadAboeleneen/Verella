@@ -152,3 +152,41 @@ describe("applyDiscountsToCart", () => {
     expect(r.appliedDiscounts.find((a) => a.isCode)?.amountCents).toBe(18000);
   });
 });
+
+describe("buy X get Y", () => {
+  const bx = (type: "bxgy_free" | "bxgy_percent" | "bxgy_fixed", value: string, buyQty: number, getQty: number) => ({
+    id: 900,
+    type,
+    value,
+    scope: "all" as const,
+    code: null,
+    minOrderTotal: null,
+    maxUses: null,
+    perUserLimit: null,
+    usedCount: 0,
+    startsAt: new Date("2020-01-01"),
+    endsAt: new Date("2100-01-01"),
+    isActive: true,
+    buyQty,
+    getQty,
+  });
+  const line = (productId: number, unitPriceCents: number, quantity: number) => ({ productId, categoryId: 1, unitPriceCents, quantity });
+
+  it("buy 2 get 1 free: the cheapest of 3 is free", () => {
+    expect(computeDiscountAmountCents(bx("bxgy_free", "0", 2, 1), [line(1, 30000, 1), line(2, 20000, 1), line(3, 10000, 1)])).toBe(10000);
+  });
+  it("needs a full group", () => {
+    expect(computeDiscountAmountCents(bx("bxgy_free", "0", 2, 1), [line(1, 30000, 2)])).toBe(0);
+  });
+  it("repeats per group", () => {
+    // 6 × 100 EGP, buy 2 get 1 → 2 free
+    expect(computeDiscountAmountCents(bx("bxgy_free", "0", 2, 1), [line(1, 10000, 6)])).toBe(20000);
+  });
+  it("percent off the Y items", () => {
+    expect(computeDiscountAmountCents(bx("bxgy_percent", "50", 1, 1), [line(1, 20000, 1), line(2, 10000, 1)])).toBe(5000);
+  });
+  it("fixed off each Y item, capped at its price", () => {
+    expect(computeDiscountAmountCents(bx("bxgy_fixed", "150", 1, 1), [line(1, 20000, 1), line(2, 10000, 1)])).toBe(10000);
+    expect(computeDiscountAmountCents(bx("bxgy_fixed", "30", 1, 1), [line(1, 20000, 1), line(2, 10000, 1)])).toBe(3000);
+  });
+});

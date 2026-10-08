@@ -48,6 +48,13 @@ export default async function AdminSettingsPage() {
             : "classic") as SiteTheme,
           currency: (find("site", "currency") as string) ?? "EGP",
           deliveryFee: (find("checkout", "delivery_fee") as string) ?? "30.00",
+          freeShippingThreshold: (find("checkout", "free_shipping_threshold") as string) ?? "",
+          codDepositType: ((find("checkout", "cod_deposit") as { type?: string } | undefined)?.type === "percent"
+            ? "percent"
+            : (find("checkout", "cod_deposit") as { type?: string } | undefined)?.type === "fixed"
+              ? "fixed"
+              : "off") as "off" | "percent" | "fixed",
+          codDepositValue: (find("checkout", "cod_deposit") as { value?: string } | undefined)?.value ?? "",
           governorateFees,
           notificationEmail: (find("notifications", "email") as string) ?? BRAND_CONTACT.email.address,
           notificationWhatsApp: (find("notifications", "whatsapp_phone") as string) ?? "",
