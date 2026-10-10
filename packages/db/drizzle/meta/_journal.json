@@ -78,6 +78,13 @@
       "when": 1791424065698,
       "tag": "0010_discount_buy_x_get_y",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1791671422668,
+      "tag": "0011_product_auto_styled",
+      "breakpoints": true
     }
   ]
 }

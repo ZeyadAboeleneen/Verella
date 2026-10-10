@@ -54,6 +54,12 @@ export default async function AdminSettingsPage() {
             : (find("checkout", "cod_deposit") as { type?: string } | undefined)?.type === "fixed"
               ? "fixed"
               : "off") as "off" | "percent" | "fixed",
+          aiBackgrounds: find("site", "ai_backgrounds") !== false,
+          marqueeEnabled: (find("site", "marquee") as { enabled?: boolean } | undefined)?.enabled !== false,
+          marqueeItems: ((find("site", "marquee") as { items?: { ar?: string; en?: string }[] } | undefined)?.items ?? []).map((i) => ({
+            ar: i.ar ?? "",
+            en: i.en ?? "",
+          })),
           codDepositValue: (find("checkout", "cod_deposit") as { value?: string } | undefined)?.value ?? "",
           governorateFees,
           notificationEmail: (find("notifications", "email") as string) ?? BRAND_CONTACT.email.address,
@@ -64,7 +70,8 @@ export default async function AdminSettingsPage() {
           instapayName: (find("checkout", "instapay_name") as string) ?? "",
           vodafoneCashNumber: (find("checkout", "vodafone_cash_number") as string) ?? "",
           vodafoneCashName: (find("checkout", "vodafone_cash_name") as string) ?? "",
-          pickupEnabled: Array.isArray(find("checkout", "fulfillment_types")) && (find("checkout", "fulfillment_types") as string[]).includes("pickup"),
+          pickupEnabled:
+            Array.isArray(find("checkout", "fulfillment_types")) && (find("checkout", "fulfillment_types") as string[]).includes("pickup"),
           paymentMethods: methods
             .filter((m): m is typeof m & { code: PaymentMethodCode } => (PAYMENT_METHOD_CODES as readonly string[]).includes(m.code))
             .map((m) => ({ code: m.code, isActive: m.isActive })),

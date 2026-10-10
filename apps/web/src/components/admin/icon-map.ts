@@ -13,6 +13,7 @@ import {
   History,
   UserCog,
   KeyRound,
+  LayoutTemplate,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,4 +32,5 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   History,
   UserCog,
   KeyRound,
+  LayoutTemplate,
 };

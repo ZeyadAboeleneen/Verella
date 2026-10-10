@@ -55,9 +55,16 @@ export function VMarquee({
   });
 
   const dark = tone === "dark";
+  // The strip slides one copy's width, then loops. A copy must be wider than
+  // the screen or a gap shows at the end — so short/few phrases are repeated
+  // until a copy is long enough (~90 characters, counting each V mark + gap
+  // as ~4, covers wide desktop screens at the largest text size).
+  const copyLength = items.reduce((n, item) => n + item.length + 4, 0);
+  const repeat = copyLength > 0 ? Math.max(1, Math.ceil(90 / copyLength)) : 1;
+  const filled = Array.from({ length: repeat }, () => items).flat();
   const run = (
     <span className="flex shrink-0 items-center">
-      {items.map((item, i) => (
+      {filled.map((item, i) => (
         <span key={i} className="flex items-center">
           <span className="px-6 md:px-10">{item}</span>
           <VMark size={28} className={dark ? "text-champagne" : "text-gold"} />

@@ -7,7 +7,7 @@ import { getStoreCategories, getStoreProducts } from "@/lib/store/queries";
 import { getLocale, getDict } from "@/lib/i18n";
 import { StoreBrowser } from "@/components/store/StoreBrowser";
 import { CategoryStrip } from "@/components/home/CategoryStrip";
-import { VMarquee } from "@/components/home/VMarquee";
+import { SiteMarquee } from "@/components/home/SiteMarquee";
 import { Reveal, RevealText } from "@/components/motion/Reveal";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -63,7 +63,7 @@ export default async function StorePage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="mt-24">
-        <VMarquee items={dict.home.marquee} tone="light" />
+        <SiteMarquee tone="light" />
       </div>
     </div>
   );

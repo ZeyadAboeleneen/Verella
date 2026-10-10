@@ -56,6 +56,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: "Categories", href: "/admin/store", icon: "LayoutGrid", permission: "store.view" },
       { label: "Discounts", href: "/admin/discounts", icon: "Percent", permission: "discounts.view" },
       { label: "Offers", href: "/admin/offers", icon: "Megaphone", permission: "discounts.view" },
+      { label: "Home sections", href: "/admin/home-sections", icon: "LayoutTemplate", permission: "settings.manage" },
     ],
   },
   {

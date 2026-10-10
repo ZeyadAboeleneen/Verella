@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { EGYPT_GOVERNORATES, GATEWAY_PAYMENT_METHODS, type PaymentMethodCode } from "@verella/core";
 import { updateSiteSettingsAction, type SiteSettingsInput } from "@/lib/settings/actions";
 import { SITE_THEMES, THEME_LABELS, type SiteTheme } from "@/lib/settings/theme";
@@ -12,22 +13,48 @@ import { Card, CardContent, CardHeader, CardTitle, FormError } from "@/component
 import { toast } from "@/components/ui/toast";
 
 const METHOD_LABELS: Record<PaymentMethodCode, { name: string; hint: string }> = {
-  cash_on_delivery: { name: "Cash on delivery", hint: "Customer pays the courier." },
-  instapay: { name: "InstaPay", hint: "Manual transfer — customer uploads a screenshot you approve under Payments." },
-  vodafone_cash: { name: "Vodafone Cash", hint: "Manual transfer — customer uploads a screenshot you approve under Payments." },
-  card: { name: "Credit / debit card", hint: "Needs the online payment gateway (e.g. Paymob) to be connected first." },
-  apple_pay: { name: "Apple Pay", hint: "Needs the online payment gateway (e.g. Paymob) to be connected first." },
+  cash_on_delivery: {
+    name: "Cash on delivery",
+    hint: "Customer pays the courier.",
+  },
+  instapay: {
+    name: "InstaPay",
+    hint: "Manual transfer — customer uploads a screenshot you approve under Payments.",
+  },
+  vodafone_cash: {
+    name: "Vodafone Cash",
+    hint: "Manual transfer — customer uploads a screenshot you approve under Payments.",
+  },
+  card: {
+    name: "Credit / debit card",
+    hint: "Needs the online payment gateway (e.g. Paymob) to be connected first.",
+  },
+  apple_pay: {
+    name: "Apple Pay",
+    hint: "Needs the online payment gateway (e.g. Paymob) to be connected first.",
+  },
 };
 
 export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fees, setFees] = useState<Record<string, string>>(
-    Object.fromEntries(initial.governorateFees.map((g) => [g.name, g.fee])),
-  );
+  const [fees, setFees] = useState<Record<string, string>>(Object.fromEntries(initial.governorateFees.map((g) => [g.name, g.fee])));
   const [methods, setMethods] = useState(initial.paymentMethods);
   const [theme, setTheme] = useState<SiteTheme>(initial.theme);
+  const [marqueeEnabled, setMarqueeEnabled] = useState(initial.marqueeEnabled);
+  const [aiBackgrounds, setAiBackgrounds] = useState(initial.aiBackgrounds);
+  const [marquee, setMarquee] = useState(initial.marqueeItems.length ? initial.marqueeItems : [{ ar: "", en: "" }]);
+  const setPhrase = (i: number, lang: "ar" | "en", v: string) =>
+    setMarquee((prev) => prev.map((p, j) => (j === i ? { ...p, [lang]: v } : p)));
+  const movePhrase = (i: number, by: -1 | 1) =>
+    setMarquee((prev) => {
+      const next = [...prev];
+      const j = i + by;
+      if (j < 0 || j >= next.length) return prev;
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
   const [depositType, setDepositType] = useState(initial.codDepositType);
 
   async function onSubmit(formData: FormData) {
@@ -41,8 +68,14 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
       deliveryFee: String(formData.get("deliveryFee")),
       freeShippingThreshold: String(formData.get("freeShippingThreshold") ?? ""),
       codDepositType: depositType,
+      marqueeEnabled,
+      aiBackgrounds,
+      marqueeItems: marquee,
       codDepositValue: String(formData.get("codDepositValue") ?? ""),
-      governorateFees: Object.entries(fees).map(([name, fee]) => ({ name, fee })),
+      governorateFees: Object.entries(fees).map(([name, fee]) => ({
+        name,
+        fee,
+      })),
       notificationEmail: String(formData.get("notificationEmail")),
       notificationWhatsApp: String(formData.get("notificationWhatsApp") ?? ""),
       taxEnabled: formData.get("taxEnabled") === "on",
@@ -112,9 +145,7 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
                   className="mt-0.5 h-4 w-4 accent-charcoal"
                   checked={m.isActive}
                   disabled={gateway}
-                  onChange={(e) =>
-                    setMethods((prev) => prev.map((x) => (x.code === m.code ? { ...x, isActive: e.target.checked } : x)))
-                  }
+                  onChange={(e) => setMethods((prev) => prev.map((x) => (x.code === m.code ? { ...x, isActive: e.target.checked } : x)))}
                 />
                 <span>
                   <span className="block text-sm font-medium text-on-surface">{METHOD_LABELS[m.code].name}</span>
@@ -133,8 +164,8 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
         <CardContent className="space-y-4">
           <p className="text-xs text-on-surface-variant">
             When on, cash on delivery orders stay pending and the customer gets a WhatsApp message asking for this deposit by InstaPay or
-            Vodafone Cash (with the account details below) and a screenshot in the chat. Confirm the order yourself once it&apos;s paid — the
-            full confirmation is sent then. The deposit is taken off the cash due on delivery.
+            Vodafone Cash (with the account details below) and a screenshot in the chat. Confirm the order yourself once it&apos;s paid —
+            the full confirmation is sent then. The deposit is taken off the cash due on delivery.
           </p>
           <div className="flex flex-wrap items-end gap-4">
             <div>
@@ -185,7 +216,13 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
             </div>
             <div>
               <Label htmlFor="vodafoneCashNumber">Vodafone Cash number</Label>
-              <Input id="vodafoneCashNumber" name="vodafoneCashNumber" dir="ltr" placeholder="01012345678" defaultValue={initial.vodafoneCashNumber} />
+              <Input
+                id="vodafoneCashNumber"
+                name="vodafoneCashNumber"
+                dir="ltr"
+                placeholder="01012345678"
+                defaultValue={initial.vodafoneCashNumber}
+              />
             </div>
             <div>
               <Label htmlFor="vodafoneCashName">Vodafone Cash account name</Label>
@@ -270,12 +307,111 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Scrolling text strip</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <label className="flex items-center gap-2 text-sm text-on-surface">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-charcoal"
+              checked={marqueeEnabled}
+              onChange={(e) => setMarqueeEnabled(e.target.checked)}
+            />
+            Show the strip (home, About and Store pages)
+          </label>
+          {marqueeEnabled && (
+            <>
+              <p className="text-xs text-on-surface-variant">
+                Each row is one phrase between the V marks, in Arabic and English. Leave all rows empty to use the default text.
+              </p>
+              <div className="space-y-2">
+                {marquee.map((p, i) => (
+                  <div key={i} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                    <Input
+                      dir="rtl"
+                      placeholder="بالعربي"
+                      aria-label={`Phrase ${i + 1} in Arabic`}
+                      value={p.ar}
+                      onChange={(e) => setPhrase(i, "ar", e.target.value)}
+                      className="min-w-0 flex-1"
+                    />
+                    <Input
+                      placeholder="In English"
+                      aria-label={`Phrase ${i + 1} in English`}
+                      value={p.en}
+                      onChange={(e) => setPhrase(i, "en", e.target.value)}
+                      className="min-w-0 flex-1"
+                    />
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => movePhrase(i, -1)}
+                        disabled={i === 0}
+                        aria-label="Move up"
+                        className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container disabled:opacity-30"
+                      >
+                        <ArrowUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => movePhrase(i, 1)}
+                        disabled={i === marquee.length - 1}
+                        aria-label="Move down"
+                        className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container disabled:opacity-30"
+                      >
+                        <ArrowDown size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMarquee((prev) => (prev.length > 1 ? prev.filter((_, j) => j !== i) : [{ ar: "", en: "" }]))}
+                        aria-label="Remove phrase"
+                        className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container hover:text-error"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMarquee((prev) => [...prev, { ar: "", en: "" }])}
+                disabled={marquee.length >= 20}
+                className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant px-3 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container disabled:opacity-40"
+              >
+                <Plus size={13} /> Add phrase
+              </button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>AI product backgrounds</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <label className="flex items-start gap-2 text-sm text-on-surface">
+            <input type="checkbox" className="mt-0.5 h-4 w-4 accent-charcoal" checked={aiBackgrounds} onChange={(e) => setAiBackgrounds(e.target.checked)} />
+            <span>
+              Make AI styled backgrounds for product photos
+              <span className="mt-0.5 block text-xs text-on-surface-variant">
+                Off: no new AI photos are made for any product (existing ones stay). Each product also has its own switch. Turn this off if
+                the server is short on memory.
+              </span>
+            </span>
+          </label>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Appearance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-on-surface-variant">
-            Colour theme for the footer, page banners and marquee. Classic matches the brand guidelines exactly; the
-            others add an optional colour wash.
+            Colour theme for the footer, page banners and marquee. Classic matches the brand guidelines exactly; the others add an optional
+            colour wash.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {SITE_THEMES.map((t) => {
@@ -293,7 +429,9 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
                 >
                   <span
                     className="block h-10 w-full rounded-lg"
-                    style={{ background: `linear-gradient(135deg, ${info.swatch[0]}, ${info.swatch[1]})` }}
+                    style={{
+                      background: `linear-gradient(135deg, ${info.swatch[0]}, ${info.swatch[1]})`,
+                    }}
                     aria-hidden="true"
                   />
                   <span className="mt-2 block text-sm font-medium text-on-surface">{info.name}</span>
@@ -332,7 +470,12 @@ export function SettingsForm({ initial }: { initial: SiteSettingsInput }) {
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm text-on-surface">
-            <input type="checkbox" name="guestCheckoutEnabled" defaultChecked={initial.guestCheckoutEnabled} className="h-4 w-4 accent-charcoal" />
+            <input
+              type="checkbox"
+              name="guestCheckoutEnabled"
+              defaultChecked={initial.guestCheckoutEnabled}
+              className="h-4 w-4 accent-charcoal"
+            />
             Allow checkout without an account
           </label>
           <label className="flex items-center gap-2 text-sm text-on-surface">

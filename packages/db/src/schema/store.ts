@@ -58,6 +58,8 @@ export const storeProducts = mysqlTable(
     currency: char("currency", { length: 3 }).notNull().default("EGP"),
     compareAtPrice: decimal("compare_at_price", { precision: 12, scale: 2 }),
     isBestSeller: boolean("is_best_seller").notNull().default(false),
+    /** Make an AI "styled background" main photo automatically on save. */
+    autoStyled: boolean("auto_styled").notNull().default(true),
     isFeaturedHome: boolean("is_featured_home").notNull().default(false),
     isActive: boolean("is_active").notNull().default(true),
     sortOrder: int("sort_order").notNull().default(0),

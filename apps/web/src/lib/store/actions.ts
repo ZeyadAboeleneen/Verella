@@ -3,7 +3,12 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { CATALOG_CACHE_TAG } from "@/lib/store/queries";
 import { after } from "next/server";
-import { ensureStyledProductImage } from "@/lib/media/auto-styled";
+import {
+  ensureStyledProductImage,
+  getOrCreateStyledPreview,
+  isAiBackgroundsEnabled,
+  removeStyledImagesFromProduct,
+} from "@/lib/media/auto-styled";
 import { and, eq, inArray, isNotNull, isNull, notInArray } from "drizzle-orm";
 import {
   db,
@@ -269,6 +274,7 @@ export async function createStoreProductAction(input: StoreProductInput): Promis
         ...productPricing(data),
         currency,
         isBestSeller: data.isBestSeller,
+        autoStyled: data.autoStyled,
         isFeaturedHome: data.isFeaturedHome,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
@@ -321,6 +327,7 @@ export async function updateStoreProductAction(id: number, input: StoreProductIn
         brand: data.brand || null,
         ...productPricing(data),
         isBestSeller: data.isBestSeller,
+        autoStyled: data.autoStyled,
         isFeaturedHome: data.isFeaturedHome,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
@@ -344,9 +351,30 @@ export async function updateStoreProductAction(id: number, input: StoreProductIn
     }
   });
 
+  // AI background switched off for this product: its own first photo is the main one again.
+  if (!data.autoStyled) await removeStyledImagesFromProduct(id);
+
   await logActivity({ actorUserId: Number(guard.id), action: "store_product.updated", entityType: "store_product", entityId: id });
   revalidateStore();
   after(() => ensureStyledProductImage(id));
+  return { success: true };
+}
+
+/**
+ * "Generate AI background" button: make a new styled main photo now (replacing
+ * any previous AI one) and switch the product's AI background on. Runs after
+ * the response — it takes a little while.
+ */
+export async function generateStyledImageAction(id: number): Promise<ActionResult> {
+  const guard = await guardPermission("store.manage");
+  if ("error" in guard) return guard;
+  if (!(await isAiBackgroundsEnabled())) return { error: "AI backgrounds are switched off in Settings." };
+
+  const [photo] = await db.select({ id: storeProductMedia.id }).from(storeProductMedia).where(eq(storeProductMedia.productId, id)).limit(1);
+  if (!photo) return { error: "Add a photo to this product first." };
+
+  await db.update(storeProducts).set({ autoStyled: true }).where(eq(storeProducts.id, id));
+  after(() => ensureStyledProductImage(id, { fresh: true }));
   return { success: true };
 }
 
@@ -367,4 +395,13 @@ export async function deleteStoreProductAction(id: number): Promise<ActionResult
   await logActivity({ actorUserId: Number(guard.id), action: "store_product.deleted", entityType: "store_product", entityId: id });
   revalidateStore();
   return { success: true };
+}
+
+/** Product form preview: the AI styled version of a photo (made now if needed — about a minute). */
+export async function previewStyledImageAction(mediaId: number): Promise<ActionResult<{ url: string }>> {
+  const guard = await guardPermission("store.manage");
+  if ("error" in guard) return guard;
+  const res = await getOrCreateStyledPreview(mediaId);
+  if ("error" in res) return { error: res.error };
+  return { success: true, data: { url: res.url } };
 }

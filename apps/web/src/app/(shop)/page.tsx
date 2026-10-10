@@ -3,7 +3,7 @@ import { getDict, getLocale } from "@/lib/i18n";
 import { getStoreBrands, getStoreCategories, getStoreProducts } from "@/lib/store/queries";
 import { withDbTimeout } from "@/lib/db-timeout";
 import { HeroShowcase } from "@/components/home/HeroShowcase";
-import { VMarquee } from "@/components/home/VMarquee";
+import { SiteMarquee } from "@/components/home/SiteMarquee";
 import { CategoryStrip } from "@/components/home/CategoryStrip";
 import { ProductShowcase } from "@/components/home/ProductShowcase";
 import { Manifesto } from "@/components/home/Manifesto";
@@ -11,6 +11,8 @@ import { EditorialFeature } from "@/components/home/EditorialFeature";
 import { BrandIndex } from "@/components/home/BrandIndex";
 import { OffersSection } from "@/components/offers/OffersSection";
 import { getActiveOffers } from "@/lib/offers/queries";
+import { defaultHomeFeatures, getHomeFeatures } from "@/lib/home-sections/queries";
+import { resolveHomeFeature } from "@/lib/home-sections/types";
 import { Reveal, RevealText } from "@/components/motion/Reveal";
 import { BRAND_CONTACT } from "@/lib/brand";
 import { jsonLdHtml, pageMetadata, siteUrl } from "@/lib/seo";
@@ -41,12 +43,13 @@ function organizationJsonLd() {
 
 export default async function Home() {
   const locale = await getLocale();
-  const [dict, categories, products, brands, offers] = await Promise.all([
+  const [dict, categories, products, brands, offers, homeFeatures] = await Promise.all([
     getDict(),
     withDbTimeout(getStoreCategories(locale)).catch(() => []),
     withDbTimeout(getStoreProducts(locale)).catch(() => []),
     withDbTimeout(getStoreBrands(locale)).catch(() => []),
     withDbTimeout(getActiveOffers(locale)).catch(() => []),
+    withDbTimeout(getHomeFeatures()).catch(() => defaultHomeFeatures()),
   ]);
   const h = dict.home;
   const lines = h.hero.lines as Record<string, string>;
@@ -63,7 +66,7 @@ export default async function Home() {
         labels={{ kicker: h.hero.kicker, shopNow: h.hero.shopNow, scroll: h.hero.scroll }}
       />
 
-      <VMarquee items={h.marquee} />
+      <SiteMarquee />
 
       <section className="mx-auto max-w-[1400px] px-5 pb-8 pt-24 md:px-16 md:pt-32">
         <div className="mb-10 md:mb-14">
@@ -89,22 +92,25 @@ export default async function Home() {
 
       <Manifesto lines={h.manifesto} signature={h.manifestoSig} />
 
-      {h.features.map((f, i) => (
-        <EditorialFeature
-          key={f.category}
-          eyebrow={f.eyebrow}
-          title={f.title}
-          body={f.body}
-          cta={f.cta}
-          href={`/store?category=${f.category}`}
-          image={categoryImage(f.category)}
-          flip={i % 2 === 1}
-        />
-      ))}
+      {homeFeatures.map((f, i) => {
+        const r = resolveHomeFeature(f, locale);
+        return (
+          <EditorialFeature
+            key={`${f.categorySlug}-${i}`}
+            eyebrow={r.eyebrow}
+            title={r.title}
+            body={r.body}
+            cta={r.cta}
+            href={r.href}
+            image={f.image?.url ?? categoryImage(f.categorySlug)}
+            flip={i % 2 === 1}
+          />
+        );
+      })}
 
       <BrandIndex brands={brands} labels={h.brands} />
 
-      <VMarquee items={h.marquee} reverse tone="light" />
+      <SiteMarquee reverse tone="light" />
     </>
   );
 }

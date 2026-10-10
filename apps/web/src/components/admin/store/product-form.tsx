@@ -6,7 +6,7 @@ import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { storeProductSchema, type StoreProductInput } from "@verella/core";
-import { createStoreProductAction, updateStoreProductAction } from "@/lib/store/actions";
+import { createStoreProductAction, generateStyledImageAction, updateStoreProductAction } from "@/lib/store/actions";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { Card, CardContent, FormError } from "@/components/ui/card";
 import { MediaGalleryPicker } from "@/components/admin/media-gallery-picker";
 import type { PickedMedia } from "@/components/admin/media-picker";
 import { toast } from "@/components/ui/toast";
+import { AiBackgroundPreview } from "./ai-background-preview";
 
 const AXIS_LABELS = { volume: "Volume (e.g. 50ml, 100ml)", size: "Size (e.g. S, M, L)", color: "Colour" } as const;
 
@@ -121,6 +122,17 @@ export function StoreProductForm({
   const [images, setImages] = useState<PickedMedia[]>(defaultValues?.images ?? []);
   const [serverError, setServerError] = useState<string | null>(null);
   const [slugTouched, setSlugTouched] = useState(!!productId);
+  const [generating, setGenerating] = useState(false);
+  // The photo the AI background is made from: the first one that isn't itself an AI photo.
+  const aiSource = images.find((img) => !/\/styled\.[a-z]+$|\/products\/styled\//i.test(img.url)) ?? null;
+  async function generate() {
+    if (!productId) return;
+    setGenerating(true);
+    const res = await generateStyledImageAction(productId);
+    setGenerating(false);
+    if ("error" in res) toast(res.error, "error");
+    else toast("Generating the AI background — refresh in about a minute.");
+  }
 
   const {
     register,
@@ -141,6 +153,7 @@ export function StoreProductForm({
       price: defaultValues?.price ?? "0.00",
       compareAtPrice: defaultValues?.compareAtPrice ?? null,
       isBestSeller: defaultValues?.isBestSeller ?? false,
+      autoStyled: defaultValues?.autoStyled ?? true,
       isFeaturedHome: defaultValues?.isFeaturedHome ?? false,
       isActive: defaultValues?.isActive ?? true,
       sortOrder: defaultValues?.sortOrder ?? 0,
@@ -151,6 +164,7 @@ export function StoreProductForm({
       mediaIds: [],
     },
   });
+  const autoStyled = watch("autoStyled");
 
   const { fields, append, remove, move } = useFieldArray({ control, name: "variants" });
   const hasVariants = fields.length > 0;
@@ -191,6 +205,32 @@ export function StoreProductForm({
 
       <Section title="Photos" hint="The first photo is the cover shown in the store.">
         <MediaGalleryPicker value={images} onChange={setImages} />
+        <div className="mt-4 rounded-xl border border-outline-variant/60 bg-surface-container-low p-4">
+          <label className="flex items-start gap-2 text-sm text-on-surface">
+            <input type="checkbox" {...register("autoStyled")} className="mt-0.5 h-4 w-4 accent-charcoal" />
+            <span>
+              <span className="font-medium">AI styled background</span>
+              <span className="mt-0.5 block text-xs text-on-surface-variant">
+                On: after saving, the first photo is cut out and placed on a coloured Verella backdrop, and that becomes the cover (your
+                photo stays as the second one). Off: your photos are used exactly as uploaded — any AI photo is removed when you save.
+              </span>
+            </span>
+          </label>
+          {productId && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button type="button" variant="outline" size="sm" loading={generating} onClick={generate}>
+                {images.some((img) => /\/styled\.[a-z]+$|\/products\/styled\//i.test(img.url)) ? "Regenerate AI background" : "Generate AI background now"}
+              </Button>
+              <span className="text-xs text-on-surface-variant">Takes about a minute — refresh the page to see it.</span>
+            </div>
+          )}
+          {autoStyled && aiSource && <AiBackgroundPreview
+              key={aiSource.id}
+              sourceId={aiSource.id}
+              sourceUrl={aiSource.url}
+              existingUrl={images[0] && images[0].id !== aiSource.id ? images[0].url : null}
+            />}
+        </div>
       </Section>
 
       <Section title="Product">

@@ -3,11 +3,13 @@ import { pageMetadata } from "@/lib/seo";
 import Link from "@/components/LocaleLink";
 import { ArrowUpRight } from "lucide-react";
 import { getDict, getLocale } from "@/lib/i18n";
+import { defaultHomeFeatures, getHomeFeatures } from "@/lib/home-sections/queries";
+import { resolveHomeFeature } from "@/lib/home-sections/types";
 import { getStoreCategories } from "@/lib/store/queries";
 import { withDbTimeout } from "@/lib/db-timeout";
 import { VMark } from "@/components/brand/Logo";
 import { Reveal, RevealText } from "@/components/motion/Reveal";
-import { VMarquee } from "@/components/home/VMarquee";
+import { SiteMarquee } from "@/components/home/SiteMarquee";
 import { EditorialFeature } from "@/components/home/EditorialFeature";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,7 +19,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AboutPage() {
   const locale = await getLocale();
-  const [dict, categories] = await Promise.all([getDict(), withDbTimeout(getStoreCategories(locale)).catch(() => [])]);
+  const [dict, categories, features] = await Promise.all([
+    getDict(),
+    withDbTimeout(getStoreCategories(locale)).catch(() => []),
+    withDbTimeout(getHomeFeatures()).catch(() => defaultHomeFeatures()),
+  ]);
+  const feature = features[0];
+  const featureText = feature ? resolveHomeFeature(feature, locale) : null;
   const t = dict.aboutPage;
 
   return (
@@ -39,7 +47,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <VMarquee items={dict.home.marquee} tone="light" />
+      <SiteMarquee tone="light" />
 
       <section className="mx-auto grid max-w-[1400px] gap-12 px-5 py-24 md:grid-cols-2 md:px-16 md:py-32">
         <ul className="space-y-4">
@@ -99,14 +107,17 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <EditorialFeature
-        eyebrow={dict.home.features[0].eyebrow}
-        title={dict.home.features[0].title}
-        body={dict.home.features[0].body}
-        cta={dict.home.features[0].cta}
-        href={`/store?category=${dict.home.features[0].category}`}
-        image={categories.find((c) => c.slug === dict.home.features[0].category)?.image ?? null}
-      />
+      {/* The first home section (Admin → Home sections): same text, link and picture. */}
+      {feature && featureText && (
+        <EditorialFeature
+          eyebrow={featureText.eyebrow}
+          title={featureText.title}
+          body={featureText.body}
+          cta={featureText.cta}
+          href={featureText.href}
+          image={feature.image?.url ?? categories.find((c) => c.slug === feature.categorySlug)?.image ?? null}
+        />
+      )}
 
       <section className="relative overflow-hidden bg-dusk px-5 py-28 text-center text-ivory md:px-16 md:py-40">
         <VMark size={90} className="mx-auto mb-10 text-champagne" />

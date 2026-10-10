@@ -147,3 +147,24 @@ export const getFulfillmentTypes = unstable_cache(getFulfillmentTypesImpl, ["set
   revalidate: SETTINGS_REVALIDATE_SECONDS,
   tags: [SETTINGS_CACHE_TAG],
 });
+
+export interface MarqueeSetting {
+  enabled: boolean;
+  /** Phrases between the V marks, in both languages. Empty = the built-in default text. */
+  items: { ar: string; en: string }[];
+}
+
+/** Scrolling text strip (home, about, store) — Admin → Settings. */
+async function getMarqueeImpl(): Promise<MarqueeSetting> {
+  const v = (await getSetting("site", "marquee").catch(() => null)) as Partial<MarqueeSetting> | null;
+  const items = Array.isArray(v?.items)
+    ? v.items
+        .map((i) => ({ ar: typeof i?.ar === "string" ? i.ar.trim() : "", en: typeof i?.en === "string" ? i.en.trim() : "" }))
+        .filter((i) => i.ar || i.en)
+    : [];
+  return { enabled: v?.enabled !== false, items };
+}
+export const getMarquee = unstable_cache(getMarqueeImpl, ["settings-marquee"], {
+  revalidate: SETTINGS_REVALIDATE_SECONDS,
+  tags: [SETTINGS_CACHE_TAG],
+});

@@ -9,6 +9,8 @@ import {
   storeProductCategories,
   storeCategories,
   storeCategoryTranslations,
+  storeProductMedia,
+  media,
 } from "@verella/db";
 import { formatMoney, toCents } from "@verella/core";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,7 @@ import { Pagination, PAGE_SIZE } from "@/components/admin/pagination";
 import { deleteStoreProductAction } from "@/lib/store/actions";
 import { AdminSearch } from "@/components/admin/admin-search";
 import { AdminSelectFilter } from "@/components/admin/admin-select-filter";
+import { isAiBackgroundsEnabled, isStyledMedia } from "@/lib/media/auto-styled";
 
 export default async function AdminStoreProductsPage({
   searchParams,
@@ -75,6 +78,7 @@ export default async function AdminStoreProductsPage({
         isActive: storeProducts.isActive,
         isBestSeller: storeProducts.isBestSeller,
         isFeaturedHome: storeProducts.isFeaturedHome,
+        autoStyled: storeProducts.autoStyled,
         name: storeProductTranslations.name,
         categoryName: storeCategories.slug,
       })
@@ -94,6 +98,27 @@ export default async function AdminStoreProductsPage({
         .from(storeProductVariants)
         .where(inArray(storeProductVariants.productId, rows.map((r) => r.id)))
     : [];
+  // Main (first) photo per product — is it an AI styled one yet?
+  const [photoRows, aiEnabled] = await Promise.all([
+    rows.length
+      ? db
+          .select({ productId: storeProductMedia.productId, sortOrder: storeProductMedia.sortOrder, folder: media.folder, url: media.url })
+          .from(storeProductMedia)
+          .innerJoin(media, eq(media.id, storeProductMedia.mediaId))
+          .where(inArray(storeProductMedia.productId, rows.map((r) => r.id)))
+          .orderBy(asc(storeProductMedia.sortOrder))
+      : Promise.resolve([]),
+    isAiBackgroundsEnabled().catch(() => true),
+  ]);
+  /** AI background state for the list: done / waiting to be made / off / no photo. */
+  const aiStatus = (p: (typeof rows)[number]) => {
+    const main = photoRows.find((r) => r.productId === p.id);
+    if (main && isStyledMedia(main)) return { label: "AI photo", tone: "bg-[#E7F7EE] text-[#1B7A44]", hint: "The cover is the AI styled photo." };
+    if (!p.autoStyled) return { label: "AI off", tone: "bg-surface-container-high text-on-surface-variant", hint: "Photos are used as uploaded." };
+    if (!main) return { label: "No photo", tone: "bg-surface-container-high text-on-surface-variant", hint: "Add a photo to get an AI background." };
+    if (!aiEnabled) return { label: "AI paused", tone: "bg-amber-50 text-amber-800", hint: "AI backgrounds are switched off in Settings." };
+    return { label: "AI pending", tone: "bg-amber-50 text-amber-800", hint: "Will be made after the next save, or use Generate on the product." };
+  };
   /** Stock that can actually sell: summed across active variants when the product has any. */
   const stockFor = (p: (typeof rows)[number]) => {
     const vs = variantRows.filter((v) => v.productId === p.id && v.isActive);
@@ -149,6 +174,7 @@ export default async function AdminStoreProductsPage({
             <Th>Price</Th>
             <Th>Stock</Th>
             <Th>Flags</Th>
+            <Th>AI background</Th>
             <Th>Status</Th>
             <Th className="text-end">Actions</Th>
           </tr>
@@ -173,6 +199,16 @@ export default async function AdminStoreProductsPage({
                 {p.isBestSeller && <span className="rounded-full bg-secondary-container px-2 py-0.5 text-xs">Best seller</span>}
               </Td>
               <Td>
+                {(() => {
+                  const ai = aiStatus(p);
+                  return (
+                    <span title={ai.hint} className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs ${ai.tone}`}>
+                      {ai.label}
+                    </span>
+                  );
+                })()}
+              </Td>
+              <Td>
                 <span
                   className={
                     p.isActive
@@ -194,7 +230,7 @@ export default async function AdminStoreProductsPage({
             </Tr>
             );
           })}
-          {rows.length === 0 && <EmptyRow colSpan={8}>{q ? `No products match “${q}”.` : "No products yet."}</EmptyRow>}
+          {rows.length === 0 && <EmptyRow colSpan={9}>{q ? `No products match “${q}”.` : "No products yet."}</EmptyRow>}
         </tbody>
       </Table>
       <Pagination basePath="/admin/store/products" params={{ q: q || undefined, category: activeCategory ? String(activeCategory.id) : undefined }} page={page} total={total} />

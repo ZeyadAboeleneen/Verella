@@ -78,6 +78,7 @@ export default async function EditStoreProductPage({ params }: { params: Promise
           price: product.price,
           compareAtPrice: product.compareAtPrice,
           isBestSeller: product.isBestSeller,
+          autoStyled: product.autoStyled,
           isFeaturedHome: product.isFeaturedHome,
           isActive: product.isActive,
           sortOrder: product.sortOrder,

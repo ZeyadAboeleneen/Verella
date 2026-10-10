@@ -1,0 +1,1 @@
+ALTER TABLE `store_products` ADD `auto_styled` boolean DEFAULT true NOT NULL;

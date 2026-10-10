@@ -26,6 +26,11 @@ export interface SiteSettingsInput {
   /** Cash-on-delivery deposit: off, a % of the order total, or a fixed amount. */
   codDepositType: "off" | "percent" | "fixed";
   codDepositValue: string;
+  /** Scrolling text strip: shown or not, and its phrases (empty = default text). */
+  marqueeEnabled: boolean;
+  /** Site-wide switch for AI styled product backgrounds. */
+  aiBackgrounds: boolean;
+  marqueeItems: { ar: string; en: string }[];
   governorateFees: GovernorateFee[];
   notificationEmail: string;
   /** WhatsApp number for new-order alerts; empty disables them. */
@@ -100,6 +105,14 @@ export async function updateSiteSettingsAction(input: SiteSettingsInput): Promis
     upsertSetting("site", "currency", input.currency),
     upsertSetting("checkout", "delivery_fee", Number(input.deliveryFee).toFixed(2)),
     upsertSetting("checkout", "governorate_fees", governorateFees),
+    upsertSetting("site", "ai_backgrounds", input.aiBackgrounds),
+    upsertSetting("site", "marquee", {
+      enabled: input.marqueeEnabled,
+      items: input.marqueeItems
+        .map((i) => ({ ar: i.ar.trim().slice(0, 60), en: i.en.trim().slice(0, 60) }))
+        .filter((i) => i.ar || i.en)
+        .slice(0, 20),
+    }),
     upsertSetting("checkout", "cod_deposit", { type: codDepositType, value: codDepositType === "off" ? "" : String(Number(codDepositValue)) }),
     upsertSetting("checkout", "free_shipping_threshold", freeShippingThreshold ? Number(freeShippingThreshold).toFixed(2) : ""),
     upsertSetting("notifications", "email", notificationEmail),

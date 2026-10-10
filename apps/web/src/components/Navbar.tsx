@@ -112,8 +112,21 @@ export default function Navbar({
     // The bar's full (un-scrolled) height, for things that sit under it at the
     // top of the page (the home hero) — must not change while scrolling, or the
     // hero jumps and opens a gap under the announcement bar.
-    if (!scrolled && navRef.current) document.documentElement.style.setProperty("--nav-height", `${navRef.current.offsetHeight}px`);
   }, [navVisible, scrolled]);
+
+  // --nav-height: re-measured whenever the bar's size changes at the top of the
+  // page. Measuring once when `scrolled` flips back caught the bar mid-way
+  // through its padding transition (65px instead of 81px), leaving a gap
+  // between the announcement bar and the home hero.
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el || scrolled) return;
+    const sync = () => document.documentElement.style.setProperty("--nav-height", `${el.offsetHeight}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [scrolled]);
 
   useEffect(() => {
     if (!navOpen) return;

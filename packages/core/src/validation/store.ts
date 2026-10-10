@@ -36,6 +36,7 @@ export const storeProductSchema = z.object({
   price: decimalString,
   compareAtPrice: nullableDecimalString.optional(),
   isBestSeller: z.boolean().default(false),
+  autoStyled: z.boolean().default(true),
   isFeaturedHome: z.boolean().default(false),
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
